@@ -12,7 +12,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ForceUpdateScreen } from '../screens/ForceUpdateScreen';
 import { WhatsNewModal } from '../components/WhatsNewModal';
 import { useNavigation } from '@react-navigation/native';
-import { TabNavigator } from './TabNavigator';
+import { HomeRootScreen } from '../screens/HomeRootScreen';
 import { OnboardingNavigator } from './OnboardingNavigator';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { NotificationSettingsScreen } from '../screens/NotificationSettingsScreen';
@@ -312,11 +312,11 @@ export const RootNavigator: React.FC = () => {
                     : undefined
             }
           />
-          <Stack.Screen name="MainTabs" component={TabNavigator} />
+          <Stack.Screen name="MainTabs" component={HomeRootScreen} />
         </>
       ) : (
         <>
-          <Stack.Screen name="MainTabs" component={TabNavigator} />
+          <Stack.Screen name="MainTabs" component={HomeRootScreen} />
           <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
         </>
       )}

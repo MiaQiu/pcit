@@ -31,7 +31,7 @@ import * as userStorage from '../lib/userStorage';
 import amplitudeService from '../services/amplitudeService';
 import { buildPlanDisplay, useModulePlan } from './LearnModulePlanView';
 import { LearnModulePlanOverview } from './LearnModulePlanOverview';
-import type { ModuleDay } from '../constants/learnModules';
+import type { LearnModuleKey, ModuleDay } from '../constants/learnModules';
 import { LEARN_MODULES, LEARN_MODULE_TABS, LearnModuleAction, LearnModuleConfig, LearnModuleTabKey, getGoalProgress } from '../constants/learnModules';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
@@ -76,7 +76,8 @@ const ModuleTabBar: React.FC<{
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.tabBarWrap, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+    // Sits 20pt into the home-indicator inset (lower on screen), never under 8pt.
+    <View style={[styles.tabBarWrap, { paddingBottom: Math.max(insets.bottom - 20, 8) }]}>
       <View style={styles.tabBar}>
         {TABS.map(tab => {
           const active = tab.key === activeTab;
@@ -100,12 +101,24 @@ const ModuleTabBar: React.FC<{
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
-export const LearnModuleScreen_v2: React.FC = () => {
+interface Props {
+  // Set when this module is the parent's home screen (HomeRootScreen renders
+  // it as the MainTabs route): no back arrow, and Profile opens the profile.
+  homeModuleKey?: LearnModuleKey;
+}
+
+export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'LearnModule'>>();
   const { t } = useTranslation();
   const { showToast } = useToast();
-  const { moduleKey, day: dayParam, initialTab = 'today', startRecordingAt } = route.params;
+  // As home, the route is MainTabs: its params only carry what returnToModule
+  // merges in (initialTab, startRecordingAt).
+  const isHome = !!homeModuleKey;
+  const params: RootStackParamList['LearnModule'] = homeModuleKey
+    ? { ...(route.params as Partial<RootStackParamList['LearnModule']> | undefined), moduleKey: homeModuleKey }
+    : route.params;
+  const { moduleKey, day: dayParam, initialTab = 'today', startRecordingAt } = params;
   const module: LearnModuleConfig = LEARN_MODULES[moduleKey];
   // Day 1 has its own practice card + copy; Day 2+ shows the parent's
   // current protocol. The "Not ready to record?" card uses Day 1's copy on
@@ -354,20 +367,24 @@ export const LearnModuleScreen_v2: React.FC = () => {
       if (moduleKey === 'screenTime') navigation.push('ModuleLearn');
       else navigation.navigate('MainTabs', { screen: 'Learn' });
     }
+    else if (tab === 'profile' && isHome) navigation.push('Profile');
     else showToast(t('learnV2.moduleScreen.comingSoon'), 'info');
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <View style={styles.navRow}>
-        <TrackedTouchable analyticsId="Back"
-          onPress={() => navigation.goBack()}
-          style={styles.backCircle}
-          activeOpacity={0.7}
-          accessibilityLabel="Back"
-        >
-          <Ionicons name="chevron-back" size={18} color={COLORS.textDark} />
-        </TrackedTouchable>
+        {/* No way back from home; the spacer keeps the goal pill centered */}
+        {isHome ? <View style={styles.navSpacer} /> : (
+          <TrackedTouchable analyticsId="Back"
+            onPress={() => navigation.goBack()}
+            style={styles.backCircle}
+            activeOpacity={0.7}
+            accessibilityLabel="Back"
+          >
+            <Ionicons name="chevron-back" size={18} color={COLORS.textDark} />
+          </TrackedTouchable>
+        )}
         {/* Goal in the header (Today tab) */}
         {activeTab === 'today' && isFirstTime === false && (
           <View style={styles.goalPill}>
@@ -654,7 +671,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  navSpacer: { width: 36 },
+  navSpacer: { width: 36, height: 36 },
 
   // ── Intro ──
   title: {

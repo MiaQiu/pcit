@@ -21,6 +21,7 @@ import { COLORS, FONTS } from '../constants/assets';
 import type { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { TrackedTouchable } from '../components/TrackedTouchable';
 import amplitudeService from '../services/amplitudeService';
+import { returnToModule } from '../navigation/moduleNavigation';
 
 const DINO = require('../../assets/images/modules/record_guide/dino.png');
 
@@ -97,8 +98,8 @@ export const ModuleRecordGuideScreen: React.FC = () => {
 
   const startRecording = () => {
     amplitudeService.trackEvent('Learn Module Record Guide Start Tapped', { moduleKey });
-    // Back to the module screen (already under this one), which starts recording.
-    navigation.popTo('LearnModule', { moduleKey, startRecordingAt: Date.now() }, { merge: true });
+    // Back to the module screen (already under this one, or home), which starts recording.
+    returnToModule(navigation, moduleKey, { startRecordingAt: Date.now() });
   };
 
   const renderExample = (step: GuideStep, n: number) => step.exampleBg && (

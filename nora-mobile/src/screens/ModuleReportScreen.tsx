@@ -62,6 +62,7 @@ import { useScreenViewDuration } from '../hooks/useScreenViewDuration';
 import { useScrollDepthTracking } from '../hooks/useScrollDepthTracking';
 import { deriveGoalFromLevel as deriveGoalNumbersFromLevel } from '../utils/goalFallback';
 import { TrackedTouchable } from '../components/TrackedTouchable';
+import { returnToModule } from '../navigation/moduleNavigation';
 
 type ModuleReportRouteProp = RouteProp<RootStackParamList, 'ModuleReport'>;
 
@@ -634,7 +635,7 @@ export const ModuleReportScreen: React.FC = () => {
           <TrackedTouchable analyticsId="moduleReport.seeMyPlan" style={styles.seeYouTomorrowButton} activeOpacity={0.85}
             onPress={() => {
               amplitudeService.trackEvent('Module Report See My Plan Tapped', { recordingId, moduleKey });
-              navigation.navigate('LearnModule', { moduleKey, initialTab: 'plan' });
+              returnToModule(navigation, moduleKey, { initialTab: 'plan' });
             }}
           >
             <Text style={styles.seeYouTomorrowButtonText}>{t('moduleReport.seeMyPlan')}</Text>
