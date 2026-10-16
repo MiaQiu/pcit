@@ -31,6 +31,8 @@ import * as userStorage from '../lib/userStorage';
 import amplitudeService from '../services/amplitudeService';
 import { buildPlanDisplay, useModulePlan } from './LearnModulePlanView';
 import { LearnModulePlanOverview } from './LearnModulePlanOverview';
+import { ModuleLearnScreen } from './ModuleLearnScreen';
+import { ProfileScreen } from './ProfileScreen';
 import type { LearnModuleKey, ModuleDay } from '../constants/learnModules';
 import { LEARN_MODULES, LEARN_MODULE_TABS, LearnModuleAction, LearnModuleConfig, LearnModuleTabKey, getGoalProgress } from '../constants/learnModules';
 
@@ -126,6 +128,8 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   const config = module.days[1];
   const base = `learnV2.modules.${moduleKey}.days.1`;
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab === 'plan' ? 'plan' : 'today');
+  // Learn / Profile render in place like Today and My plan (no push), where available.
+  const hasLearnTab = moduleKey === 'screenTime';
   // navigate() to an already-open LearnModule (e.g. "See my plan" from the
   // module report) updates params instead of remounting.
   useEffect(() => {
@@ -362,40 +366,44 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   const handleTabPress = (tab: TabKey) => {
     if (tab === activeTab) return;
     amplitudeService.trackEvent('Learn Module Tab Tapped', { moduleKey, tab });
-    if (tab === 'today' || (tab === 'plan' && module.plan)) setActiveTab(tab);
-    else if (tab === 'learn') {
-      if (moduleKey === 'screenTime') navigation.push('ModuleLearn');
-      else navigation.navigate('MainTabs', { screen: 'Learn' });
-    }
-    else if (tab === 'profile' && isHome) navigation.push('Profile');
+    if (tab === 'today' || (tab === 'plan' && module.plan) || (tab === 'learn' && hasLearnTab) || (tab === 'profile' && isHome)) {
+      setActiveTab(tab);
+    } else if (tab === 'learn') navigation.navigate('MainTabs', { screen: 'Learn' });
     else showToast(t('learnV2.moduleScreen.comingSoon'), 'info');
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <View style={styles.navRow}>
-        {/* No way back from home; the spacer keeps the goal pill centered */}
-        {isHome ? <View style={styles.navSpacer} /> : (
-          <TrackedTouchable analyticsId="Back"
-            onPress={() => navigation.goBack()}
-            style={styles.backCircle}
-            activeOpacity={0.7}
-            accessibilityLabel="Back"
-          >
-            <Ionicons name="chevron-back" size={18} color={COLORS.textDark} />
-          </TrackedTouchable>
-        )}
-        {/* Goal in the header (Today tab) */}
-        {activeTab === 'today' && isFirstTime === false && (
-          <View style={styles.goalPill}>
-            <Ionicons name="locate" size={16} color={COLORS.mainPurple} />
-            <Text style={styles.goalPillText}>{t('learnV2.moduleScreenV2.goalLabel', { number: currentGoal?.number ?? 1 })}</Text>
-          </View>
-        )}
-        <View style={styles.navSpacer} />
-      </View>
+      {/* Learn / Profile have their own header; as home there's nothing else to show here */}
+      {!(isHome && (activeTab === 'learn' || activeTab === 'profile')) && (
+        <View style={styles.navRow}>
+          {/* No way back from home; the spacer keeps the goal pill centered */}
+          {isHome ? <View style={styles.navSpacer} /> : (
+            <TrackedTouchable analyticsId="Back"
+              onPress={() => navigation.goBack()}
+              style={styles.backCircle}
+              activeOpacity={0.7}
+              accessibilityLabel="Back"
+            >
+              <Ionicons name="chevron-back" size={18} color={COLORS.textDark} />
+            </TrackedTouchable>
+          )}
+          {/* Goal in the header (Today tab) */}
+          {activeTab === 'today' && isFirstTime === false && (
+            <View style={styles.goalPill}>
+              <Ionicons name="locate" size={16} color={COLORS.mainPurple} />
+              <Text style={styles.goalPillText}>{t('learnV2.moduleScreenV2.goalLabel', { number: currentGoal?.number ?? 1 })}</Text>
+            </View>
+          )}
+          <View style={styles.navSpacer} />
+        </View>
+      )}
 
-      {activeTab === 'plan' ? (
+      {activeTab === 'learn' ? (
+        <ModuleLearnScreen embedded />
+      ) : activeTab === 'profile' ? (
+        <ProfileScreen embedded />
+      ) : activeTab === 'plan' ? (
         <LearnModulePlanOverview
           moduleKey={moduleKey}
           onOpenPlan={goal => {

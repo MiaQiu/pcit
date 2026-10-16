@@ -56,7 +56,13 @@ interface UserProfile {
   subscriptionEndDate?: Date;
 }
 
-export const ProfileScreen: React.FC = () => {
+interface Props {
+  // Rendered as the module screen's Profile tab: no back button, and no top
+  // safe-area inset (the module screen already applies it).
+  embedded?: boolean;
+}
+
+export const ProfileScreen: React.FC<Props> = ({ embedded = false }) => {
   const { t, i18n } = useTranslation();
   const navigation = useNavigation<RootStackNavigationProp>();
   const authService = useAuthService();
@@ -449,7 +455,7 @@ export const ProfileScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={embedded ? [] : undefined}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#8C49D5" />
           <Text style={styles.loadingText}>{t('profile.loadingProfile')}</Text>
@@ -459,15 +465,17 @@ export const ProfileScreen: React.FC = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={embedded ? [] : ['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TrackedTouchable analyticsId="Back"
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
-        </TrackedTouchable>
+        {embedded ? <View style={styles.headerSpacer} /> : (
+          <TrackedTouchable analyticsId="Back"
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          </TrackedTouchable>
+        )}
         <Text style={styles.headerTitle}>{t('profile.title')}</Text>
         <View style={styles.headerSpacer} />
       </View>

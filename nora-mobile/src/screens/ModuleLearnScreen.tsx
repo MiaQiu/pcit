@@ -193,7 +193,13 @@ const ModuleSection: React.FC<ModuleSectionProps> = ({
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
-export const ModuleLearnScreen: React.FC = () => {
+interface Props {
+  // Rendered as the module screen's Learn tab: no back button, and no top
+  // safe-area inset (the module screen already applies it).
+  embedded?: boolean;
+}
+
+export const ModuleLearnScreen: React.FC<Props> = ({ embedded = false }) => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const lessonService = useLessonService();
   const { isOnline } = useNetworkStatus();
@@ -397,14 +403,14 @@ export const ModuleLearnScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.loadingWrap}>
+      <SafeAreaView style={styles.loadingWrap} edges={embedded ? [] : undefined}>
         <ActivityIndicator size="large" color={COLORS.mainPurple} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.screen} edges={embedded ? [] : ['top', 'left', 'right']}>
       <ScrollView
         ref={scrollViewRef}
         style={styles.scroll}
@@ -421,9 +427,11 @@ export const ModuleLearnScreen: React.FC = () => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TrackedTouchable analyticsId="Back" onPress={() => navigation.goBack()} style={styles.backButton} activeOpacity={0.7}>
-            <Ionicons name="chevron-back" size={24} color={COLORS.textDark} />
-          </TrackedTouchable>
+          {!embedded && (
+            <TrackedTouchable analyticsId="Back" onPress={() => navigation.goBack()} style={styles.backButton} activeOpacity={0.7}>
+              <Ionicons name="chevron-back" size={24} color={COLORS.textDark} />
+            </TrackedTouchable>
+          )}
           <Text style={styles.title}>{t('learnV2.title')}</Text>
         </View>
 
