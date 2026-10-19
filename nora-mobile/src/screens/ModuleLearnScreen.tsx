@@ -483,8 +483,8 @@ const styles = StyleSheet.create({
   backButton: { width: 34, height: 34, marginLeft: -8, alignItems: 'center', justifyContent: 'center' },
   title: {
     fontFamily: FONTS.bold,
-    fontSize: 30,
-    lineHeight: 36,
+    fontSize: 26,
+    lineHeight: 32,
     letterSpacing: -0.5,
     color: COLORS.textDark,
     marginTop: 8,
@@ -507,9 +507,9 @@ const styles = StyleSheet.create({
   },
   moduleName: {
     fontFamily: FONTS.bold,
-    fontSize: 26,
+    fontSize: 20,
     color: COLORS.textDark,
-    lineHeight: 32,
+    lineHeight: 26,
     letterSpacing: -0.3,
     flex: 1,
   },

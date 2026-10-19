@@ -37,6 +37,7 @@ import {
   primaryFocusLabels,
   type FocusAreaData,
 } from '../utils/snapshotFocusAreas';
+import { homeModuleFor } from '../navigation/moduleNavigation';
 
 interface UserProfile {
   name: string;
@@ -320,6 +321,9 @@ export const ProfileScreen: React.FC<Props> = ({ embedded = false }) => {
   const asIssueArray = (issue?: string | string[]): string[] =>
     Array.isArray(issue) ? issue : issue ? [issue] : [];
 
+  // Primary focus is a module shown as home (e.g. screen time).
+  const isModuleHome = !!homeModuleFor(profile?.issue);
+
   // The merged "Primary Focus Area" list — same derivation as the ProfileReport
   // learning-journey subtitle (see utils/snapshotFocusAreas.ts).
   const getPrimaryFocusText = (): string | null => {
@@ -557,10 +561,13 @@ export const ProfileScreen: React.FC<Props> = ({ embedded = false }) => {
               return primaryFocusText ? (
                 <>
                   <View style={styles.divider} />
+                  {/* Screen-time parents have the module as home; the Child
+                      Snapshot isn't their journey, so the row is plain info. */}
                   <TrackedTouchable analyticsId="profile.primaryFocusLabel"
                     style={styles.infoRow}
                     activeOpacity={0.7}
                     onPress={handlePrimaryFocusPress}
+                    disabled={isModuleHome}
                   >
                     <View style={styles.infoIcon}>
                       <Ionicons name="heart-outline" size={20} color="#8C49D5" />
@@ -569,7 +576,7 @@ export const ProfileScreen: React.FC<Props> = ({ embedded = false }) => {
                       <Text style={styles.infoLabel}>{t('profile.primaryFocusLabel')}</Text>
                       <Text style={styles.infoValue}>{primaryFocusText}</Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                    {!isModuleHome && <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />}
                   </TrackedTouchable>
                 </>
               ) : null;

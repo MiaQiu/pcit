@@ -9,6 +9,21 @@ import { CommonActions, StackActions } from '@react-navigation/native';
 import type { LearnModuleKey } from '../constants/learnModules';
 import type { RootStackNavigationProp, RootStackParamList } from './types';
 
+// ChildIssue value (the parent's hardest problem) → module shown as home.
+const MODULE_HOME_BY_ISSUE: Record<string, LearnModuleKey> = {
+  screen_time: 'screenTime',
+};
+
+/**
+ * The module that is this parent's home screen, from User.issue, or null for
+ * the regular tabs. ChildIssue is single-choice (a string); older accounts may
+ * hold an array.
+ */
+export const homeModuleFor = (issue: string | string[] | undefined | null): LearnModuleKey | null => {
+  const hardest = Array.isArray(issue) ? issue[0] : issue;
+  return (hardest && MODULE_HOME_BY_ISSUE[hardest]) || null;
+};
+
 // The module MainTabs is rendering as home, or null when it's the regular tabs.
 // Set by HomeRootScreen.
 let moduleHomeKey: LearnModuleKey | null = null;
