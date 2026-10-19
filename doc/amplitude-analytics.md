@@ -53,7 +53,6 @@ Auto-tracked device properties: `appSetId`, `carrier`, `deviceManufacturer`, `de
 
 ```typescript
 amplitudeService.identifyUser(user.id, {
-  email, name,
   currentStreak, longestStreak,
   subscriptionPlan, subscriptionStatus,
   childAge,           // derived from childBirthYear
@@ -62,7 +61,9 @@ amplitudeService.identifyUser(user.id, {
 ```
 
 ### On login / signup
-`LoginScreen.tsx` and `CreateAccountScreen.tsx` call `identifyUser` with: `email`, `name`, `currentStreak`, `longestStreak`, `subscriptionPlan`.
+`LoginScreen.tsx` and `CreateAccountScreen.tsx` call `identifyUser` with: `currentStreak`, `longestStreak`, `subscriptionPlan`, `subscriptionStatus`, `childAge`, `relationshipToChild`.
+
+**No personal info:** email and name are never sent. `identifyUser` drops `email`/`name` keys and unsets them on every identify (clearing values set by older app versions), and `getSafeRouteParams` strips email/name route params from Screen Viewed events.
 
 ### On logout
 `ProfileScreen.tsx` and `RootNavigator.tsx` call `amplitudeService.reset()` to clear the user ID and session.

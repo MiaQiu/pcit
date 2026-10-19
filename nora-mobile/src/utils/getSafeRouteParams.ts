@@ -1,10 +1,11 @@
-const SENSITIVE_KEY_PATTERN = /token|password|secret/i;
+const SENSITIVE_KEY_PATTERN = /token|password|secret|email|^(user|child|first|last|full)?name$/i;
 
 /**
  * Extracts the subset of a route's params that are safe to attach to an
  * analytics event: primitive values only (so large/nested payloads like a
  * full lesson, quiz, or transcript object are never forwarded), and never a
- * key that looks like a token/password/secret (e.g. ResetPassword's `token`).
+ * key that looks like a token/password/secret (e.g. ResetPassword's `token`)
+ * or personal info (e.g. Login's `email`).
  */
 export function getSafeRouteParams(params: object | undefined): Record<string, any> {
   if (!params) return {};

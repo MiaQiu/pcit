@@ -12,6 +12,9 @@ const AMPLITUDE_PROD_KEY = '6afe0ca3eac4c17cfad1a6cff1ce7d28'; // Production API
 // Select API key based on environment
 const AMPLITUDE_API_KEY = __DEV__ ? AMPLITUDE_DEV_KEY : AMPLITUDE_PROD_KEY;
 
+// Personal info that must never reach Amplitude as user properties
+const PII_USER_PROPERTIES = ['email', 'name'];
+
 class AmplitudeService {
   private initialized = false;
 
@@ -87,8 +90,11 @@ class AmplitudeService {
       };
 
       Object.entries(enrichedProperties).forEach(([key, value]) => {
+        if (PII_USER_PROPERTIES.includes(key)) return;
         identify.set(key, value);
       });
+      // Never send personal info; also clears values set by older app versions
+      PII_USER_PROPERTIES.forEach((key) => identify.unset(key));
       amplitude.identify(identify);
 
       console.log('[Amplitude] User identified:', userId);

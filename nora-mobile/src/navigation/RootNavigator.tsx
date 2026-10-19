@@ -211,8 +211,6 @@ export const RootNavigator: React.FC = () => {
 
           // Identify user on session restore so events are never anonymous
           amplitudeService.identifyUser(user.id, {
-            email: user.email,
-            name: user.name,
             currentStreak: user.currentStreak || 0,
             longestStreak: user.longestStreak || 0,
             subscriptionPlan: user.subscriptionPlan,

@@ -123,8 +123,6 @@ export const CreateAccountScreen: React.FC = () => {
       // Track signup in Amplitude with user properties
       if (response && response.user) {
         amplitudeService.identifyUser(response.user.id, {
-          email: response.user.email,
-          name: response.user.name,
           currentStreak: 0,
           longestStreak: 0,
           subscriptionPlan: response.user.subscriptionPlan,

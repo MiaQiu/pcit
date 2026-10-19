@@ -148,8 +148,6 @@ export const LoginScreen: React.FC = () => {
           : 0;
 
         amplitudeService.identifyUser(response.user.id, {
-          email: response.user.email,
-          name: response.user.name,
           currentStreak: response.user.currentStreak || 0,
           longestStreak: response.user.longestStreak || 0,
           subscriptionPlan: response.user.subscriptionPlan,
