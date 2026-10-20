@@ -24,9 +24,9 @@ export const ResponseButton: React.FC<ResponseButtonProps> = ({
   onPress,
 }) => {
   const getStateStyles = () => {
-    if (isSelected && isCorrect) return styles.correct;
-    if (isSelected && !isCorrect) return styles.incorrect;
-    return styles.default;
+    if (isSelected && isCorrect) return correctStyles;
+    if (isSelected && !isCorrect) return incorrectStyles;
+    return defaultStyles;
   };
 
   const stateStyles = getStateStyles();
@@ -90,52 +90,53 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 8,
   },
+});
 
-  default: {
-    container: {
-      backgroundColor: COLORS.white,
-      borderColor: '#E0E0E0',
-    },
-    labelCircle: {
-      backgroundColor: '#F5F5F5',
-    },
-    labelText: {
-      color: '#666666',
-    },
-    optionText: {
-      color: COLORS.textDark,
-    },
+// Per-state overrides, one sheet per state
+const defaultStyles = StyleSheet.create({
+  container: {
+    backgroundColor: COLORS.white,
+    borderColor: '#E0E0E0',
   },
-
-  correct: {
-    container: {
-      backgroundColor: '#F0FFF4',
-      borderColor: '#48BB78',
-    },
-    labelCircle: {
-      backgroundColor: '#48BB78',
-    },
-    labelText: {
-      color: COLORS.white,
-    },
-    optionText: {
-      color: COLORS.textDark,
-    },
+  labelCircle: {
+    backgroundColor: '#F5F5F5',
   },
+  labelText: {
+    color: '#666666',
+  },
+  optionText: {
+    color: COLORS.textDark,
+  },
+});
 
-  incorrect: {
-    container: {
-      backgroundColor: '#FFF5F5',
-      borderColor: '#F56565',
-    },
-    labelCircle: {
-      backgroundColor: '#F56565',
-    },
-    labelText: {
-      color: COLORS.white,
-    },
-    optionText: {
-      color: COLORS.textDark,
-    },
+const correctStyles = StyleSheet.create({
+  container: {
+    backgroundColor: '#F0FFF4',
+    borderColor: '#48BB78',
+  },
+  labelCircle: {
+    backgroundColor: '#48BB78',
+  },
+  labelText: {
+    color: COLORS.white,
+  },
+  optionText: {
+    color: COLORS.textDark,
+  },
+});
+
+const incorrectStyles = StyleSheet.create({
+  container: {
+    backgroundColor: '#FFF5F5',
+    borderColor: '#F56565',
+  },
+  labelCircle: {
+    backgroundColor: '#F56565',
+  },
+  labelText: {
+    color: COLORS.white,
+  },
+  optionText: {
+    color: COLORS.textDark,
   },
 });

@@ -51,6 +51,8 @@ export interface User {
   subscriptionStartDate?: Date;
   subscriptionEndDate?: Date;
   isFreeAccount?: boolean;
+  // Computed by GET /api/auth/me: free account, or an active Stripe/RevenueCat subscription
+  isSubscribed?: boolean;
 }
 
 // Child Snapshot survey — 10-item behavior questionnaire + parenting stress

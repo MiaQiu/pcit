@@ -301,6 +301,13 @@ export interface RecordingAnalysis {
     howWePracticeTogether: {
       sentences: string[];
     };
+    // Earlier first-session format, still on older reports: the parent's
+    // strengths and an interaction-style explanation. Absent on new reports.
+    parentSuperpowers?: string[] | null;
+    interactionStyle?: {
+      dimensionsExplanation?: string | null;
+      effectivenessExplanation?: string | null;
+    } | null;
   } | null;
   aboutChild?: AboutChildItem[] | null;
   // Server-selected card from `aboutChild` — dedup'd against recently shown

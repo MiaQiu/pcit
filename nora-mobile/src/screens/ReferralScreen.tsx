@@ -88,7 +88,7 @@ export const ReferralScreen: React.FC = () => {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {loading ? (
-          <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 60 }} />
+          <ActivityIndicator size="large" color={COLORS.mainPurple} style={{ marginTop: 60 }} />
         ) : data ? (
           <>
             <View style={styles.heroSection}>

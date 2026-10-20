@@ -36,7 +36,7 @@ class AmplitudeService {
       const environment = __DEV__ ? 'development' : 'production';
       console.log(`[Amplitude] Initializing in ${environment} mode`);
 
-      // Initialize Amplitude with default tracking
+      // Initialize Amplitude
       await amplitude.init(AMPLITUDE_API_KEY, undefined, {
         trackingOptions: {
           appSetId: true,
@@ -49,14 +49,9 @@ class AmplitudeService {
           osVersion: true,
           platform: true,
         },
-        defaultTracking: {
-          sessions: true,
-          appLifecycles: true,
-          // Autocapture can't understand a React Navigation stack (it's one native
-          // screen), so it's off here in favor of the explicit trackScreenView calls
-          // wired through NavigationContainer.onStateChange in App.tsx.
-          screenViews: false,
-        },
+        // No autocapture in this SDK (analytics-react-native 1.x has no `defaultTracking`):
+        // screen views come from the explicit trackScreenView calls wired through
+        // NavigationContainer.onStateChange in App.tsx.
         // React Native specific configuration
         instanceName: 'nora-mobile',
         disableCookies: true, // Disable cookies in React Native (not supported)

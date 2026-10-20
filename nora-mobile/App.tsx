@@ -47,12 +47,14 @@ const linking = {
   prefixes: [Linking.createURL('/'), 'nora://', 'https://hinora.co'],
   config: {
     screens: {
+      // Onboarding's route params are the navigator's own props (initialStep etc.),
+      // not NavigatorScreenParams, so the typed config won't accept nested screens here
       Onboarding: {
         screens: {
           ResetPassword: 'reset-password',
           Login: { path: 'join', parse: { referralCode: String } },
         },
-      },
+      } as any,
       MainTabs: {
         screens: {
           Home: 'home',

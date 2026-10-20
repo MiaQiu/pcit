@@ -5,40 +5,6 @@
  */
 
 import { LessonDetailResponse } from '@nora/core';
-import { LessonCardProps } from '../components/LessonCard';
-import { DRAGON_PURPLE } from '../constants/assets';
-
-/**
- * Mock lessons for HomeScreen
- */
-export const MOCK_HOME_LESSONS: LessonCardProps[] = [
-  {
-    id: '1',
-    phase: 'PHASE',
-    phaseName: 'Connect',
-    title: 'Read your first 2-minute Lesson',
-    subtitle: 'Start your journey',
-    description: 'Lessons are short 2 min reads about how important connection is during playtime.',
-    dragonImageUrl: DRAGON_PURPLE,
-    backgroundColor: '#E4E4FF',
-    ellipse77Color: '#9BD4DF', // Bottom ellipse - cyan
-    ellipse78Color: '#A6E0CB', // Top ellipse - light green
-    isLocked: false,
-  },
-  {
-    id: '2',
-    phase: 'PHASE',
-    phaseName: 'Discipline',
-    title: 'Read your first 2-minute Lesson',
-    subtitle: 'Start your journey',
-    description: 'Lessons are short 2 min reads about how important connection is during playtime.',
-    dragonImageUrl: DRAGON_PURPLE,
-    backgroundColor: '#FFE4C0',
-    ellipse77Color: '#FFB380', // Bottom ellipse - orange
-    ellipse78Color: '#A6E0CB', // Top ellipse - light green
-    isLocked: true,
-  },
-];
 
 /**
  * Mock lesson detail for LessonViewerScreen
@@ -48,16 +14,13 @@ export const getMockLessonDetail = (lessonId: string): LessonDetailResponse => {
   return {
     lesson: {
       id: lessonId,
-      phase: 'CONNECT',
-      phaseNumber: 1,
+      module: 'FOUNDATION',
       dayNumber: 1,
       title: 'The Power of Praise',
       subtitle: 'Why praise matters',
       shortDescription: 'Learn how praise shapes behavior',
       objectives: ['Understand the power of praise', 'Learn different types of praise'],
       estimatedMinutes: 2,
-      isBooster: false,
-      prerequisites: [],
       teachesCategories: ['PRAISE'],
       dragonImageUrl: 'https://example.com/dragon.png',
       backgroundColor: '#E4E4FF',

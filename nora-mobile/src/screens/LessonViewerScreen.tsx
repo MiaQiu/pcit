@@ -306,6 +306,7 @@ interface LessonViewerScreenProps {
     params: {
       lessonId: string;
       moduleKey?: string;
+      nextLessonId?: string;
     };
   };
   navigation: any;
