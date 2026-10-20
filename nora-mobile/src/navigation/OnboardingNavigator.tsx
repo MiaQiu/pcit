@@ -6,10 +6,11 @@
 import React, { useEffect, useRef } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { OnboardingStackParamList, RootStackParamList } from './types';
-import { RouteProp } from '@react-navigation/native';
-import { useOnboarding } from '../contexts/OnboardingContext';
+import { CommonActions, RouteProp } from '@react-navigation/native';
+import { useOnboarding, type OnboardingData } from '../contexts/OnboardingContext';
 import { useAuthService } from '../contexts/AppContext';
 import { DraftStep, isResumableStep, saveDraft } from '../utils/onboardingDraft';
+import { previousOnboardingStep } from './onboardingPreviousStep';
 
 // Flow (account-last signup): Welcome → Start → (Login | NameInput) →
 //   Relationship → ChildName → ChildGender → ChildBirthday →
@@ -160,6 +161,29 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
   };
   useEffect(persistDraft, [data]);
 
+  // A restored screen (draft or server resume point) starts alone in the stack, so
+  // swipe-back does nothing. Whenever the focused screen is the bottom one, slip the
+  // screen before it in underneath, one at a time as the parent goes back.
+  const dataRef = useRef(data);
+  dataRef.current = data;
+  const ensureHistoryBehind = (screenNavigation: any, screenRoute: { key: string; name: string; params?: object }) => {
+    const state = screenNavigation.getState();
+    if (state.routes[0]?.key !== screenRoute.key) return;
+    // The draft restore lands in context a render after the first focus
+    const live = dataRef.current;
+    const draft = (draftData ?? {}) as Partial<OnboardingData>;
+    const answers: Partial<OnboardingData> = {
+      issue: live.issue?.length ? live.issue : draft.issue,
+      screenTime: live.screenTime && Object.keys(live.screenTime).length ? live.screenTime : draft.screenTime,
+    };
+    const previous = previousOnboardingStep(screenRoute, answers, authService.isAuthenticated());
+    if (!previous) return;
+    screenNavigation.dispatch((current: any) => {
+      const routes = [{ key: `${previous.name}-${Date.now()}`, name: previous.name, params: previous.params }, ...current.routes];
+      return CommonActions.reset({ ...current, routes, index: current.index + 1 });
+    });
+  };
+
   // Determine initial route name based on the incomplete step
   const getInitialRouteName = (): keyof OnboardingStackParamList => {
     if (initialStep) {
@@ -172,10 +196,11 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
 
   return (
     <Stack.Navigator
-      screenListeners={({ route: screenRoute }) => ({
+      screenListeners={({ navigation: screenNavigation, route: screenRoute }) => ({
         focus: () => {
           lastStepRef.current = { name: screenRoute.name, params: screenRoute.params as Record<string, unknown> | undefined };
           persistDraft();
+          ensureHistoryBehind(screenNavigation, screenRoute);
         },
       })}
       screenOptions={{
