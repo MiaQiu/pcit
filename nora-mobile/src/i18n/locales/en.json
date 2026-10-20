@@ -3062,6 +3062,112 @@
       "3": "Crying",
       "4": "Meltdown",
       "5": "Hitting"
+    },
+    "recommendedStrategies": "Recommended Strategies",
+    "keyStrategies": {
+      "countdown": {
+        "name": "Give simple countdown warnings",
+        "summary": "Warn before time is up, so the end isn’t a surprise.",
+        "details": "Use short warnings to prepare your child, such as “5 minutes left”, “2 minutes left”, “Last one, then we stop”. This helps your child adjust before the screen turns off.",
+        "why": "Young children find sudden stops hard. A warning gives their brain time to shift gears before the screen goes off.",
+        "steps": [
+          "Give a warning 5 minutes before the end, then again at 2 minutes.",
+          "Get close, make eye contact and say it calmly.",
+          "Name the last one: the last episode, level or song."
+        ],
+        "say": "Two more minutes, then the TV goes off."
+      },
+      "timer": {
+        "name": "Use a timer to make it neutral",
+        "summary": "Let the timer, not you, signal the end.",
+        "details": "A visual timer or alarm shifts the boundary from you to the routine. It supports cooperation because the timer becomes the signal, not the parent.",
+        "why": "When the timer signals the end, the limit comes from the routine, not from you, so there is less to argue about.",
+        "steps": [
+          "Set a visual timer together before screen time starts.",
+          "Put it where your child can see it.",
+          "When it rings, point to it and follow through right away."
+        ],
+        "say": "The timer says screen time is done."
+      },
+      "bridging": {
+        "name": "Redirect to a bridging activity",
+        "summary": "Start a fun next activity yourself and invite your child in.",
+        "details": "Start playing the bridging activity and describe what you’re doing to draw your child’s attention. Don’t give attention to the protest until your child joins you. Once they join, give labeled praise for their effort.",
+        "why": "Going from a screen to nothing feels like a loss. A fun next activity gives your child something to move toward.",
+        "steps": [
+          "Have the next activity ready before the screen goes off.",
+          "Start playing it yourself and describe what you are doing.",
+          "Ignore the protest; when your child joins, praise them for joining."
+        ],
+        "say": "I’m building a tall tower with the red blocks!"
+      }
+    },
+    "consistency": {
+      "title": "Stay Consistent",
+      "body": "Consistency is what makes these changes work. When the limit is the same every time, {{childName}} learns that protesting doesn’t bring the screen back, and the meltdowns fade.\n\nA heads-up: when you start holding the limit, the protests may get **louder or last longer** for a while before they get better. This is called an **extinction burst**: {{childName}} is testing whether the old way still works. It’s a sign the change is working. Stay calm, keep the limit, and it will pass."
+    },
+    "keyStrategyLabels": {
+      "why": "Why it works",
+      "how": "How to do it",
+      "say": "Try saying",
+      "tapHint": "Tap to see how",
+      "showLess": "Show less",
+      "whatToSay": "What to say",
+      "noraTip": "Nora Tip:"
+    },
+    "keyStrategyScreens": {
+      "yourChild": "your child",
+      "countdown": {
+        "title": "Give Simple Countdown Warnings",
+        "subtitle": "Give {{childName}}’s brain a clear boundary and natural stopping point before the screen turns off.",
+        "badge": "Clear Statement + Silent Waiting",
+        "why": "Sudden stops cause meltdowns. Giving a countdown with a natural stopping point (like ending after a song, video, or game round) helps {{childName}} wrap up the activity mentally, so the transition feels predictable instead of abrupt.",
+        "say": [
+          "2 minutes left before screen time ends.",
+          "This is our last song before the tablet goes away."
+        ],
+        "pause": "(Then pause and wait silently: no extra questions or explanations.)"
+      },
+      "timer": {
+        "title": "Use a Neutral Timer",
+        "subtitle": "Let the timer be the boundary so you don’t have to argue.",
+        "badge": "Neutral Timer",
+        "why": "When you say “time’s up”, it can feel like a personal power struggle to {{childName}}. Having an objective, external cue (like a timer) makes the rule neutral and fair, taking you out of the role of the “bad guy”.",
+        "sayIntro": "Choose any option that fits the moment:",
+        "options": [
+          {
+            "label": "Setting the Rule",
+            "text": "Screen time ends when this timer dings."
+          },
+          {
+            "label": "When Time’s Up",
+            "text": "Look, the timer dinged! Time to put the tablet away."
+          },
+          {
+            "label": "Joint Action",
+            "text": "The timer rang! Help me press the red button to turn it off."
+          }
+        ],
+        "tip": "Point to the timer when it goes off rather than giving personal commands. Let the timer do the enforcing."
+      },
+      "bridging": {
+        "title": "Redirect to a Bridging Activity",
+        "subtitle": "Announce a fun, physical activity before screens start to make transitions effortless.",
+        "badge": "Announce Early & Land Smoothly",
+        "why": "Stopping screens cold causes a sudden drop in dopamine. Announcing a high-value physical activity (a crunchy snack, a fun game, or a hands-on task) before screen time starts sets the expectation early. {{childName}}’s brain looks forward to what comes next instead of feeling a sudden loss when screens turn off.",
+        "sayIntro": "(Set the bridge early & land smoothly)",
+        "options": [
+          {
+            "label": "Before screen time starts:",
+            "text": "When screen time ends, you and I are going to build a mega Lego tower!"
+          },
+          {
+            "label": "When screen time ends:",
+            "text": "Time is up! Let’s go build that mega Lego tower together!"
+          }
+        ],
+        "tip": "Announce the exciting bridging activity before taking the device away so {{childName}} anticipates what comes next."
+      }
     }
   },
   "moduleChat": {
@@ -3070,6 +3176,13 @@
     "latestSessionPrompt": "I'd like to chat about my latest session.",
     "strategyPrompt": "I'd like to talk about “{{strategy}}”.",
     "strategiesLabel": "Talk about a strategy",
+    "specialPlay": {
+      "yes": "Yes, add it",
+      "moreInfo": "Tell me more first",
+      "notNow": "Not now",
+      "addedReply": "Done! Special play time is now on your home page. Pick a calm moment today, away from screen time, and let {{childName}} lead for 5 minutes. I'd love to hear how it goes.",
+      "declinedReply": "No problem. We'll keep working on your screen-time routine together, and you can ask me about special play time any time."
+    },
     "bookmarks": {
       "title": "Bookmarks",
       "add": "Bookmark this reply",

@@ -153,6 +153,8 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   // and thinking difference in onboarding: their latest regular (non-module)
   // play recording, which gets the regular PCIT report.
   const [hasDifferences, setHasDifferences] = useState(false);
+  // Agreed in the module chat to add special play time.
+  const [specialPlayAdded, setSpecialPlayAdded] = useState(false);
   const [playSession, setPlaySession] = useState<{ id: string; createdAt: string; status: 'processing' | 'ready' } | null>(null);
   // Unsubscribed and out of free play recordings: Start goes to Subscription.
   const [playLimitReached, setPlayLimitReached] = useState(false);
@@ -225,6 +227,7 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
         setLatestSession(data.session);
         setServerDay(data.dayNumber ?? 1);
         setHasDifferences(!!data.hasDifferences);
+        setSpecialPlayAdded(!!data.specialPlayAdded);
         setPlaySession(data.playSession ?? null);
         setPlayLimitReached(!!data.playLimitReached);
         setProgressLoaded(true);
@@ -303,7 +306,9 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
     : null;
   // On the following-day Today (rendered only there) — incl. Day 1 once
   // today's report is in, which stays Day 1 until tomorrow.
-  const showPlayCard = hasDifferences;
+  // For parents who reported a learning and thinking difference, or who
+  // agreed to add it in the module chat.
+  const showPlayCard = hasDifferences || specialPlayAdded;
 
   const elapsed = Math.floor(recorder.durationMillis / 1000);
   const recordingPanel = (

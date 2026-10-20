@@ -242,6 +242,11 @@ export type RootStackParamList = {
     // Prefills the input (e.g. a report's reflective question to answer).
     draft?: string;
   };
+  // Illustrated how-to for a key screen-time strategy (from a report's Recommended Strategies).
+  KeyStrategy: {
+    strategy: import('../constants/learnModules').KeyStrategyId;
+    childName?: string;
+  };
   // Coach replies bookmarked in a Learn module's chat.
   ModuleChatBookmarks: {
     moduleKey: LearnModuleKey;

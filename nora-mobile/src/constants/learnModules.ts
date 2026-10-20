@@ -139,7 +139,11 @@ export interface ModulePlanData {
 }
 
 // Section of a free-form Day 1 report, split out by the server's format call.
-export type ModuleReportSectionKind = 'win' | 'learned' | 'emotion' | 'grow' | 'reflect' | 'expectations' | 'other';
+export type ModuleReportSectionKind = 'win' | 'learned' | 'emotion' | 'strategies' | 'grow' | 'reflect' | 'expectations' | 'other';
+
+// Key screen-time strategies a Day 1 report can recommend; standard copy in
+// moduleReport.keyStrategies.<id>.
+export type KeyStrategyId = 'countdown' | 'timer' | 'bridging';
 
 // One point of the child's outburst level (0 calm – 5 aggression) over a session.
 export interface EmotionTimelinePoint {
@@ -162,6 +166,7 @@ export interface ModuleCoachingData {
   narrative?: string;
   report?: { headline: string; sections: ModuleReportSection[] };
   emotionTimeline?: EmotionTimelinePoint[]; // drawn in the 'emotion' section
+  recommendedStrategies?: KeyStrategyId[]; // listed in the 'strategies' section
   suggestedStrategies?: { name: string; description: string }[];
   coachingReport?: {
     introduction: string;

@@ -53,6 +53,7 @@ import { computeFocusAreas, primaryFocusAreas, type FocusAreaData } from '../uti
 import { MomentPlayer } from '../components/MomentPlayer';
 import { RadarChart } from '../components/RadarChart';
 import { EmotionTimelineChart } from '../components/EmotionTimelineChart';
+import { KeyStrategyList } from '../components/KeyStrategyList';
 import { DomainMilestoneModal } from '../components/DomainMilestoneModal';
 import { NextLevelOverviewModal } from '../components/NextLevelOverviewModal';
 import { MarkdownText } from '../utils/MarkdownText';
@@ -84,11 +85,14 @@ const FIRST_SESSION_CHALLENGE_ACCENT = { color: '#E08A3C', background: '#FBE7D2'
 
 // PDI command-sequence label badges — same mapping as ReportScreen.tsx's
 // PDICoachCorner; unknown labels read as "Needs Work".
+const MODULE_ALERT_RED = '#D64545';
+
 // Card icon per section kind of a narrative module report (moduleCoaching.report).
 const NARRATIVE_SECTION_ICONS: Record<ModuleReportSectionKind, keyof typeof Ionicons.glyphMap> = {
   win:          'star',
   learned:      'heart',
   emotion:      'pulse',
+  strategies:   'bulb',
   grow:         'trending-up',
   reflect:      'chatbubbles',
   expectations: 'compass',
@@ -585,6 +589,7 @@ export const ModuleReportScreen: React.FC = () => {
     // Outburst graph goes in the 'emotion' section; the first section if the formatter tagged none.
     const emotionTimeline = moduleCoaching.emotionTimeline ?? [];
     const emotionSectionIndex = Math.max(0, narrativeReport?.sections.findIndex(s => s.kind === 'emotion') ?? 0);
+    const recommendedStrategies = moduleCoaching.recommendedStrategies ?? [];
     return (
       <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
         <View style={styles.header}>
@@ -607,12 +612,20 @@ export const ModuleReportScreen: React.FC = () => {
           </View>
 
           {narrativeReport ? (
-            /* One card per section of the write-up, in the coach's order */
-            narrativeReport.sections.map((section, i) => (
-              <ReportCard key={i} icon={NARRATIVE_SECTION_ICONS[section.kind] ?? 'sparkles'} title={section.title}>
+            <>
+            {/* One card per section of the write-up, in the coach's order */}
+            {narrativeReport.sections.map((section, i) => {
+              // Recommended Strategies: standard copy per strategy, not the write-up's list of names
+              const showKeyStrategies = section.kind === 'strategies' && recommendedStrategies.length > 0;
+              return (
+              <ReportCard key={i} icon={NARRATIVE_SECTION_ICONS[section.kind] ?? 'sparkles'}
+                title={showKeyStrategies ? t('moduleReport.recommendedStrategies') : section.title}>
                 {!!section.quote && <Text style={styles.moduleQuote}>{`\u201C${section.quote}\u201D`}</Text>}
                 {i === emotionSectionIndex && emotionTimeline.length > 1 && <EmotionTimelineChart points={emotionTimeline} />}
-                {!!section.body && <MarkdownText style={styles.moduleBody}>{section.body}</MarkdownText>}
+                {showKeyStrategies ? (
+                  <KeyStrategyList strategies={recommendedStrategies} childName={childName !== 'Your Child' ? childName : undefined}
+                    onOpen={(strategy) => amplitudeService.trackEvent('Module Report Strategy Opened', { recordingId, moduleKey, strategy })} />
+                ) : !!section.body && <MarkdownText style={styles.moduleBody}>{section.body}</MarkdownText>}
                 {!!section.script && (
                   <View style={styles.moduleTryThis}>
                     <Text style={styles.moduleTryThisLabel}>{t('moduleReport.trySaying')}</Text>
@@ -632,7 +645,32 @@ export const ModuleReportScreen: React.FC = () => {
                   </TrackedTouchable>
                 )}
               </ReportCard>
-            ))
+              );
+            })}
+            {/* Closing card: standard copy, not from the write-up */}
+            <ReportCard icon="repeat" title={t('moduleReport.consistency.title')}>
+              {(() => {
+                // Second paragraph (the extinction-burst heads-up) gets a red alert icon.
+                const [intro, ...rest] = t('moduleReport.consistency.body', { childName }).split('\n\n');
+                return (
+                  <>
+                    <MarkdownText style={styles.moduleBody}>{intro}</MarkdownText>
+                    {rest.length > 0 && (
+                      <View style={styles.moduleAlertRow}>
+                        <View style={styles.moduleAlertIcon}>
+                          <Ionicons name="alert" size={16} color="#FFFFFF" />
+                        </View>
+                        {/* MarkdownText's wrapper View doesn't take flex; this one bounds its width in the row */}
+                        <View style={styles.moduleAlertText}>
+                          <MarkdownText style={StyleSheet.flatten([styles.moduleBody, { marginTop: 0 }])}>{rest.join('\n\n')}</MarkdownText>
+                        </View>
+                      </View>
+                    )}
+                  </>
+                );
+              })()}
+            </ReportCard>
+            </>
           ) : coachingReport ? (
             <>
             {/* Top Moment — recordings only; a survey-based report has no moment to quote */}
@@ -2098,6 +2136,9 @@ const styles = StyleSheet.create({
   moduleStrategyName: { fontFamily: FONTS.bold, fontSize: 17, color: COLORS.mainPurple },
   moduleTryThis: { marginTop: 14, backgroundColor: '#F5EAFB', borderRadius: 14, padding: 12 },
   moduleTryThisLabel: { fontFamily: FONTS.semiBold, fontSize: 14, letterSpacing: 0.6, color: '#6B7280', textTransform: 'uppercase' },
+  moduleAlertRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginTop: 14, backgroundColor: '#FDEFEF', borderRadius: 16, padding: 14 },
+  moduleAlertIcon: { width: 28, height: 28, borderRadius: 14, backgroundColor: MODULE_ALERT_RED, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
+  moduleAlertText: { flex: 1, minWidth: 0 },
   moduleReflectButton: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, marginTop: 14, borderWidth: 1, borderColor: COLORS.mainPurple, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 14 },
   moduleReflectButtonText: { fontFamily: FONTS.semiBold, fontSize: 16, color: COLORS.mainPurple },
 

@@ -11,6 +11,7 @@ const prisma             = require('../services/db.cjs');
 const { subscribe, publish } = require('../services/chatBus.cjs');
 const agentBus = require('../services/agentBus.cjs');
 const { getModuleChatPrompt, LEARN_MODULE_KEYS } = require('../services/pcitAnalysisService.cjs');
+const { prepareOfferReply, recordOffer, respondToOffer } = require('../services/specialPlayOffer.cjs');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -98,9 +99,21 @@ const TOOL_DECLARATIONS = [
 ];
 
 // Learn module chat tools. The family's context is already in the module
-// prompt, so the only tool records the strategy check-in's outcome — it's fed
-// into the next module report (moduleStrategyFeedbackNotes).
+// prompt, so the tools only write: the strategy check-in's outcome (fed into
+// the next module report, moduleStrategyFeedbackNotes) and the parent's
+// typed answer to a special play time offer (services/specialPlayOffer.cjs).
 const MODULE_TOOL_DECLARATIONS = [
+  {
+    name: 'answer_special_play_offer',
+    description: "Record the parent's answer when they TYPE a reply to your offer to add special play time to their home page (not needed when they tap an option — the app records that). 'accepted' adds the Play time card to their home page.",
+    parameters: {
+      type: 'OBJECT',
+      properties: {
+        response: { type: 'STRING', enum: ['accepted', 'declined'], description: "'accepted' if they want it added, 'declined' if not now" },
+      },
+      required: ['response'],
+    },
+  },
   {
     name: 'save_strategy_feedback',
     description: "Save what the parent told you about one suggested strategy during a strategy check-in. Call once per strategy, when the parent agrees on a next step or the check-in ends.",
@@ -332,10 +345,16 @@ async function toolSaveStrategyFeedback(userId, moduleKey, args) {
   return { saved: true };
 }
 
+async function toolAnswerSpecialPlayOffer(userId, moduleKey, args) {
+  if (!['accepted', 'declined'].includes(args?.response)) return { error: "response must be 'accepted' or 'declined'" };
+  return respondToOffer(userId, moduleKey, args.response, 'chat');
+}
+
 async function executeModuleTool(name, args, userId, moduleKey) {
   switch (name) {
-    case 'save_strategy_feedback': return toolSaveStrategyFeedback(userId, moduleKey, args);
-    default:                       return { error: `Unknown tool: ${name}` };
+    case 'answer_special_play_offer': return toolAnswerSpecialPlayOffer(userId, moduleKey, args);
+    case 'save_strategy_feedback':    return toolSaveStrategyFeedback(userId, moduleKey, args);
+    default:                          return { error: `Unknown tool: ${name}` };
   }
 }
 
@@ -357,6 +376,7 @@ const TOOL_STATUS = {
   get_child_parent_profile: 'Personalizing your answer...',
   get_transcript:           'Reviewing recent play sessions...',
   save_strategy_feedback:   'Almost ready...',
+  answer_special_play_offer: 'Almost ready...',
 };
 
 /**
@@ -982,13 +1002,18 @@ router.post('/chat', async (req, res, next) => {
       ok: true, error: null,
     });
 
-    const reply = result.text.trim();
+    // A special play time offer's marker is kept in the text (the app shows
+    // the offer's options from it) and recorded.
+    const { text: reply, offered } = moduleKey
+      ? await prepareOfferReply(req.userId, result.text.trim())
+      : { text: result.text.trim(), offered: false };
 
     const modelMsg = await prisma.coachChatMessage.create({
       data: { userId: req.userId, role: 'model', text: reply },
       select: { id: true, role: true, text: true, scripted: true, createdAt: true },
     });
     publish(req.userId, [modelMsg]);
+    if (offered) await recordOffer(req.userId, moduleKey, modelMsg.id);
 
     res.json({ reply });
   } catch (err) {

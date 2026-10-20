@@ -508,12 +508,16 @@ export const ModuleChatScreen: React.FC = () => {
     sendText(input);
   }, [input, loading, sendText, sendScripted, parentName, childName, moduleKey, t]);
 
-  // Chips under the coach's latest message (its OPTIONS line).
+  // Chips under the coach's latest message: its OPTIONS line, or the fixed
+  // options of its offer (OFFER line — special play time).
   const visibleMessages = messages.filter(m => m.role !== 'psychologist' && m.role !== 'user_psych');
   const lastMessage = visibleMessages[visibleMessages.length - 1];
-  const quickReplies = !loading && !showGuide && lastMessage?.role === 'model'
-    ? parseQuickReplies(lastMessage.text).options
-    : [];
+  const lastReply = !loading && !showGuide && lastMessage?.role === 'model' ? parseQuickReplies(lastMessage.text) : null;
+  const offerYes = t('moduleChat.specialPlay.yes');
+  const offerMore = t('moduleChat.specialPlay.moreInfo');
+  const offerNo = t('moduleChat.specialPlay.notNow');
+  const specialPlayOffer = lastReply?.offer === 'special_play';
+  const quickReplies = specialPlayOffer ? [offerYes, offerMore, offerNo] : lastReply?.options ?? [];
 
   // Strategy check-in, opening round — fixed lines, no LLM: tapping a strategy
   // asks whether they've tried it (two chips); each chip gets a fixed
@@ -557,8 +561,37 @@ export const ModuleChatScreen: React.FC = () => {
     </TouchableOpacity>
   ) : null;
 
+  // Special play time offer, "Yes, add it" / "Not now": saved first (yes adds
+  // the Play time card to Today), then a fixed reply — no LLM. "Tell me more
+  // first" goes to the coach, which explains and offers again.
+  const answerSpecialPlayOffer = useCallback(async (option: string, response: 'accepted' | 'declined') => {
+    if (loading) return;
+    amplitudeService.trackEvent('Special Play Offer Answered', { chat: 'module_coach', moduleKey, response, via: 'chip' });
+    setLoading(true);
+    try {
+      const res = await authService.authenticatedRequest(`${API_URL}/api/learn-modules/${moduleKey}/special-play`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ response }),
+      });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+    } catch (err) {
+      reportError(err, 'ModuleChatScreen.answerSpecialPlayOffer');
+      Alert.alert(t('common.error'), t('coachChat.errorConnection'));
+      return;
+    } finally {
+      setLoading(false);
+    }
+    const reply = response === 'accepted'
+      ? t('moduleChat.specialPlay.addedReply', { childName: childName || t('coachChat.yourChild') })
+      : t('moduleChat.specialPlay.declinedReply');
+    sendScripted([{ role: 'user', text: option }, { role: 'model', text: reply }]);
+  }, [loading, authService, moduleKey, childName, sendScripted, t]);
+
   const handleQuickReply = useCallback((option: string) => {
     amplitudeService.trackEvent('Chat Quick Reply Used', { chat: 'module_coach', moduleKey, option });
+    if (specialPlayOffer && option === offerYes) return answerSpecialPlayOffer(option, 'accepted');
+    if (specialPlayOffer && option === offerNo) return answerSpecialPlayOffer(option, 'declined');
     const fixedReply = checkInReplies[option];
     if (fixedReply) {
       sendScripted([{ role: 'user', text: option }, { role: 'model', text: fixedReply }]);
@@ -566,7 +599,7 @@ export const ModuleChatScreen: React.FC = () => {
       sendText(option);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [moduleKey, sendScripted, sendText, checkInTried, checkInClarify, childName]);
+  }, [moduleKey, sendScripted, sendText, checkInTried, checkInClarify, childName, specialPlayOffer, offerYes, offerNo, answerSpecialPlayOffer]);
 
   const handleRequestHuman = useCallback(() => {
     amplitudeService.trackEvent('Coach Chat Human Request Tapped');

@@ -6,6 +6,7 @@ const prisma = require('../services/db.cjs');
 const { logError } = require('../utils/errorLogger.cjs');
 const { LEARN_MODULE_KEYS } = require('../services/pcitAnalysisService.cjs');
 const { reportedDifferences } = require('../utils/screenTimeIntake.cjs');
+const { respondToOffer } = require('../services/specialPlayOffer.cjs');
 
 const router = express.Router();
 
@@ -74,6 +75,30 @@ router.get('/:moduleKey/plan', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/learn-modules/:moduleKey/special-play
+ * Body: { response: 'accepted' | 'declined' }
+ * The parent tapped an option on the module chat's special play time offer
+ * (services/specialPlayOffer.cjs). 'accepted' adds the Play time card.
+ */
+router.post('/:moduleKey/special-play', async (req, res) => {
+  try {
+    const { moduleKey } = req.params;
+    const { response } = req.body;
+    if (!LEARN_MODULE_KEYS.has(moduleKey)) {
+      return res.status(404).json({ error: 'Unknown module' });
+    }
+    if (!['accepted', 'declined'].includes(response)) {
+      return res.status(400).json({ error: "response must be 'accepted' or 'declined'" });
+    }
+    await respondToOffer(req.userId, moduleKey, response, 'chip');
+    res.json({ response });
+  } catch (error) {
+    logError(error, { route: 'learn-modules#Special play offer response error', userId: req.userId });
+    res.status(500).json({ error: 'Failed to save the answer' });
+  }
+});
+
 // A module upload whose init ran but whose audio never arrived stays PENDING
 // with this storagePath forever — don't let it show as "processing" for good.
 const STALE_PENDING_UPLOAD_MS = 60 * 60 * 1000;
@@ -90,7 +115,8 @@ const FREE_PLAY_RECORDINGS = 3;
  * day the parent is on (analyzed reports + 1).
  *
  * Also for the following-day "Play time recording" card: hasDifferences (the parent
- * reported a learning and thinking difference in onboarding) and playSession,
+ * reported a learning and thinking difference in onboarding), specialPlayAdded
+ * (they agreed to add it in the module chat) and playSession,
  * the same status for their latest regular (non-module) play recording.
  * playLimitReached: an unsubscribed parent has used their
  * FREE_PLAY_RECORDINGS analyzed play recordings.
@@ -118,7 +144,7 @@ router.get('/:moduleKey/latest-session', async (req, res) => {
     const [user, playSessions, completedPlays] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
-        select: { screenTimeIntake: true, isFreeAccount: true, subscriptionStatus: true, subscriptionEndDate: true },
+        select: { screenTimeIntake: true, specialPlayAddedAt: true, isFreeAccount: true, subscriptionStatus: true, subscriptionEndDate: true },
       }),
       prisma.session.findMany({
         where: { userId, moduleKey: null, analysisStatus: { not: 'FAILED' } },
@@ -129,6 +155,8 @@ router.get('/:moduleKey/latest-session', async (req, res) => {
       prisma.session.count({ where: { userId, moduleKey: null, analysisStatus: 'COMPLETED' } }),
     ]);
     const hasDifferences = reportedDifferences(user?.screenTimeIntake).length > 0;
+    // Added in the module chat (add_special_play) — also shows the Play time card.
+    const specialPlayAdded = !!user?.specialPlayAddedAt;
     // Same rule as GET /api/auth/me's isSubscribed.
     const isSubscribed = !!user && (user.isFreeAccount
       || (['ACTIVE', 'TRIAL', 'CANCELLED', 'PAST_DUE'].includes(user.subscriptionStatus)
@@ -150,7 +178,7 @@ router.get('/:moduleKey/latest-session', async (req, res) => {
     });
     const dayNumber = completedReports + 1;
 
-    if (!latest) return res.json({ session: null, activeStrategy, dayNumber, hasDifferences, playSession, playLimitReached });
+    if (!latest) return res.json({ session: null, activeStrategy, dayNumber, hasDifferences, specialPlayAdded, playSession, playLimitReached });
 
     const ready = latest.analysisStatus === 'COMPLETED' && !!latest.moduleCoaching;
     // COMPLETED without coaching shouldn't happen; treat it like no report.
@@ -161,6 +189,7 @@ router.get('/:moduleKey/latest-session', async (req, res) => {
       activeStrategy,
       dayNumber,
       hasDifferences,
+      specialPlayAdded,
       playSession,
       playLimitReached,
     });

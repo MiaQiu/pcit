@@ -454,6 +454,7 @@ model User {
   diagnosisStatus           String?
   professionalSupport       String?
   screenTimeIntake          Json? // answers from the screen-time onboarding branch
+  specialPlayAddedAt        DateTime? // parent agreed in the module chat to add the Play time card
   profileImageUrl           String?
   subscriptionEndDate       DateTime?
   subscriptionPlan          SubscriptionPlan            @default(FREE)
@@ -501,6 +502,7 @@ model User {
   LearnModuleSurvey         LearnModuleSurvey[]
   ModuleStrategyFeedback    ModuleStrategyFeedback[]
   ChatBookmark              ChatBookmark[]
+  SpecialPlayOffer          SpecialPlayOffer[]
   AbcInsight                AbcInsight[]
   HomeCardLike              HomeCardLike[]
   HomeCardUserInputResponse HomeCardUserInputResponse[]
@@ -1566,6 +1568,26 @@ model ModuleStrategyFeedback {
   User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, moduleKey, createdAt])
+}
+
+// Each time the module chat offered to add special play time (the Play time
+// card) — the coach's OFFER: special_play marker — and how the parent
+// answered. Accepting sets User.specialPlayAddedAt.
+model SpecialPlayOffer {
+  id           String    @id @default(uuid())
+  userId       String
+  moduleKey    String
+  // The coach message with the offer (null: accepted without an offer)
+  messageId    String?
+  // 'accepted' | 'declined'; null = not answered (yet)
+  response     String?
+  // 'chip' (tapped the offer's option) | 'chat' (typed it, via the coach)
+  respondedVia String?
+  respondedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  User         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 enum AbcLogType {

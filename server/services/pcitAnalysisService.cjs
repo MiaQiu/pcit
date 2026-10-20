@@ -942,7 +942,7 @@ async function getModuleChatPrompt(userId, moduleKey) {
   const [user, reports] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
-      select: { childName: true, childBirthYear: true, childBirthday: true },
+      select: { childName: true, childBirthYear: true, childBirthday: true, screenTimeIntake: true, specialPlayAddedAt: true },
     }),
     getModuleReports(userId, moduleKey),
   ]);
@@ -995,6 +995,11 @@ async function getModuleChatPrompt(userId, moduleKey) {
     LAST_SESSION_SUMMARY: lastSession,
     MASTERED_STRATEGIES:  mastered.join(', ') || 'none yet',
     RECENT_FEEDBACK:      feedback.length ? formatStrategyFeedback(feedback) : '  none yet',
+    // The Play time card shows for parents who reported a learning and
+    // thinking difference, or who agreed to add it here (add_special_play).
+    SPECIAL_PLAY:         user?.specialPlayAddedAt || reportedDifferences(user?.screenTimeIntake).length > 0
+      ? 'already on their home page'
+      : 'not added yet',
   });
 }
 

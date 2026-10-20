@@ -75,8 +75,7 @@ Progression:
 ================================================================
 first section: briefly highlight what the parents did well.
 second section: plot the child's emotion outburst level over time. show in a graph. give one best tip that will most likely work for the child to reduce the outburst intensity/duration.
-third section: display the strategies (from the key strategy list - 3 of them) that the parents are not doing correctly or not doing at all. 
-last section: highlight the improtance of being consistent, and be aware of extinction burst. 
+third section, titled "Recommended Strategies": from the three key strategies only, list the ones the parent is not doing correctly or not doing at all. List ONLY their names, one per line, exactly as named in the key strategy list ("Give simple countdown warnings", "Use a timer to make it neutral", "Redirect the child to a bridging activity and model it"). No explanation or advice in this section: the app shows a standard description of each strategy.
 
 take note of the parent's mental state (e.g. could be very distressed). coach with compassion.
 

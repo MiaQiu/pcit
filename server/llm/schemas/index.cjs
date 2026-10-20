@@ -627,7 +627,7 @@ const SCREENTIME_NARRATIVE_FORMAT = {
             type: 'object',
             properties: {
               // Picks the card's icon in the app.
-              kind:   { type: 'string', enum: ['win', 'learned', 'emotion', 'grow', 'reflect', 'expectations', 'other'] },
+              kind:   { type: 'string', enum: ['win', 'learned', 'emotion', 'strategies', 'grow', 'reflect', 'expectations', 'other'] },
               title:  { type: 'string' },
               body:   { type: 'string' },
               quote:  { type: 'string' },
@@ -656,6 +656,12 @@ const SCREENTIME_NARRATIVE_FORMAT = {
         propertyOrdering: ['seconds', 'level', 'label'],
       },
     },
+    // Key strategies listed in the "strategies" section; the app shows its
+    // own standard description of each (moduleReport.keyStrategies).
+    recommended_strategies: {
+      type: 'array',
+      items: { type: 'string', enum: ['countdown', 'timer', 'bridging'] },
+    },
     my_plan: SCREENTIME_COACHING.properties.my_plan,
     suggested_strategies: {
       type: 'array',
@@ -669,8 +675,8 @@ const SCREENTIME_NARRATIVE_FORMAT = {
       },
     },
   },
-  required: ['report', 'emotion_timeline', 'my_plan', 'suggested_strategies'],
-  propertyOrdering: ['report', 'emotion_timeline', 'my_plan', 'suggested_strategies'],
+  required: ['report', 'emotion_timeline', 'recommended_strategies', 'my_plan', 'suggested_strategies'],
+  propertyOrdering: ['report', 'emotion_timeline', 'recommended_strategies', 'my_plan', 'suggested_strategies'],
 };
 
 module.exports = {

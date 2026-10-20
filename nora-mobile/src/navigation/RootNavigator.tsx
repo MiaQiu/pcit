@@ -53,6 +53,7 @@ import { ModuleRecordGuideScreen } from '../screens/ModuleRecordGuideScreen';
 import { ModulePlanDetailScreen } from '../screens/ModulePlanDetailScreen';
 import { ModuleCheatSheetScreen } from '../screens/ModuleCheatSheetScreen';
 import { ModuleChatScreen } from '../screens/ModuleChatScreen';
+import { KeyStrategyScreen } from '../screens/KeyStrategyScreen';
 import { ModuleChatBookmarksScreen } from '../screens/ModuleChatBookmarksScreen';
 import { ModuleLearnScreen } from '../screens/ModuleLearnScreen';
 import { GetReadySectionScreen } from '../screens/GetReadySectionScreen';
@@ -601,6 +602,13 @@ export const RootNavigator: React.FC = () => {
         component={ModuleChatScreen}
         options={{
           animation: 'slide_from_bottom',
+        }}
+      />
+      <Stack.Screen
+        name="KeyStrategy"
+        component={KeyStrategyScreen}
+        options={{
+          animation: 'slide_from_right',
         }}
       />
       <Stack.Screen
