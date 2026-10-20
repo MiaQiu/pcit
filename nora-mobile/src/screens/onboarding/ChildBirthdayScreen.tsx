@@ -16,6 +16,7 @@ import { OnboardingFooter } from '../../components/OnboardingFooter';
 import amplitudeService from '../../services/amplitudeService';
 import { useAuthService } from '../../contexts/AppContext';
 import { saveOnboardingFields } from '../../utils/onboardingDraft';
+import { goBackTo } from '../../navigation/goBackTo';
 
 // ─── Android custom scroll picker ────────────────────────────────────────────
 
@@ -135,11 +136,7 @@ export const ChildBirthdayScreen: React.FC = () => {
   };
 
   const handleBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigation.replace('ChildGender');
-    }
+    goBackTo(navigation, 'ChildGender');
   };
 
   return (

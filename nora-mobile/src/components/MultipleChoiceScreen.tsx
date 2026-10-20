@@ -27,6 +27,7 @@ import { OnboardingButtonRow } from './OnboardingButtonRow';
 import { OnboardingProgressHeader } from './OnboardingProgressHeader';
 import amplitudeService from '../services/amplitudeService';
 import { TrackedTouchable } from './TrackedTouchable';
+import { goBackTo } from '../navigation/goBackTo';
 
 export interface MultipleChoiceOption {
   value: string | number;
@@ -55,6 +56,8 @@ export interface MultipleChoiceScreenProps {
   // only — for flows that run separately from onboarding (e.g. the WACB survey).
   singlePhaseHeader?: boolean;
   prevScreen?: keyof import('../navigation/types').OnboardingStackParamList;
+  // Replaces the default back (goBack, else prevScreen), e.g. for flows that compute the previous step
+  onBack?: () => void;
   disableAutoNavigate?: boolean; // Disable auto-navigation for single-select
   allowOtherOption?: boolean; // Enable "Others" option with text input
   otherOptionValue?: string; // Value identifier for the "Others" option (default: 'other')
@@ -92,6 +95,7 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
   totalStepsInPhase = 1,
   singlePhaseHeader = false,
   prevScreen,
+  onBack,
   disableAutoNavigate = false,
   allowOtherOption = false,
   otherOptionValue = 'other',
@@ -238,10 +242,12 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
   };
 
   const handleBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
+    if (onBack) {
+      onBack();
     } else if (prevScreen) {
-      navigation.replace(prevScreen as any);
+      goBackTo(navigation, prevScreen);
+    } else if (navigation.canGoBack()) {
+      navigation.goBack();
     }
   };
 
@@ -404,8 +410,8 @@ const styles = StyleSheet.create({
     height: 68,
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    borderRadius: 36,
-    paddingHorizontal: 24,
+    borderRadius: 12,
+    paddingHorizontal: 16,
     marginBottom: 12,
   },
   optionCardSelected: {
@@ -415,7 +421,7 @@ const styles = StyleSheet.create({
   },
   optionLabel: {
     flex: 1,
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: 'DMSans_600SemiBold',
     fontSize: 16,
     color: '#1E2939',
   },
@@ -433,9 +439,9 @@ const styles = StyleSheet.create({
     height: 68,
     borderWidth: 2,
     borderColor: '#007866',
-    borderRadius: 36,
-    paddingHorizontal: 24,
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontFamily: 'DMSans_600SemiBold',
     fontSize: 16,
     color: '#1E2939',
     backgroundColor: '#EBF9F8',

@@ -31,6 +31,8 @@ import { TrackedTouchable } from '../../components/TrackedTouchable';
 import { reportError } from '../../utils/reportError';
 import * as userStorage from '../../lib/userStorage';
 import { buildProfilePayload, clearDraft } from '../../utils/onboardingDraft';
+import { SCREEN_TIME_STEPS, adjacentStepIndex } from './screenTime/screenTimeFlow';
+import { goBackTo } from '../../navigation/goBackTo';
 
 export const CreateAccountScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -49,8 +51,17 @@ export const CreateAccountScreen: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-  }, []);
+  // Resumed from a saved draft, this screen has no history behind it: go to the
+  // screen that opens it (the step before the screen-time plan, or OBIntro1V2)
+  const handleBack = () => {
+    if (next === 'ScreenTimeStep') {
+      const planIndex = typeof nextParams?.step === 'number' ? nextParams.step : SCREEN_TIME_STEPS.length - 1;
+      const prevIndex = adjacentStepIndex(planIndex, -1, data.screenTime ?? {});
+      goBackTo(navigation, 'ScreenTimeStep', { step: Math.max(prevIndex, 0) });
+      return;
+    }
+    goBackTo(navigation, 'OBIntro1V2');
+  };
 
   // Validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -195,7 +206,7 @@ export const CreateAccountScreen: React.FC = () => {
           {/* Back Button */}
           <TrackedTouchable analyticsId="Back"
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={handleBack}
             activeOpacity={0.7}
           >
             <Ionicons name="arrow-back" size={24} color="#1F2937" />
@@ -387,7 +398,7 @@ const styles = StyleSheet.create({
     height: 56,
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    borderRadius: 16,
+    borderRadius: 12,
     paddingHorizontal: 20,
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 16,
@@ -398,7 +409,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    borderRadius: 16,
+    borderRadius: 12,
     height: 56,
   },
   passwordInput: {
@@ -424,8 +435,8 @@ const styles = StyleSheet.create({
   button: {
     width: '100%',
     height: 56,
-    backgroundColor: '#1E1E1E',
-    borderRadius: 30,
+    backgroundColor: '#8C49D5',
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -435,8 +446,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E7EB',
   },
   buttonText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 18,
+    fontFamily: 'DMSans_700Bold',
+    fontSize: 16,
     color: '#FFFFFF',
   },
   buttonTextDisabled: {

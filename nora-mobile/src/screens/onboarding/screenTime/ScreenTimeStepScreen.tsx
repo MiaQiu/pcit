@@ -33,6 +33,7 @@ import {
 } from './screenTimeFlow';
 import { ScreenTimeScene } from './ScreenTimeScene';
 import { OnboardingFooter } from '../../../components/OnboardingFooter';
+import { goBackTo } from '../../../navigation/goBackTo';
 
 const NS = 'onboarding.screenTime';
 // Horizontal padding of insight/plan content (styles.scrollContent)
@@ -130,9 +131,8 @@ export const ScreenTimeStepScreen: React.FC = () => {
   // A step resumed from a saved draft has no history behind it
   const goBack = () => {
     const prevIndex = adjacentStepIndex(index, -1, data.screenTime ?? {});
-    if (navigation.canGoBack()) navigation.goBack();
-    else if (prevIndex >= 0) navigation.replace('ScreenTimeStep', { step: prevIndex });
-    else navigation.replace('ChildIssue');
+    if (prevIndex >= 0) goBackTo(navigation, 'ScreenTimeStep', { step: prevIndex });
+    else goBackTo(navigation, 'ChildIssue');
   };
 
   if (step.kind === 'question') {
@@ -145,6 +145,7 @@ export const ScreenTimeStepScreen: React.FC = () => {
         values={values}
         context={context}
         onNext={goNext}
+        onBack={goBack}
       />
     );
   }
@@ -175,7 +176,8 @@ const QuestionStep: React.FC<{
   values: Record<string, unknown>;
   context?: string;
   onNext: () => void;
-}> = ({ step, index, screenName, analyticsStep, values, context, onNext }) => {
+  onBack: () => void;
+}> = ({ step, index, screenName, analyticsStep, values, context, onNext, onBack }) => {
   const { t } = useTranslation();
   const optionsKey = step.optionsKey ?? `${step.id}.options`;
   const prompt = step.subtitleKey ? t(`${NS}.${step.subtitleKey}`) : step.multi ? t(`${NS}.selectAll`) : '';
@@ -209,6 +211,7 @@ const QuestionStep: React.FC<{
       subtitleStyle={questionStyles.subtitle}
       optionLabelStyle={questionStyles.option}
       optionCardStyle={questionStyles.optionCard}
+      onBack={onBack}
       renderButtons={(props) => <OnboardingFooter {...props} />}
     />
   );

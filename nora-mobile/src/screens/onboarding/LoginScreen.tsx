@@ -36,6 +36,7 @@ import { reportError } from '../../utils/reportError';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { buildProfilePayload, clearDraft } from '../../utils/onboardingDraft';
 import * as userStorage from '../../lib/userStorage';
+import { goBackTo } from '../../navigation/goBackTo';
 
 const PENDING_REFERRAL_KEY = '@nora_pending_referral_code';
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
@@ -245,7 +246,7 @@ export const LoginScreen: React.FC = () => {
         style={styles.keyboardView}
       >
         {/* Back Button */}
-        <TrackedTouchable analyticsId="Back" style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TrackedTouchable analyticsId="Back" style={styles.backButton} onPress={() => goBackTo(navigation, 'Start')}>
           <Ionicons name="chevron-back" size={28} color="#1E2939" />
         </TrackedTouchable>
 
@@ -389,7 +390,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 56,
     backgroundColor: '#000000',
-    borderRadius: 32,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
@@ -400,7 +401,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   appleButtonText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     fontSize: 16,
     color: '#FFFFFF',
   },
@@ -408,7 +409,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 56,
     backgroundColor: '#FFFFFF',
-    borderRadius: 32,
+    borderRadius: 10,
     borderWidth: 1.5,
     borderColor: '#E5E7EB',
     alignItems: 'center',
@@ -416,7 +417,7 @@ const styles = StyleSheet.create({
     marginBottom: 28,
   },
   googleButtonText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     fontSize: 16,
     color: '#1E2939',
   },
@@ -471,7 +472,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 56,
     backgroundColor: '#8C49D5',
-    borderRadius: 32,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
@@ -480,7 +481,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   loginButtonText: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: 'DMSans_700Bold',
     fontSize: 16,
     color: '#FFFFFF',
     letterSpacing: 1,

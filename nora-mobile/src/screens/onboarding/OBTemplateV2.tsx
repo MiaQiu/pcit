@@ -126,13 +126,13 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 56,
     backgroundColor: '#8C49D5',
-    borderRadius: 30,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 18,
+    fontFamily: 'DMSans_700Bold',
+    fontSize: 16,
     color: '#FFFFFF',
   },
 });

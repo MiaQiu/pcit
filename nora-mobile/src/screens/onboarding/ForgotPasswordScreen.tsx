@@ -22,6 +22,7 @@ import { useAuthService } from '../../contexts/AppContext';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../../services/amplitudeService';
 import { TrackedTouchable } from '../../components/TrackedTouchable';
+import { goBackTo } from '../../navigation/goBackTo';
 
 export const ForgotPasswordScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -62,13 +63,12 @@ export const ForgotPasswordScreen: React.FC = () => {
     }
   };
 
+  // Opened with no history (e.g. restored app state), back goes to Login
   const handleBack = () => {
-    navigation.goBack();
+    goBackTo(navigation, 'Login');
   };
 
-  const handleBackToLogin = () => {
-    navigation.goBack();
-  };
+  const handleBackToLogin = handleBack;
 
   if (emailSent) {
     return (
@@ -275,25 +275,17 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 56,
     backgroundColor: '#8C49D5',
-    borderRadius: 32,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-    shadowColor: '#8C49D5',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   buttonText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 18,
+    fontFamily: 'DMSans_700Bold',
+    fontSize: 16,
     color: '#FFFFFF',
   },
   loginContainer: {

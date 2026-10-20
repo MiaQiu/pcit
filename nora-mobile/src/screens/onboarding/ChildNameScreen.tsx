@@ -16,6 +16,7 @@ import { OnboardingFooter } from '../../components/OnboardingFooter';
 import amplitudeService from '../../services/amplitudeService';
 import { useAuthService } from '../../contexts/AppContext';
 import { saveOnboardingFields } from '../../utils/onboardingDraft';
+import { goBackTo } from '../../navigation/goBackTo';
 
 export const ChildNameScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -36,11 +37,7 @@ export const ChildNameScreen: React.FC = () => {
   };
 
   const handleBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigation.replace('Relationship');
-    }
+    goBackTo(navigation, 'Relationship');
   };
 
   const isValid = childName.trim().length > 0;

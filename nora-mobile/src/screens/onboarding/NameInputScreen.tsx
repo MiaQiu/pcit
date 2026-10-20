@@ -16,6 +16,7 @@ import { OnboardingFooter } from '../../components/OnboardingFooter';
 import amplitudeService from '../../services/amplitudeService';
 import { useAuthService } from '../../contexts/AppContext';
 import { saveOnboardingFields } from '../../utils/onboardingDraft';
+import { goBackTo } from '../../navigation/goBackTo';
 
 export const NameInputScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -52,13 +53,7 @@ export const NameInputScreen: React.FC = () => {
 
       <OnboardingFooter
         parentPadding={20}
-        onBack={() => {
-          if (navigation.canGoBack()) {
-            navigation.goBack();
-          } else {
-            navigation.reset({ index: 0, routes: [{ name: 'Start' }] });
-          }
-        }}
+        onBack={() => goBackTo(navigation, 'Start')}
         onContinue={handleContinue}
         continueDisabled={!isValid}
       />
