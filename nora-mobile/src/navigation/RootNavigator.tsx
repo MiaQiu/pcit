@@ -52,6 +52,8 @@ import { ModuleGuideScreen } from '../screens/ModuleGuideScreen';
 import { ModuleRecordGuideScreen } from '../screens/ModuleRecordGuideScreen';
 import { ModulePlanDetailScreen } from '../screens/ModulePlanDetailScreen';
 import { ModuleCheatSheetScreen } from '../screens/ModuleCheatSheetScreen';
+import { ModuleSpecialPlayScreen } from '../screens/ModuleSpecialPlayScreen';
+import { ModuleRoutineScreen } from '../screens/ModuleRoutineScreen';
 import { ModuleChatScreen } from '../screens/ModuleChatScreen';
 import { KeyStrategyScreen } from '../screens/KeyStrategyScreen';
 import { ModuleChatBookmarksScreen } from '../screens/ModuleChatBookmarksScreen';
@@ -593,6 +595,20 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen
         name="ModuleCheatSheet"
         component={ModuleCheatSheetScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="ModuleSpecialPlay"
+        component={ModuleSpecialPlayScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="ModuleRoutine"
+        component={ModuleRoutineScreen}
         options={{
           animation: 'slide_from_right',
         }}

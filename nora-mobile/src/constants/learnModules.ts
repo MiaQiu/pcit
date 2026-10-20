@@ -64,6 +64,13 @@ export interface LearnModuleGoal {
   key: string;
   strategyIds: number[];
   image: ReturnType<typeof require>;
+  // Openable before it's the current goal (no lock on the roadmap).
+  unlocked?: boolean;
+  // Tapping opens this page instead of the plan detail: 'routine' = why a
+  // routine works + the fixed routine, 'specialPlay' = the Special Playtime intro.
+  opens?: 'routine' | 'specialPlay';
+  // No progress bar on its roadmap card while it's the current goal.
+  hideProgress?: boolean;
 }
 
 export interface LearnModuleConfig {
@@ -106,13 +113,9 @@ export const LEARN_MODULES = {
     },
     goals: [
       // 1 routine, 2 plan the transition, 3 natural stopping point, 4 countdown warnings, 5 timer
-      { key: 'predictable', strategyIds: [1, 2, 3, 4, 5], image: require('../../assets/images/modules/plan1.png') },
-      // 6 effective command, 7 follow-through, 10 stay consistent
-      { key: 'boundary', strategyIds: [6, 7, 10], image: require('../../assets/images/modules/plan2.png') },
+      { key: 'predictable', strategyIds: [1, 2, 3, 4, 5], image: require('../../assets/images/modules/plan1.png'), opens: 'routine', hideProgress: true },
       // 8 co-regulate first
-      { key: 'tantrumSkills', strategyIds: [8], image: require('../../assets/images/modules/plan3.png') },
-      // 9 bridging activity & modeling
-      { key: 'backToScreen', strategyIds: [9], image: require('../../assets/images/modules/plan4.png') },
+      { key: 'tantrumSkills', strategyIds: [8], image: require('../../assets/images/modules/plan3.png'), unlocked: true, opens: 'specialPlay' },
     ],
   },
 } satisfies Record<string, LearnModuleConfig>;

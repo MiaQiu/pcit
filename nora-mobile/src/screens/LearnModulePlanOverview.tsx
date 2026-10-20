@@ -1,11 +1,11 @@
 /**
  * LearnModulePlanOverview
  * "My plan" tab of LearnModuleScreen_v2: the module's goal roadmap — header,
- * "Our focus" card, then each goal (LEARN_MODULES[moduleKey].goals) with its
+ * then each goal (LEARN_MODULES[moduleKey].goals) with its
  * status (completed / current / next / later). Progress = the goal's
  * strategies the parent has mastered (getGoalProgress). Tapping the current
- * (or a completed) goal opens the detailed plan (ModulePlanDetail); later
- * goals are locked.
+ * (or a completed, or an `unlocked`) goal opens the detailed plan
+ * (ModulePlanDetail); other later goals are locked.
  */
 
 import React from 'react';
@@ -23,7 +23,6 @@ const MUTED = '#6B7280';
 const DONE_GREEN = '#2F9E5B';
 const NUMBER_SIZE = 36;
 const HEADER_ART = require('../../assets/images/modules/plan5.png');
-const FOCUS_GAP = 18; // header → "Our focus" card
 
 interface Props {
   moduleKey: LearnModuleKey;
@@ -73,7 +72,7 @@ const GoalCard: React.FC<{
         <Text style={styles.goalTitle}>{t(`${base}.${goal.key}.title`)}</Text>
         <Text style={styles.goalDescription}>{t(`${base}.${goal.key}.description`)}</Text>
 
-        {goal.status === 'current' ? (
+        {goal.status === 'current' ? (goal.hideProgress ? null : (
           <View style={styles.progressRow}>
             <View style={styles.progressTrack}>
               {/* A sliver even at 0 so "In progress" reads as started */}
@@ -81,12 +80,12 @@ const GoalCard: React.FC<{
             </View>
             <Text style={styles.progressLabel}>{t('learnV2.moduleScreenV2.planOverview.inProgress')}</Text>
           </View>
-        ) : goal.status === 'completed' ? (
+        )) : goal.status === 'completed' ? (
           <View style={styles.metaRow}>
             <Ionicons name="checkmark-circle" size={16} color={DONE_GREEN} />
             <Text style={[styles.metaText, { color: DONE_GREEN }]}>{t('learnV2.moduleScreenV2.planOverview.done')}</Text>
           </View>
-        ) : (
+        ) : goal.unlocked ? null : (
           <View style={styles.metaRow}>
             <Ionicons name="lock-closed" size={15} color={MUTED} />
             <Text style={styles.metaText}>{t('learnV2.moduleScreenV2.planOverview.locked')}</Text>
@@ -117,18 +116,6 @@ export const LearnModulePlanOverview: React.FC<Props> = ({ moduleKey, onOpenPlan
         <Image source={HEADER_ART} style={styles.headerArt} resizeMode="contain" />
       </View>
 
-      {/* Our focus */}
-      <View style={styles.focusCard}>
-        <View style={styles.focusIcon}>
-          <Ionicons name="locate" size={26} color={COLORS.mainPurple} />
-        </View>
-        <View style={styles.flex}>
-          <Text style={styles.focusEyebrow}>{t('learnV2.moduleScreenV2.planOverview.focusEyebrow')}</Text>
-          <Text style={styles.focusTitle}>{t('learnV2.moduleScreenV2.planOverview.focusTitle')}</Text>
-          <Text style={styles.focusBody}>{t('learnV2.moduleScreenV2.planOverview.focusBody', { count: goals.length })}</Text>
-        </View>
-      </View>
-
       {/* Goals */}
       {goals.map((goal, i) => (
         <GoalCard
@@ -136,7 +123,7 @@ export const LearnModulePlanOverview: React.FC<Props> = ({ moduleKey, onOpenPlan
           goal={goal}
           isLast={i === goals.length - 1}
           base={base}
-          onPress={() => (goal.status === 'current' || goal.status === 'completed' ? onOpenPlan(goal) : onLockedGoal(goal))}
+          onPress={() => (goal.status === 'current' || goal.status === 'completed' || goal.unlocked ? onOpenPlan(goal) : onLockedGoal(goal))}
         />
       ))}
     </ScrollView>
@@ -144,7 +131,6 @@ export const LearnModulePlanOverview: React.FC<Props> = ({ moduleKey, onOpenPlan
 };
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   content: { paddingHorizontal: H_PAD, paddingBottom: 24 },
 
   // ── Header ──
@@ -158,35 +144,7 @@ const styles = StyleSheet.create({
     color: '#1A1446',
   },
   subtitle: { fontFamily: FONTS.regular, fontSize: 15, lineHeight: 22, color: MUTED, marginTop: 6 },
-  // Bottom-aligned and pulled down by the focus card's marginTop so it sits on the card.
-  headerArt: { width: 170, height: 170 * (210 / 316), alignSelf: 'flex-end', marginBottom: -FOCUS_GAP, marginRight: -12 },
-
-  // ── Our focus ──
-  focusCard: {
-    flexDirection: 'row',
-    gap: 14,
-    backgroundColor: PURPLE_TINT,
-    borderRadius: 24,
-    padding: 18,
-    marginTop: FOCUS_GAP,
-  },
-  focusIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  focusEyebrow: {
-    fontFamily: FONTS.bold,
-    fontSize: 12,
-    letterSpacing: 1.2,
-    color: COLORS.mainPurple,
-    textTransform: 'uppercase',
-  },
-  focusTitle: { fontFamily: FONTS.bold, fontSize: 18, lineHeight: 24, color: COLORS.textDark, marginTop: 4 },
-  focusBody: { fontFamily: FONTS.regular, fontSize: 13, lineHeight: 19, color: MUTED, marginTop: 6 },
+  headerArt: { width: 170, height: 170 * (210 / 316), alignSelf: 'flex-end', marginRight: -12 },
 
   // ── Goal card ──
   goalCard: {

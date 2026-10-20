@@ -227,6 +227,9 @@ export type RootStackParamList = {
     // Set by ModuleRecordGuide's "Start recording": start recording on arrival
     // (a timestamp, so each tap is a new request).
     startRecordingAt?: number;
+    // Set by ModuleSpecialPlay's "Start 5-Min Special Playtime": add special
+    // play and start a play recording on arrival (a timestamp, like above).
+    startPlayRecordingAt?: number;
   };
   LearnModuleSurvey: {
     moduleKey: LearnModuleKey;
@@ -253,6 +256,14 @@ export type RootStackParamList = {
   };
   // "Quick Cheat Sheet" (focus areas from the last session + fixed routine).
   ModuleCheatSheet: {
+    moduleKey: LearnModuleKey;
+  };
+  // Why a routine works + the fixed 8-step routine, opened from the "My plan" roadmap.
+  ModuleRoutine: {
+    moduleKey: LearnModuleKey;
+  };
+  // Special Playtime intro, opened from the "My plan" roadmap.
+  ModuleSpecialPlay: {
     moduleKey: LearnModuleKey;
   };
   // A Learn module's detailed current plan, opened from the "My plan" roadmap.

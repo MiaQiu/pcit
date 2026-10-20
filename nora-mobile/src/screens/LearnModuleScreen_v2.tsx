@@ -70,13 +70,13 @@ const MUTED = '#6B7280';
 
 // ─── Bottom tab bar ──────────────────────────────────────────────────────────
 
-const TABS = LEARN_MODULE_TABS;
 type TabKey = LearnModuleTabKey;
 
 const ModuleTabBar: React.FC<{
+  tabs: readonly (typeof LEARN_MODULE_TABS)[number][];
   activeTab: TabKey;
   onTabPress: (tab: TabKey) => void;
-}> = ({ activeTab, onTabPress }) => {
+}> = ({ tabs, activeTab, onTabPress }) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
@@ -84,7 +84,7 @@ const ModuleTabBar: React.FC<{
     // Sits 20pt into the home-indicator inset (lower on screen), never under 8pt.
     <View style={[styles.tabBarWrap, { paddingBottom: Math.max(insets.bottom - 20, 8) }]}>
       <View style={styles.tabBar}>
-        {TABS.map(tab => {
+        {tabs.map(tab => {
           const active = tab.key === activeTab;
           const color = active ? COLORS.mainPurple : MUTED;
           return (
@@ -108,7 +108,8 @@ const ModuleTabBar: React.FC<{
 
 interface Props {
   // Set when this module is the parent's home screen (HomeRootScreen renders
-  // it as the MainTabs route): no back arrow, and Profile opens the profile.
+  // it as the MainTabs route): no back arrow, no header over Learn / Profile,
+  // and the only way to the profile, so the Profile tab shows only here.
   homeModuleKey?: LearnModuleKey;
 }
 
@@ -118,12 +119,12 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   const { t } = useTranslation();
   const { showToast } = useToast();
   // As home, the route is MainTabs: its params only carry what returnToModule
-  // merges in (initialTab, startRecordingAt).
+  // merges in (initialTab, startRecordingAt, startPlayRecordingAt).
   const isHome = !!homeModuleKey;
   const params: RootStackParamList['LearnModule'] = homeModuleKey
     ? { ...(route.params as Partial<RootStackParamList['LearnModule']> | undefined), moduleKey: homeModuleKey }
     : route.params;
-  const { moduleKey, day: dayParam, initialTab = 'today', startRecordingAt } = params;
+  const { moduleKey, day: dayParam, initialTab = 'today', startRecordingAt, startPlayRecordingAt } = params;
   const module: LearnModuleConfig = LEARN_MODULES[moduleKey];
   // Day 1 has its own practice card + copy; Day 2+ shows the parent's
   // current protocol. The "Not ready to record?" card uses Day 1's copy on
@@ -131,7 +132,10 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   const config = module.days[1];
   const base = `learnV2.modules.${moduleKey}.days.1`;
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab === 'plan' ? 'plan' : 'today');
-  // Learn / Profile render in place like Today and My plan (no push), where available.
+  // Learn / Profile render in place like Today and My plan (no push). Profile
+  // is home-only (opened from Learn, the regular tabs have it); Learn only
+  // where the module has its own lessons.
+  const tabs = isHome ? LEARN_MODULE_TABS : LEARN_MODULE_TABS.filter(tab => tab.key !== 'profile');
   const hasLearnTab = moduleKey === 'screenTime';
   // navigate() to an already-open LearnModule (e.g. "See my plan" from the
   // module report) updates params instead of remounting.
@@ -381,6 +385,33 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startRecordingAt]);
 
+  // "Start 5-Min Special Playtime" (ModuleSpecialPlay) brings the parent back
+  // here with startPlayRecordingAt set: add special play (so the play card
+  // shows from now on, as when accepted in the module chat) and start a play
+  // recording on Today, once per tap. The play card isn't on the first-time
+  // Today, so there it only adds special play.
+  useEffect(() => {
+    if (!startPlayRecordingAt) return;
+    navigation.setParams({ startPlayRecordingAt: undefined });
+    setActiveTab('today');
+    if (!specialPlayAdded) {
+      setSpecialPlayAdded(true);
+      authService.authenticatedRequest(`${API_URL}/api/learn-modules/${moduleKey}/special-play`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ response: 'accepted' }),
+      }).catch(() => {});
+    }
+    if (recorder.isRecording || isFirstTime !== false) return;
+    amplitudeService.trackEvent('Learn Module Action Tapped', { moduleKey, day: currentDay, action: 'recordPlay', source: 'specialPlay', limitReached: playLimitReached });
+    if (playLimitReached) {
+      navigation.navigate('Onboarding', { initialStep: 'Subscription' });
+      return;
+    }
+    recorder.start('play');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startPlayRecordingAt]);
+
   // "How to record" / "What to record" links, on the first-time practice card only.
   const helpLinks = (
     <View style={styles.helpRow}>
@@ -449,7 +480,9 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
           moduleKey={moduleKey}
           onOpenPlan={goal => {
             amplitudeService.trackEvent('Learn Module Plan Goal Opened', { moduleKey, goal: goal.key, status: goal.status });
-            navigation.push('ModulePlanDetail', { moduleKey });
+            if (goal.opens === 'routine') navigation.push('ModuleRoutine', { moduleKey });
+            else if (goal.opens === 'specialPlay') navigation.push('ModuleSpecialPlay', { moduleKey });
+            else navigation.push('ModulePlanDetail', { moduleKey });
           }}
           onLockedGoal={goal => {
             amplitudeService.trackEvent('Learn Module Plan Goal Locked Tapped', { moduleKey, goal: goal.key });
@@ -736,7 +769,7 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
         </ScrollView>
       )}
 
-      <ModuleTabBar activeTab={activeTab} onTabPress={handleTabPress} />
+      <ModuleTabBar tabs={tabs} activeTab={activeTab} onTabPress={handleTabPress} />
     </SafeAreaView>
   );
 };
@@ -800,7 +833,10 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
+    // Bordered: plain white barely shows on BG.
     backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E4D9F7',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -921,7 +957,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     marginTop: 12,
   },
-  cheatSheetTop: { marginTop: 16 },
+  // On the page background (not a card): white so it doesn't blend into BG.
+  cheatSheetTop: { marginTop: 16, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E4D9F7' },
   softButtonText: { fontFamily: FONTS.semiBold, fontSize: 15, color: COLORS.mainPurple },
 
   // ── Practice card ──

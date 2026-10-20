@@ -1737,17 +1737,9 @@
             "title": "Making screentime endings predictable",
             "description": "Help your child know what comes next before screen time ends."
           },
-          "boundary": {
-            "title": "Hold the boundary calmly",
-            "description": "Stay calm, keep it short and consistent even when there is protest."
-          },
           "tantrumSkills": {
             "title": "Build the skills behind the tantrum",
             "description": "Strengthen your child's ability to manage big feelings and frustration."
-          },
-          "backToScreen": {
-            "title": "Building the skills back to screentime",
-            "description": "Practice and reinforce the new skills so screen time goes more smoothly."
           }
         },
         "cheatSheet": {
@@ -1788,6 +1780,88 @@
             "8": {
               "moment": "When your child joins",
               "action": "Praise specifically: “You started playing with the blocks! Great job joining me.”"
+            }
+          }
+        },
+        "specialPlay": {
+          "title": "Routines failing? Build the skill behind the rule.",
+          "subtitle": "Why 5 minutes of Special Playtime fixes screentime battles when rules and timers aren’t enough.",
+          "cta": "Start 5-Min Special Playtime",
+          "brain": {
+            "title": "The Hidden Neuroscience Behind Screentime Meltdowns",
+            "lead": "A routine is just a rule. Play builds the brain muscle to follow it.",
+            "body": "Screentime floods a child’s brain with rapid dopamine, and transitions require strong executive function and emotional regulation. 5 minutes of child-led play fills {{name}}’s need for autonomy before the boundary happens."
+          },
+          "research": {
+            "title": "The Science Behind Special Playtime",
+            "lead": "Grounded in 50+ years of clinical psychology research.",
+            "body": "Special Playtime is built on decades of research into child-led play. Practicing 5 minutes of child-led interaction daily leads to key developmental shifts that reduce screentime tantrums."
+          },
+          "coaching": {
+            "title": "How Nora’s AI Coaching Helps",
+            "lead": "No generic advice. Real coaching from your real interactions.",
+            "body": "Hit record during your 5-minute play session. Nora analyzes your voice to keep you in the “sweet spot” and flags accidental questions or commands that pull control away from {{name}}.",
+            "penTitle": "The PEN skills",
+            "praise": "Praise: Catch good behavior with positive words.",
+            "echo": "Echo: Repeat {{name}}’s words back to show you’re listening.",
+            "narrate": "Narrate: Describe what {{name}} is doing out loud like a sports announcer.",
+            "avoid": "Avoid: Hold back on criticism, questions, and commands so {{name}} stays in the driver's seat."
+          }
+        },
+        "routinePage": {
+          "title": "Making screentime endings predictable",
+          "subtitle": "Help {{name}} know what comes next so screen time ends without a fight.",
+          "why": {
+            "title": "Why a Routine Stops Screentime Tantrums",
+            "surprises": {
+              "title": "Removes Sudden Surprises",
+              "body": "A structured routine turns an abrupt shock into a familiar, expected habit."
+            },
+            "badGuy": {
+              "title": "Shifts the “Bad Guy” Role",
+              "body": "The routine becomes the boundary, so you don’t have to constantly decide when time is up."
+            },
+            "overload": {
+              "title": "Reduces Brain Overload",
+              "body": "Knowing the exact steps frees up energy so {{name}} can focus on self-regulating."
+            }
+          },
+          "flow": {
+            "title": "The Predictable 8-Step Transition Flow",
+            "hint": "Tap each step to view exact scripts and tips:",
+            "steps": {
+              "1": {
+                "moment": "Before screen time",
+                "summary": "Set expectations early & announce a bridging activity."
+              },
+              "2": {
+                "moment": "5 minutes left",
+                "summary": "Give a clear, neutral countdown warning."
+              },
+              "3": {
+                "moment": "2 minutes left",
+                "summary": "Pair time remaining with a natural stopping point."
+              },
+              "4": {
+                "moment": "Time to stop",
+                "summary": "Announce time is up with a neutral timer cue."
+              },
+              "5": {
+                "moment": "If {{name}} ignores you",
+                "summary": "Use calm, silent waiting instead of rapid repeat commands."
+              },
+              "6": {
+                "moment": "If {{name}} still refuses",
+                "summary": "Guide firmly & calmly without negotiating or arguing."
+              },
+              "7": {
+                "moment": "During the crying",
+                "summary": "Stay present, validate feelings, and avoid lecturing."
+              },
+              "8": {
+                "moment": "When {{name}} joins",
+                "summary": "Use labeled praise instantly when they cooperate."
+              }
             }
           }
         }
@@ -1889,9 +1963,6 @@
       "planOverview": {
         "title": "My plan",
         "subtitle": "A step-by-step plan based on what we found in your last session.",
-        "focusEyebrow": "Our focus",
-        "focusTitle": "Helping your child with screen time transitions",
-        "focusBody": "{{count}} goals to build calmer, more predictable screen time endings and stronger skills over time.",
         "status": {
           "completed": "Completed",
           "current": "Current goal",
@@ -1912,7 +1983,7 @@
         "body_girl": "Play together with {{name}} for 5 minutes, letting her lead.",
         "cta": "Start play recording",
         "hint": "Follow {{name}}'s lead and enjoy playing together. The recording stops on its own after 5 minutes.",
-        "processing": "Nora is preparing your play time report…",
+        "processing": "Nora is preparing your play time report. This takes a few minutes.",
         "tooShortMessage": "Play together for the full 5 minutes so Nora has enough to give you helpful feedback."
       }
     }
