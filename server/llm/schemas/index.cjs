@@ -610,6 +610,69 @@ const SCREENTIME_FOLLOWUP_COACHING = {
   propertyOrdering: ['progress', 'coaching_report', 'my_plan'],
 };
 
+// ── module-coaching-screentime-format (Day 1) ─────────────────────────────────
+// prompts/coaching-screentime_1st-format.txt: the free-form Day 1 write-up
+// (coaching-screentime_1st.txt) split into display sections, plus the
+// "My Plan" payload and module-chat strategy ideas extracted from it.
+const SCREENTIME_NARRATIVE_FORMAT = {
+  type: 'object',
+  properties: {
+    report: {
+      type: 'object',
+      properties: {
+        headline: { type: 'string' },
+        sections: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              // Picks the card's icon in the app.
+              kind:   { type: 'string', enum: ['win', 'learned', 'emotion', 'grow', 'reflect', 'expectations', 'other'] },
+              title:  { type: 'string' },
+              body:   { type: 'string' },
+              quote:  { type: 'string' },
+              script: { type: 'string' },
+            },
+            required: ['kind', 'title', 'body'],
+            propertyOrdering: ['kind', 'title', 'body', 'quote', 'script'],
+          },
+        },
+      },
+      required: ['headline', 'sections'],
+      propertyOrdering: ['headline', 'sections'],
+    },
+    // Child's outburst level over the session, drawn as a graph in the
+    // "emotion" section. Empty when the write-up has no timeline.
+    emotion_timeline: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          seconds: { type: 'integer' },
+          level:   { type: 'integer' },
+          label:   { type: 'string' },
+        },
+        required: ['seconds', 'level', 'label'],
+        propertyOrdering: ['seconds', 'level', 'label'],
+      },
+    },
+    my_plan: SCREENTIME_COACHING.properties.my_plan,
+    suggested_strategies: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name:        { type: 'string' },
+          description: { type: 'string' },
+        },
+        required: ['name', 'description'],
+      },
+    },
+  },
+  required: ['report', 'emotion_timeline', 'my_plan', 'suggested_strategies'],
+  propertyOrdering: ['report', 'emotion_timeline', 'my_plan', 'suggested_strategies'],
+};
+
 module.exports = {
   PCIT_CODING,
   REVIEW_FEEDBACK,
@@ -626,4 +689,5 @@ module.exports = {
   SKILL_IMPROVE,
   SCREENTIME_COACHING,
   SCREENTIME_FOLLOWUP_COACHING,
+  SCREENTIME_NARRATIVE_FORMAT,
 };

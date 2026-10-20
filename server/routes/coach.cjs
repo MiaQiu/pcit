@@ -6,14 +6,18 @@ const fetch   = require('node-fetch');
 const { requireAuth }    = require('../middleware/auth.cjs');
 const { logLLMCall }          = require('../llm/logger.cjs');
 const { sendLLMFailureAlert } = require('../llm/alertEmail.cjs');
+const { Prisma }         = require('@prisma/client');
 const prisma             = require('../services/db.cjs');
 const { subscribe, publish } = require('../services/chatBus.cjs');
 const agentBus = require('../services/agentBus.cjs');
+const { getModuleChatPrompt, LEARN_MODULE_KEYS } = require('../services/pcitAnalysisService.cjs');
 
 const router = express.Router();
 router.use(requireAuth);
 
 const MODEL           = process.env.GEMINI_STREAMING_MODEL || 'gemini-3.1-pro-preview';
+// Learn module chats: short, scoped check-ins — a fast flash model.
+const MODULE_CHAT_MODEL = process.env.GEMINI_MODULE_CHAT_MODEL || 'gemini-3.8-flash';
 const MAX_AGENT_TURNS = 6;          // tool-call rounds before giving up
 const MAX_HISTORY_MESSAGES = 20;    // conversation turns sent to LLM
 
@@ -51,6 +55,17 @@ function buildSystemPrompt(locale) {
   return prompt;
 }
 
+// Learn module chat (body.moduleKey): the module's own scoped prompt (e.g.
+// prompts/coach-screentime.txt, filled with the family's context) plus the
+// reply-language rule.
+function buildModuleSystemPrompt(modulePrompt, locale) {
+  const langName = LOCALE_NAMES[locale] || LOCALE_NAMES['en'];
+  if (langName === LOCALE_NAMES['en']) return modulePrompt;
+  return `${modulePrompt}
+**LANGUAGE**
+Always reply in ${langName}, including the OPTIONS line. Do not switch to another language even if the parent writes in a different language.`;
+}
+
 // ─── Tool declarations (sent to Gemini) ───────────────────────────────────────
 
 const TOOL_DECLARATIONS = [
@@ -78,6 +93,28 @@ const TOOL_DECLARATIONS = [
         limit: { type: 'NUMBER', description: 'Number of recent sessions to retrieve (1–10, default 2)' },
       },
       required: [],
+    },
+  },
+];
+
+// Learn module chat tools. The family's context is already in the module
+// prompt, so the only tool records the strategy check-in's outcome — it's fed
+// into the next module report (moduleStrategyFeedbackNotes).
+const MODULE_TOOL_DECLARATIONS = [
+  {
+    name: 'save_strategy_feedback',
+    description: "Save what the parent told you about one suggested strategy during a strategy check-in. Call once per strategy, when the parent agrees on a next step or the check-in ends.",
+    parameters: {
+      type: 'OBJECT',
+      properties: {
+        strategy:  { type: 'STRING', description: 'The strategy discussed, named as in the plan or suggested strategies' },
+        tried:     { type: 'STRING', enum: ['yes', 'not_yet', 'unsure'], description: "Whether the parent has tried it: 'yes', 'not_yet', or 'unsure' (wanted to clarify it before trying)" },
+        outcome:   { type: 'STRING', enum: ['went_well', 'partly', 'hard'], description: 'Only when tried is yes: how it went' },
+        obstacle:  { type: 'STRING', description: 'What got in the way, what was hard, or which part was unclear — in a short phrase' },
+        next_step: { type: 'STRING', description: 'The one next step the parent agreed to try, if any' },
+        notes:     { type: 'STRING', description: "Anything else useful for the next report (e.g. the child's reaction), in one sentence" },
+      },
+      required: ['strategy', 'tried'],
     },
   },
 ];
@@ -246,6 +283,62 @@ async function toolGetTranscript(userId) {
   };
 }
 
+const optionalText = (v) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, 500) : null);
+
+// One row per strategy per report period: the model may call this more than
+// once in a check-in (or again later), so a strategy that already has
+// feedback since the latest module report is updated — fields it didn't
+// resend keep their earlier values.
+async function toolSaveStrategyFeedback(userId, moduleKey, args) {
+  const strategy = optionalText(args?.strategy);
+  const tried = ['yes', 'not_yet', 'unsure'].includes(args?.tried) ? args.tried : null;
+  if (!strategy || !tried) return { error: 'strategy and tried are required' };
+  const fields = {
+    tried,
+    outcome:  tried === 'yes' && ['went_well', 'partly', 'hard'].includes(args.outcome) ? args.outcome : null,
+    obstacle: optionalText(args.obstacle),
+    nextStep: optionalText(args.next_step),
+    notes:    optionalText(args.notes),
+  };
+
+  const latestReport = await prisma.session.findFirst({
+    where: { userId, moduleKey, analysisStatus: 'COMPLETED', moduleCoaching: { not: Prisma.DbNull } },
+    orderBy: { createdAt: 'desc' },
+    select: { createdAt: true },
+  });
+  const existing = await prisma.moduleStrategyFeedback.findFirst({
+    where: {
+      userId,
+      moduleKey,
+      strategy: { equals: strategy, mode: 'insensitive' },
+      ...(latestReport ? { createdAt: { gt: latestReport.createdAt } } : {}),
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+  if (existing) {
+    await prisma.moduleStrategyFeedback.update({
+      where: { id: existing.id },
+      data: {
+        tried,
+        outcome:  tried === 'yes' ? (fields.outcome ?? existing.outcome) : null,
+        obstacle: fields.obstacle ?? existing.obstacle,
+        nextStep: fields.nextStep ?? existing.nextStep,
+        notes:    fields.notes ?? existing.notes,
+      },
+    });
+  } else {
+    await prisma.moduleStrategyFeedback.create({ data: { userId, moduleKey, strategy, ...fields } });
+  }
+  return { saved: true };
+}
+
+async function executeModuleTool(name, args, userId, moduleKey) {
+  switch (name) {
+    case 'save_strategy_feedback': return toolSaveStrategyFeedback(userId, moduleKey, args);
+    default:                       return { error: `Unknown tool: ${name}` };
+  }
+}
+
 async function executeTool(name, args, userId) {
   switch (name) {
     case 'get_child_parent_profile': return toolGetChildParentProfile(userId);
@@ -263,11 +356,40 @@ const TOOL_STATUS = {
   get_child_milestone:      "Understanding your child’s stage...",
   get_child_parent_profile: 'Personalizing your answer...',
   get_transcript:           'Reviewing recent play sessions...',
+  save_strategy_feedback:   'Almost ready...',
 };
+
+/**
+ * What the agent loops run with: system prompt, tool declarations and the
+ * tool executor. The main coach is the PCIT therapist with its data tools;
+ * a Learn module chat (moduleKey) gets the module's scoped prompt and tools.
+ */
+async function buildAgent(userId, locale, moduleKey = null) {
+  if (moduleKey) {
+    const modulePrompt = await getModuleChatPrompt(userId, moduleKey);
+    if (modulePrompt) {
+      return {
+        systemPrompt: buildModuleSystemPrompt(modulePrompt, locale),
+        tools:        MODULE_TOOL_DECLARATIONS,
+        model:        MODULE_CHAT_MODEL,
+        // Short check-in replies don't need deep thinking; the default level
+        // often ran past the 30s timeout and fell back to Claude.
+        thinkingConfig: { thinkingLevel: 'low' },
+        executeTool:  (name, args) => executeModuleTool(name, args, userId, moduleKey),
+      };
+    }
+  }
+  return {
+    systemPrompt: buildSystemPrompt(locale),
+    tools:        TOOL_DECLARATIONS,
+    model:        MODEL,
+    executeTool:  (name, args) => executeTool(name, args, userId),
+  };
+}
 
 // ─── Gemini agent loop ────────────────────────────────────────────────────────
 
-async function runAgentLoop(userId, userText, dbHistory, signal, locale = 'en') {
+async function runAgentLoop(userId, userText, dbHistory, signal, agent) {
   const contents = [
     ...dbHistory.map(m => ({
       role: m.role === 'model' || m.role === 'psychologist' ? 'model' : 'user',
@@ -277,15 +399,20 @@ async function runAgentLoop(userId, userText, dbHistory, signal, locale = 'en') 
   ];
 
   const baseBody = {
-    system_instruction: { parts: [{ text: buildSystemPrompt(locale) }] },
-    tools: [{ function_declarations: TOOL_DECLARATIONS }],
-    generationConfig: { temperature: 0.8, maxOutputTokens: 2048 },
+    system_instruction: { parts: [{ text: agent.systemPrompt }] },
+    tools: [{ function_declarations: agent.tools }],
+    generationConfig: {
+      temperature: 0.8,
+      maxOutputTokens: 2048,
+      ...(agent.thinkingConfig ? { thinkingConfig: agent.thinkingConfig } : {}),
+    },
   };
 
-  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`;
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${agent.model}:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
   let totalInput = 0;
   let totalOutput = 0;
+  let preamble = ''; // text sent alongside a tool call — the reply if the final turn has none
 
   for (let turn = 0; turn < MAX_AGENT_TURNS; turn++) {
     if (turn === 0) publish(userId, [{ type: 'status', text: 'Thinking...' }]);
@@ -320,16 +447,19 @@ async function runAgentLoop(userId, userText, dbHistory, signal, locale = 'en') 
     const textPart = parts.find(p => typeof p.text === 'string');
     const fnParts  = parts.filter(p => p.functionCall);
 
-    if (textPart) {
-      return { text: textPart.text, usage: { inputTokens: totalInput, outputTokens: totalOutput } };
+    // Text alongside a function call (e.g. save_strategy_feedback) is a
+    // preamble — run the call and let the next turn write the reply.
+    if (fnParts.length === 0 && (textPart?.text.trim() || preamble)) {
+      return { text: textPart?.text.trim() ? textPart.text : preamble, usage: { inputTokens: totalInput, outputTokens: totalOutput } };
     }
 
     if (fnParts.length === 0) {
       throw new Error('Gemini returned no text and no function calls');
     }
+    if (textPart?.text.trim()) preamble = textPart.text;
 
     // Append model's tool-call turn
-    contents.push({ role: 'model', parts: fnParts });
+    contents.push({ role: 'model', parts });
 
     const statuses = fnParts.map(p => ({
       type: 'status',
@@ -340,7 +470,7 @@ async function runAgentLoop(userId, userText, dbHistory, signal, locale = 'en') 
     // Execute tools (in parallel) and append results
     const responseParts = await Promise.all(
       fnParts.map(async p => {
-        const result = await executeTool(p.functionCall.name, p.functionCall.args ?? {}, userId);
+        const result = await agent.executeTool(p.functionCall.name, p.functionCall.args ?? {});
         return { functionResponse: { name: p.functionCall.name, response: { result } } };
       })
     );
@@ -356,7 +486,7 @@ async function runAgentLoop(userId, userText, dbHistory, signal, locale = 'en') 
 const CLAUDE_FALLBACK_MODEL = 'claude-sonnet-4-6';
 
 // Convert Gemini tool declarations → Claude format (input_schema, lowercase types)
-const CLAUDE_TOOLS = TOOL_DECLARATIONS.map(t => ({
+const toClaudeTools = (declarations) => declarations.map(t => ({
   name:        t.name,
   description: t.description,
   input_schema: {
@@ -370,7 +500,7 @@ const CLAUDE_TOOLS = TOOL_DECLARATIONS.map(t => ({
   },
 }));
 
-async function runClaudeAgentLoop(userId, userText, dbHistory, signal, locale = 'en') {
+async function runClaudeAgentLoop(userId, userText, dbHistory, signal, agent) {
   // Build messages array; Claude requires strict user/assistant alternation.
   // Merge consecutive same-role messages and drop leading assistant turns.
   const rawMessages = [
@@ -401,6 +531,7 @@ async function runClaudeAgentLoop(userId, userText, dbHistory, signal, locale = 
 
   let totalInput  = 0;
   let totalOutput = 0;
+  let preamble    = ''; // text sent alongside a tool call — the reply if the final turn has none
 
   for (let turn = 0; turn < MAX_AGENT_TURNS; turn++) {
     if (turn === 0) publish(userId, [{ type: 'status', text: 'Thinking...' }]);
@@ -416,8 +547,8 @@ async function runClaudeAgentLoop(userId, userText, dbHistory, signal, locale = 
         headers,
         body: JSON.stringify({
           model:       CLAUDE_FALLBACK_MODEL,
-          system:      buildSystemPrompt(locale),
-          tools:       CLAUDE_TOOLS,
+          system:      agent.systemPrompt,
+          tools:       toClaudeTools(agent.tools),
           messages,
           max_tokens:  2048,
           temperature: 0.8,
@@ -446,10 +577,11 @@ async function runClaudeAgentLoop(userId, userText, dbHistory, signal, locale = 
 
     if (data.stop_reason === 'end_turn' || toolBlocks.length === 0) {
       return {
-        text:  textBlock?.text ?? '',
+        text:  textBlock?.text?.trim() ? textBlock.text : preamble,
         usage: { inputTokens: totalInput, outputTokens: totalOutput },
       };
     }
+    if (textBlock?.text?.trim()) preamble = textBlock.text;
 
     // Append assistant's tool-call turn, then execute tools in parallel
     messages.push({ role: 'assistant', content });
@@ -462,7 +594,7 @@ async function runClaudeAgentLoop(userId, userText, dbHistory, signal, locale = 
 
     const toolResults = await Promise.all(
       toolBlocks.map(async b => {
-        const result = await executeTool(b.name, b.input ?? {}, userId);
+        const result = await agent.executeTool(b.name, b.input ?? {});
         return { type: 'tool_result', tool_use_id: b.id, content: JSON.stringify(result) };
       })
     );
@@ -522,10 +654,125 @@ router.post('/psych-message', async (req, res, next) => {
     }
     const msg = await prisma.coachChatMessage.create({
       data: { userId: req.userId, role: 'user_psych', text: message.trim() },
-      select: { id: true, role: true, text: true, createdAt: true },
+      select: { id: true, role: true, text: true, scripted: true, createdAt: true },
     });
     publish(req.userId, [msg]);
     res.json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/coach/scripted
+ * Body: { messages: [{ role: 'user' | 'model', text: string }] }
+ * Saves fixed (non-LLM) chat turns — the Learn module chat's opening round of
+ * a strategy check-in ("Have you tried it?" → the parent's choice → a fixed
+ * follow-up) — and publishes them like any chat message. They're part of the
+ * history, so the coach picks up from them on the parent's next message.
+ * Does NOT trigger the AI agent.
+ */
+const MAX_SCRIPTED_MESSAGES = 4;
+router.post('/scripted', async (req, res, next) => {
+  try {
+    const { messages } = req.body;
+    const valid = Array.isArray(messages)
+      && messages.length > 0
+      && messages.length <= MAX_SCRIPTED_MESSAGES
+      && messages.every(m => ['user', 'model'].includes(m?.role) && typeof m.text === 'string' && m.text.trim() && m.text.length <= 2000);
+    if (!valid) return res.status(400).json({ error: 'messages must be 1-4 { role: user|model, text }' });
+
+    // Explicit, increasing timestamps keep the turns in order (history and
+    // long-poll sort by createdAt).
+    const base = Date.now();
+    const saved = [];
+    for (const [i, m] of messages.entries()) {
+      saved.push(await prisma.coachChatMessage.create({
+        data: { userId: req.userId, role: m.role, text: m.text.trim(), scripted: true, createdAt: new Date(base + i) },
+        select: { id: true, role: true, text: true, scripted: true, createdAt: true },
+      }));
+    }
+    publish(req.userId, saved);
+    res.json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── Bookmarks ────────────────────────────────────────────────────────────────
+
+const BOOKMARK_SELECT = { id: true, messageId: true, moduleKey: true, text: true, messageCreatedAt: true, createdAt: true };
+
+/**
+ * GET /api/coach/bookmarks?moduleKey=<key>
+ * The parent's bookmarked coach replies (from that module's chat, if given),
+ * newest first: { bookmarks: [...] }.
+ */
+router.get('/bookmarks', async (req, res, next) => {
+  try {
+    const { moduleKey } = req.query;
+    if (moduleKey != null && !LEARN_MODULE_KEYS.has(moduleKey)) return res.status(400).json({ error: 'Unknown module' });
+    const bookmarks = await prisma.chatBookmark.findMany({
+      where: { userId: req.userId, ...(moduleKey ? { moduleKey } : {}) },
+      orderBy: { createdAt: 'desc' },
+      select: BOOKMARK_SELECT,
+    });
+    res.json({ bookmarks });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/coach/bookmarks
+ * Body: { messageId: string, moduleKey?: string }
+ * Bookmarks one of the coach's replies (not the app's fixed lines).
+ * Bookmarking the same message again returns the existing bookmark.
+ */
+router.post('/bookmarks', async (req, res, next) => {
+  try {
+    const { messageId, moduleKey } = req.body;
+    if (typeof messageId !== 'string' || !messageId) return res.status(400).json({ error: 'messageId is required' });
+    if (moduleKey != null && !LEARN_MODULE_KEYS.has(moduleKey)) return res.status(400).json({ error: 'Unknown module' });
+
+    const message = await prisma.coachChatMessage.findFirst({
+      where: { id: messageId, userId: req.userId },
+      select: { role: true, text: true, scripted: true, createdAt: true },
+    });
+    if (!message) return res.status(404).json({ error: 'Message not found' });
+    if (message.role !== 'model' || message.scripted) {
+      return res.status(400).json({ error: 'Only coach replies can be bookmarked' });
+    }
+
+    const bookmark = await prisma.chatBookmark.upsert({
+      where: { userId_messageId: { userId: req.userId, messageId } },
+      update: {},
+      create: {
+        userId: req.userId,
+        messageId,
+        moduleKey: moduleKey ?? null,
+        text: message.text,
+        messageCreatedAt: message.createdAt,
+      },
+      select: BOOKMARK_SELECT,
+    });
+    res.json({ bookmark });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * DELETE /api/coach/bookmarks/:id
+ * Removes a bookmark, by bookmark id or by the bookmarked message's id.
+ */
+router.delete('/bookmarks/:id', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { count } = await prisma.chatBookmark.deleteMany({
+      where: { userId: req.userId, OR: [{ id }, { messageId: id }] },
+    });
+    res.json({ deleted: count });
   } catch (err) {
     next(err);
   }
@@ -544,7 +791,7 @@ router.get('/events', async (req, res, next) => {
     const pending = await prisma.coachChatMessage.findMany({
       where: { userId: req.userId, createdAt: { gt: since } },
       orderBy: { createdAt: 'asc' },
-      select: { id: true, role: true, text: true, createdAt: true },
+      select: { id: true, role: true, text: true, scripted: true, createdAt: true },
     });
 
     if (pending.length > 0) {
@@ -590,7 +837,7 @@ router.get('/history', async (req, res, next) => {
         ...(since ? { createdAt: { gte: since } } : {}),
       },
       orderBy: { createdAt: 'asc' },
-      select: { id: true, role: true, text: true, createdAt: true },
+      select: { id: true, role: true, text: true, scripted: true, createdAt: true },
     });
     res.json({ messages });
   } catch (err) {
@@ -600,22 +847,27 @@ router.get('/history', async (req, res, next) => {
 
 /**
  * POST /api/coach/chat
- * Body: { message: string }
+ * Body: { message: string, locale?: string, moduleKey?: string }
+ * moduleKey (e.g. 'screenTime') = a Learn module's chat: same history, but the
+ * module's scoped prompt and strategy-feedback tool (see buildAgent).
  * Returns: { reply: string }
  */
 router.post('/chat', async (req, res, next) => {
   try {
-    const { message, locale } = req.body;
+    const { message, locale, moduleKey } = req.body;
     if (!message || typeof message !== 'string' || !message.trim()) {
       return res.status(400).json({ error: 'message is required' });
     }
     const userText = message.trim();
     const userLocale = (typeof locale === 'string' && LOCALE_NAMES[locale]) ? locale : 'en';
+    if (moduleKey != null && !LEARN_MODULE_KEYS.has(moduleKey)) {
+      return res.status(400).json({ error: 'Unknown module' });
+    }
 
     // Save & publish the user message immediately so admin sees it without waiting for LLM
     const userMsg = await prisma.coachChatMessage.create({
       data: { userId: req.userId, role: 'user', text: userText },
-      select: { id: true, role: true, text: true, createdAt: true },
+      select: { id: true, role: true, text: true, scripted: true, createdAt: true },
     });
     publish(req.userId, [userMsg]);
 
@@ -628,6 +880,9 @@ router.post('/chat', async (req, res, next) => {
     });
     dbHistory.reverse();
 
+    const agent = await buildAgent(req.userId, userLocale, moduleKey);
+    const label = moduleKey ? `coach-chat-${moduleKey}` : 'coach-chat';
+
     const abortController = new AbortController();
     agentBus.setActive(req.userId, abortController);
 
@@ -636,12 +891,12 @@ router.post('/chat', async (req, res, next) => {
     let usedRetry    = false;
     let usedFallback = false;
     let provider     = 'gemini';
-    let model        = MODEL;
+    let model        = agent.model;
 
     const isUserAbort = () => abortController.signal.aborted;
 
     try {
-      result = await runAgentLoop(req.userId, userText, dbHistory, abortController.signal, userLocale);
+      result = await runAgentLoop(req.userId, userText, dbHistory, abortController.signal, agent);
     } catch (firstErr) {
       if (firstErr.name === 'AbortError' && isUserAbort()) {
         agentBus.clear(req.userId);
@@ -651,7 +906,7 @@ router.post('/chat', async (req, res, next) => {
       if (firstErr.name !== 'AbortError') {
         agentBus.clear(req.userId);
         logLLMCall({
-          label: 'coach-chat', model, provider,
+          label, model, provider,
           latencyMs: Date.now() - start,
           inputTokens: null, outputTokens: null,
           hasSchema: false, usedFallback: false, usedRepair: false, usedRetry: false,
@@ -663,7 +918,7 @@ router.post('/chat', async (req, res, next) => {
       // Gemini timed out — retry once silently
       usedRetry = true;
       logLLMCall({
-        label: 'coach-chat', model, provider,
+        label, model, provider,
         latencyMs: Date.now() - start,
         inputTokens: null, outputTokens: null,
         hasSchema: false, usedFallback: false, usedRepair: false, usedRetry: true,
@@ -671,7 +926,7 @@ router.post('/chat', async (req, res, next) => {
       });
 
       try {
-        result = await runAgentLoop(req.userId, userText, dbHistory, abortController.signal, userLocale);
+        result = await runAgentLoop(req.userId, userText, dbHistory, abortController.signal, agent);
       } catch (retryErr) {
         if (retryErr.name === 'AbortError' && isUserAbort()) {
           agentBus.clear(req.userId);
@@ -683,7 +938,7 @@ router.post('/chat', async (req, res, next) => {
         provider     = 'anthropic';
         model        = CLAUDE_FALLBACK_MODEL;
         logLLMCall({
-          label: 'coach-chat', model: MODEL, provider: 'gemini',
+          label, model: agent.model, provider: 'gemini',
           latencyMs: Date.now() - start,
           inputTokens: null, outputTokens: null,
           hasSchema: false, usedFallback: true, usedRepair: false, usedRetry: true,
@@ -691,24 +946,24 @@ router.post('/chat', async (req, res, next) => {
         });
 
         try {
-          result = await runClaudeAgentLoop(req.userId, userText, dbHistory, abortController.signal, userLocale);
+          result = await runClaudeAgentLoop(req.userId, userText, dbHistory, abortController.signal, agent);
         } catch (claudeErr) {
           agentBus.clear(req.userId);
           logLLMCall({
-            label: 'coach-chat', model, provider,
+            label, model, provider,
             latencyMs: Date.now() - start,
             inputTokens: null, outputTokens: null,
             hasSchema: false, usedFallback: true, usedRepair: false, usedRetry: true,
             ok: false, error: claudeErr.message,
           });
           sendLLMFailureAlert({
-            label: 'coach-chat', model, error: claudeErr.message,
+            label, model, error: claudeErr.message,
             to: 'info@chromamind.ai',
           });
           const sorryText = "I'm having some trouble right now and couldn't process your message. Please try again in a moment, or tap \"Talk to a Psychologist\" if you need immediate support.";
           const sorryMsg = await prisma.coachChatMessage.create({
             data: { userId: req.userId, role: 'model', text: sorryText },
-            select: { id: true, role: true, text: true, createdAt: true },
+            select: { id: true, role: true, text: true, scripted: true, createdAt: true },
           });
           publish(req.userId, [sorryMsg]);
           return res.json({ reply: sorryText });
@@ -719,7 +974,7 @@ router.post('/chat', async (req, res, next) => {
     agentBus.clear(req.userId);
 
     logLLMCall({
-      label: 'coach-chat', model, provider,
+      label, model, provider,
       latencyMs: Date.now() - start,
       inputTokens: result.usage.inputTokens,
       outputTokens: result.usage.outputTokens,
@@ -731,7 +986,7 @@ router.post('/chat', async (req, res, next) => {
 
     const modelMsg = await prisma.coachChatMessage.create({
       data: { userId: req.userId, role: 'model', text: reply },
-      select: { id: true, role: true, text: true, createdAt: true },
+      select: { id: true, role: true, text: true, scripted: true, createdAt: true },
     });
     publish(req.userId, [modelMsg]);
 

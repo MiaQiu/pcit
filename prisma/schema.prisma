@@ -499,6 +499,8 @@ model User {
   CoachChatMessage          CoachChatMessage[]
   AbcLog                    AbcLog[]
   LearnModuleSurvey         LearnModuleSurvey[]
+  ModuleStrategyFeedback    ModuleStrategyFeedback[]
+  ChatBookmark              ChatBookmark[]
   AbcInsight                AbcInsight[]
   HomeCardLike              HomeCardLike[]
   HomeCardUserInputResponse HomeCardUserInputResponse[]
@@ -1443,10 +1445,30 @@ model CoachChatMessage {
   userId    String
   role      String // 'user' | 'model'
   text      String
+  // Fixed app line (POST /api/coach/scripted), not written by the coach
+  scripted  Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookmarks ChatBookmark[]
 
+  @@index([userId, createdAt])
+}
+
+// A coach reply the parent bookmarked in a Learn module chat. Keeps its own
+// copy of the text, so it stays if the message is deleted.
+model ChatBookmark {
+  id               String            @id @default(uuid())
+  userId           String
+  messageId        String?
+  moduleKey        String?
+  text             String
+  messageCreatedAt DateTime
+  createdAt        DateTime          @default(now())
+  User             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message          CoachChatMessage? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, messageId])
   @@index([userId, createdAt])
 }
 
@@ -1521,6 +1543,29 @@ model LearnModuleSurvey {
   Session         Session[]
 
   @@index([userId, moduleKey, submittedAt])
+}
+
+// A parent's feedback on a suggested strategy, captured by the Learn module
+// chat's strategy check-in (save_strategy_feedback tool in routes/coach.cjs).
+// Feedback since the last report is fed into the next report's prompt.
+model ModuleStrategyFeedback {
+  id         String   @id @default(uuid())
+  userId     String
+  moduleKey  String
+  strategy   String
+  // 'yes' | 'not_yet' | 'unsure'
+  tried      String
+  // 'went_well' | 'partly' | 'hard' (when tried)
+  outcome    String?
+  // What got in the way, what was hard, or what was unclear
+  obstacle   String?
+  // The next step the parent agreed to
+  nextStep   String?
+  notes      String?
+  createdAt  DateTime @default(now())
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, moduleKey, createdAt])
 }
 
 enum AbcLogType {

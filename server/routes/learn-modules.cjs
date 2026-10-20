@@ -64,7 +64,8 @@ router.get('/:moduleKey/plan', async (req, res) => {
       recordingId: session?.id || null,
       createdAt: session?.createdAt || null,
       masteredStrategies,
-      suggestedStrategies: session?.moduleCoaching?.coachingReport?.nextGrowthFocus?.strategies || [],
+      suggestedStrategies: session?.moduleCoaching?.suggestedStrategies
+        || session?.moduleCoaching?.coachingReport?.nextGrowthFocus?.strategies || [],
     });
   } catch (error) {
     logError(error, { route: 'learn-modules#Get module plan error', userId: req.userId });

@@ -3031,10 +3031,42 @@
   "moduleReport": {
     "nextGrowthFocus": "下一步成長重點",
     "trySaying": "試著這樣說",
-    "seeMyPlan": "查看我的計畫"
+    "seeMyPlan": "查看我的計畫",
+    "reflectWithNora": "和 Nora 聊聊",
+    "reflectDraft": "關於報告裡的「{{title}}」：",
+    "emotionLevels": {
+      "0": "平靜",
+      "1": "討價還價",
+      "2": "哼唧",
+      "3": "哭鬧",
+      "4": "崩潰",
+      "5": "動手"
+    }
   },
   "moduleChat": {
-    "strategyPrompt": "下一次螢幕時間結束時，我可以怎麼用「{{strategy}}」？",
+    "greetingReply": "{{name}}你好！我在這裡幫你讓{{childName}}的螢幕時間更輕鬆。今天想聊什麼——最近一次結束螢幕時間的情況，還是你正在練習的策略？",
+    "latestSessionLabel": "聊聊最近一次紀錄",
+    "latestSessionPrompt": "我想聊聊我最近的一次紀錄。",
+    "strategyPrompt": "我想聊聊「{{strategy}}」。",
+    "strategiesLabel": "聊聊一個策略",
+    "bookmarks": {
+      "title": "收藏",
+      "add": "收藏這則回覆",
+      "remove": "取消收藏",
+      "removeTitle": "取消收藏這則回覆？",
+      "removeConfirm": "取消收藏",
+      "removeError": "無法取消收藏，請再試一次。",
+      "loadError": "無法載入你的收藏，請稍後再試。",
+      "emptyTitle": "還沒有收藏",
+      "emptyBody": "點一下 Nora 回覆下方的書籤圖示，就能把它儲存在這裡。"
+    },
+    "checkIn": {
+      "question": "你有機會試試「{{strategy}}」了嗎？",
+      "tried": "我試過了",
+      "clarify": "我想先弄清楚再試",
+      "triedReply": "太好了！跟我說說進行得怎麼樣——{{childName}}有什麼反應？哪些部分容易，哪些比較難？",
+      "clarifyReply": "當然可以！你想弄清楚哪一部分——該說什麼、什麼時候做，還是別的？"
+    },
     "suggestedLabel": "根據你上次紀錄建議的策略"
   }
 }

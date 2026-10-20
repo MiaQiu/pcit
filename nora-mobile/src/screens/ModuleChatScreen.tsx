@@ -4,6 +4,12 @@
  * LearnModuleScreen_v2. Starts as a copy of CoachChatScreen (AI parenting
  * coach — calls backend /api/coach/chat, Gemini via LLM gateway);
  * module-specific changes go here so the main coach chat is unaffected.
+ *
+ * Sends moduleKey with each message, so the server answers with the module's
+ * scoped coach (server/prompts/coach-screentime.txt). Tapping a suggested
+ * strategy sends "I'd like to talk about …", which starts the coach's
+ * strategy check-in; the coach's quick replies (OPTIONS line) show as chips
+ * under its latest message and send on tap.
  */
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
@@ -26,7 +32,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as userStorage from '../lib/userStorage';
 import { Video, ResizeMode } from 'expo-av';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect, RouteProp } from '@react-navigation/native';
 import type { RootStackParamList } from '../navigation/types';
 import { useModulePlan } from './LearnModulePlanView';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,6 +43,8 @@ import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
 import { TrackedTouchable } from '../components/TrackedTouchable';
 import { reportError } from '../utils/reportError';
+import { parseQuickReplies } from '../utils/chatQuickReplies';
+import { MarkdownText } from '../utils/MarkdownText';
 
 const PSYCH_REQUESTED_KEY = '@nora_psych_requested';
 
@@ -77,7 +85,14 @@ interface Message {
   role: 'user' | 'model' | 'psychologist' | 'user_psych';
   text: string;
   createdAt?: string;
+  // A fixed app line (greeting, check-in opening), not written by the coach.
+  scripted?: boolean;
 }
+
+// Saved messages have server UUIDs; optimistic ('opt-…') and local error
+// messages don't, and can't be bookmarked.
+const SERVER_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const isBookmarkable = (m: Message) => m.role === 'model' && !m.scripted && SERVER_ID_RE.test(m.id);
 
 // ─── Animated status dots ─────────────────────────────────────────────────────
 
@@ -96,10 +111,12 @@ const AnimatedStatusText: React.FC<{ text: string; style: object }> = ({ text, s
 
 // ─── Bubble ───────────────────────────────────────────────────────────────────
 
-const Bubble: React.FC<{ message: Message }> = ({ message }) => {
+// onToggleBookmark is set only for the coach's own replies.
+const Bubble: React.FC<{ message: Message; bookmarked?: boolean; onToggleBookmark?: () => void }> = ({ message, bookmarked, onToggleBookmark }) => {
   const { t } = useTranslation();
   const isUser = message.role === 'user';
   const isPsychologist = message.role === 'psychologist';
+  const text = isUser ? message.text : parseQuickReplies(message.text).text;
   return (
     <View style={[styles.bubbleRow, isUser ? styles.bubbleRowUser : styles.bubbleRowModel]}>
       {!isUser && (
@@ -114,31 +131,60 @@ const Bubble: React.FC<{ message: Message }> = ({ message }) => {
           <Text style={styles.psychLabel}>{t('coachChat.psychologist')}</Text>
         )}
         <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleModel]}>
-          <Text style={[styles.bubbleText, isUser ? styles.bubbleTextUser : styles.bubbleTextModel]}>
-            {message.text}
-          </Text>
+          {isUser ? (
+            <Text style={[styles.bubbleText, styles.bubbleTextUser]}>{text}</Text>
+          ) : (
+            // The coach writes **bold** for scripts and key words.
+            <MarkdownText style={StyleSheet.flatten([styles.bubbleText, styles.bubbleTextModel])} boldFontFamily={FONTS.bold}>
+              {text}
+            </MarkdownText>
+          )}
         </View>
+        {onToggleBookmark && (
+          <TouchableOpacity
+            style={styles.bookmarkButton}
+            onPress={onToggleBookmark}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityLabel={t(bookmarked ? 'moduleChat.bookmarks.remove' : 'moduleChat.bookmarks.add')}
+          >
+            <Ionicons
+              name={bookmarked ? 'bookmark' : 'bookmark-outline'}
+              size={16}
+              color={bookmarked ? COLORS.mainPurple : '#9CA3AF'}
+            />
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
 };
 
+// A message that's only a greeting gets a fixed reply (no LLM call).
+const GREETING_RE = /^(hi+|hello|hey+|hiya|yo|good (morning|afternoon|evening)|你好|您好|嗨|哈[囉啰喽]|早安|早上好|午安|晚上好)(\s*(there|nora|諾拉|诺拉))?[\s!.~,，。！～]*$/i;
+
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export const ModuleChatScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const { moduleKey } = useRoute<RouteProp<RootStackParamList, 'ModuleChat'>>().params;
+  const { moduleKey, draft } = useRoute<RouteProp<RootStackParamList, 'ModuleChat'>>().params;
   const authService = useAuthService();
   const { t, i18n } = useTranslation();
   const { markAiAsRead, psychUnreadCount } = useCoachUnread();
   const flatListRef = useRef<FlatList>(null);
+  const inputRef = useRef<TextInput>(null);
   const latestServerTsRef = useRef<string | undefined>(undefined);
   const optimisticIndexRef = useRef<number>(0);
-  const prevContentHeightRef = useRef(0);
   const pinToBottomRef = useRef(true);
 
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [chattedThisVisit, setChattedThisVisit] = useState(false);
+  // When the latest module session with a ready report was recorded — offers
+  // "Chat about latest session" if it's newer than the last chat message.
+  const [latestSessionAt, setLatestSessionAt] = useState<string | null>(null);
+  // Ids of the bookmarked coach replies.
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
+  const [input, setInput] = useState(draft ?? '');
   const [showHumanModal, setShowHumanModal] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [submittingHuman, setSubmittingHuman] = useState(false);
@@ -146,15 +192,13 @@ export const ModuleChatScreen: React.FC = () => {
   const [psychRequested, setPsychRequested] = useState(false);
   const [loading, setLoading] = useState(false);
   const [statusText, setStatusText] = useState<string | null>(null);
-  const [flatListHeight, setFlatListHeight] = useState(600);
-  const [showSpacer, setShowSpacer] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [parentName, setParentName] = useState('');
   const [childName, setChildName] = useState('');
 
   // Ideas: the strategies suggested in the parent's last module report
-  // (subtitle = its description; tapping asks how to use it). Before any
-  // report, the coach chat's general ideas.
+  // (subtitle = its description; tapping starts a check-in on it). Before any
+  // report, the coach chat's general ideas (tapping fills the input).
   const { suggestedStrategies } = useModulePlan(moduleKey);
   const SUGGESTION_IMAGES = [
     require('../../assets/images/green-energy.png'),
@@ -168,13 +212,14 @@ export const ModuleChatScreen: React.FC = () => {
         title: strategy.name,
         subtitle: strategy.description,
         prompt: t('moduleChat.strategyPrompt', { strategy: strategy.name }),
+        sendNow: true,
       }))
     : [
         { image: SUGGESTION_IMAGES[0], title: t('coachChat.suggestions.understandTitle'), prompt: t('coachChat.suggestions.understandPrompt') },
         { image: SUGGESTION_IMAGES[1], title: t('coachChat.suggestions.whatToDoTitle'), prompt: t('coachChat.suggestions.whatToDoPrompt') },
         { image: SUGGESTION_IMAGES[2], title: t('coachChat.suggestions.confidenceTitle'), prompt: t('coachChat.suggestions.confidencePrompt') },
         { image: SUGGESTION_IMAGES[3], title: t('coachChat.suggestions.planTitle'), prompt: t('coachChat.suggestions.planPrompt') },
-      ].map(s => ({ ...s, subtitle: s.prompt }));
+      ].map(s => ({ ...s, subtitle: s.prompt, sendNow: false }));
 
   const scrollToEnd = useCallback((animated = true) => {
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated }), 100);
@@ -188,10 +233,64 @@ export const ModuleChatScreen: React.FC = () => {
     amplitudeService.trackEvent('Chat Opened', { chat: 'ai_coach' });
   }, []);
 
+  // Open the keyboard on entry — once the slide-up transition has finished,
+  // so focusing doesn't stutter the animation.
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('transitionEnd', (e: { data?: { closing?: boolean } }) => {
+      if (!e.data?.closing) inputRef.current?.focus();
+    });
+    return unsubscribe;
+  }, [navigation]);
+
   // Clear AI unread badge on exit
   useEffect(() => {
     return () => { markAiAsRead(latestServerTsRef.current); };
   }, [markAiAsRead]);
+
+  useEffect(() => {
+    authService.authenticatedRequest(`${API_URL}/api/learn-modules/${moduleKey}/latest-session`)
+      .then(r => r.json())
+      .then((data: { session: { createdAt: string; status: string } | null }) => {
+        if (data.session?.status === 'ready') setLatestSessionAt(data.session.createdAt);
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Bookmarks — reloaded on focus, as the parent can remove them on the
+  // bookmarks screen.
+  useFocusEffect(useCallback(() => {
+    authService.authenticatedRequest(`${API_URL}/api/coach/bookmarks?moduleKey=${moduleKey}`)
+      .then(r => r.json())
+      .then((data: { bookmarks: Array<{ messageId: string | null }> }) => {
+        setBookmarkedIds(new Set(data.bookmarks.flatMap(b => (b.messageId ? [b.messageId] : []))));
+      })
+      .catch(() => {});
+  }, [authService, moduleKey]));
+
+  const toggleBookmark = useCallback(async (messageId: string) => {
+    const wasBookmarked = bookmarkedIds.has(messageId);
+    const setBookmarked = (on: boolean) => setBookmarkedIds(prev => {
+      const next = new Set(prev);
+      if (on) next.add(messageId); else next.delete(messageId);
+      return next;
+    });
+    setBookmarked(!wasBookmarked);
+    amplitudeService.trackEvent(wasBookmarked ? 'Chat Bookmark Removed' : 'Chat Bookmark Added', { chat: 'module_coach', moduleKey });
+    try {
+      const response = wasBookmarked
+        ? await authService.authenticatedRequest(`${API_URL}/api/coach/bookmarks/${messageId}`, { method: 'DELETE' })
+        : await authService.authenticatedRequest(`${API_URL}/api/coach/bookmarks`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messageId, moduleKey }),
+          });
+      if (!response.ok) throw new Error(`Server error ${response.status}`);
+    } catch (err) {
+      setBookmarked(wasBookmarked);
+      reportError(err, 'ModuleChatScreen.toggleBookmark');
+    }
+  }, [bookmarkedIds, authService, moduleKey]);
 
   // Load history (cache-first), then long-poll for new messages
   useEffect(() => {
@@ -255,7 +354,10 @@ export const ModuleChatScreen: React.FC = () => {
         }
       }
 
-      if (!cancelled) startPolling();
+      if (!cancelled) {
+        setHistoryLoaded(true);
+        startPolling();
+      }
     }
 
     // 3. Long-poll loop — holds until server pushes or 25s timeout
@@ -301,34 +403,46 @@ export const ModuleChatScreen: React.FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleSend = useCallback(async () => {
-    const text = input.trim();
-    if (!text || loading) return;
+  // The keyboard stays up while chatting (sending doesn't dismiss it; the
+  // parent closes it by dragging the list). When it opens, keep the latest
+  // message just above it.
+  useEffect(() => {
+    const sub = Keyboard.addListener('keyboardDidShow', () => {
+      if (pinToBottomRef.current && !showGuide) scrollToEnd();
+    });
+    return () => sub.remove();
+  }, [showGuide, scrollToEnd]);
 
-    amplitudeService.trackEvent('Chat Message Sent', { chat: 'ai_coach' });
-    setInput('');
-    setLoading(true);
-    Keyboard.dismiss();
-
+  // Shows outgoing messages optimistically (replaced by the real ones when the
+  // long-poll delivers them). The list stays pinned to the bottom like a
+  // normal chat (no sliding the new message up to the top).
+  const showOutgoing = useCallback((outgoing: Array<Pick<Message, 'role' | 'text'>>) => {
     setShowGuide(false);
+    pinToBottomRef.current = true;
+    setChattedThisVisit(true);
 
-    // Stop auto-pinning to bottom; we'll control scroll manually from here
-    pinToBottomRef.current = false;
-
-    // scrollTarget = top of where the new message will appear.
-    // If spacer is already shown, prevContentHeightRef includes its height — subtract it.
-    const scrollTarget = Math.max(0, prevContentHeightRef.current - (showSpacer ? flatListHeight : 0) - 16);
-    if (!showSpacer) setShowSpacer(true); // persist for the whole session — never remove
-
-    const optimisticId = `opt-${Date.now()}`;
-    const optimisticMsg: Message = { id: optimisticId, role: 'user', text, createdAt: new Date().toISOString() };
+    const stamp = Date.now();
+    const optimistic: Message[] = outgoing.map((m, i) => ({
+      id: `opt-${stamp}-${i}`,
+      role: m.role,
+      text: m.text,
+      createdAt: new Date(stamp + i).toISOString(),
+    }));
     setMessages(prev => {
       optimisticIndexRef.current = prev.length;
-      return [...prev, optimisticMsg];
+      return [...prev, ...optimistic];
     });
-    setTimeout(() => {
-      flatListRef.current?.scrollToOffset({ offset: scrollTarget, animated: true });
-    }, 150);
+    scrollToEnd();
+    return optimistic.map(m => m.id);
+  }, [scrollToEnd]);
+
+  const sendText = useCallback(async (raw: string) => {
+    const text = raw.trim();
+    if (!text || loading) return;
+
+    amplitudeService.trackEvent('Chat Message Sent', { chat: 'module_coach', moduleKey });
+    setLoading(true);
+    const [optimisticId] = showOutgoing([{ role: 'user', text }]);
 
     try {
       const response = await authService.authenticatedRequest(
@@ -336,14 +450,14 @@ export const ModuleChatScreen: React.FC = () => {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text, locale: i18n.language }),
+          body: JSON.stringify({ message: text, locale: i18n.language, moduleKey }),
         }
       );
 
       if (!response.ok) throw new Error(`Server error ${response.status}`);
       // Messages (user + AI) are delivered via the long-poll loop when publish() fires
     } catch (err) {
-      amplitudeService.trackEvent('Chat Send Error', { chat: 'ai_coach', error: err instanceof Error ? err.message : String(err) });
+      amplitudeService.trackEvent('Chat Send Error', { chat: 'module_coach', moduleKey, error: err instanceof Error ? err.message : String(err) });
       setMessages(prev => [
         ...prev.filter(m => m.id !== optimisticId),
         { id: Date.now().toString(), role: 'model', text: t('coachChat.errorConnection') },
@@ -353,7 +467,106 @@ export const ModuleChatScreen: React.FC = () => {
       setLoading(false);
       setStatusText(null);
     }
-  }, [input, loading, scrollToEnd, authService]);
+  }, [loading, showOutgoing, scrollToEnd, authService, moduleKey, i18n.language, t]);
+
+  // Fixed chat turns (no LLM): saved to the history via /api/coach/scripted,
+  // so the coach continues from them on the parent's next message.
+  const sendScripted = useCallback(async (turns: Array<Pick<Message, 'role' | 'text'>>) => {
+    if (loading) return;
+    const optimisticIds = showOutgoing(turns);
+    try {
+      const response = await authService.authenticatedRequest(
+        `${API_URL}/api/coach/scripted`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: turns }),
+        }
+      );
+      if (!response.ok) throw new Error(`Server error ${response.status}`);
+    } catch (err) {
+      amplitudeService.trackEvent('Chat Send Error', { chat: 'module_coach', moduleKey, scripted: true, error: err instanceof Error ? err.message : String(err) });
+      setMessages(prev => [
+        ...prev.filter(m => !optimisticIds.includes(m.id)),
+        { id: Date.now().toString(), role: 'model', text: t('coachChat.errorConnection') },
+      ]);
+      scrollToEnd();
+    }
+  }, [loading, showOutgoing, scrollToEnd, authService, moduleKey, t]);
+
+  const handleSend = useCallback(() => {
+    const text = input.trim();
+    if (!text || loading) return;
+    setInput('');
+    if (GREETING_RE.test(text)) {
+      amplitudeService.trackEvent('Chat Greeting Answered', { chat: 'module_coach', moduleKey });
+      const reply = t('moduleChat.greetingReply', { name: parentName, childName: childName || t('coachChat.yourChild') });
+      // Without a name: "Hi !" → "Hi!" (en) / "你好" stays as is (zh).
+      sendScripted([{ role: 'user', text }, { role: 'model', text: reply.replace(/^Hi !/, 'Hi!') }]);
+      return;
+    }
+    sendText(input);
+  }, [input, loading, sendText, sendScripted, parentName, childName, moduleKey, t]);
+
+  // Chips under the coach's latest message (its OPTIONS line).
+  const visibleMessages = messages.filter(m => m.role !== 'psychologist' && m.role !== 'user_psych');
+  const lastMessage = visibleMessages[visibleMessages.length - 1];
+  const quickReplies = !loading && !showGuide && lastMessage?.role === 'model'
+    ? parseQuickReplies(lastMessage.text).options
+    : [];
+
+  // Strategy check-in, opening round — fixed lines, no LLM: tapping a strategy
+  // asks whether they've tried it (two chips); each chip gets a fixed
+  // follow-up asking for details. The parent's typed answer goes to the coach
+  // (see STRATEGY CHECK-IN in server/prompts/coach-screentime.txt).
+  const checkInTried = t('moduleChat.checkIn.tried');
+  const checkInClarify = t('moduleChat.checkIn.clarify');
+  const checkInReplies: Record<string, string> = {
+    [checkInTried]: t('moduleChat.checkIn.triedReply', { childName: childName || t('coachChat.yourChild') }),
+    [checkInClarify]: t('moduleChat.checkIn.clarifyReply'),
+  };
+  // Waiting for the parent's details after a fixed follow-up — no strategy row.
+  const awaitingDetails = lastMessage?.role === 'model' && Object.values(checkInReplies).includes(lastMessage.text);
+  // Once the chat has history the welcome ideas are gone — offer the
+  // suggested strategies as a chip row above the input instead.
+  const showStrategyRow = !showGuide && !loading && !awaitingDetails && quickReplies.length === 0 && suggestedStrategies.length > 0;
+
+  const sendStrategy = useCallback((name: string, source: string) => {
+    amplitudeService.trackEvent('Chat Suggestion Used', { chat: 'module_coach', moduleKey, suggestion: name, source });
+    sendScripted([
+      { role: 'user', text: t('moduleChat.strategyPrompt', { strategy: name }) },
+      { role: 'model', text: `${t('moduleChat.checkIn.question', { strategy: name })}\nOPTIONS: ${checkInTried} | ${checkInClarify}` },
+    ]);
+  }, [moduleKey, sendScripted, t, checkInTried, checkInClarify]);
+
+  // "Chat about latest session": on entry, when a session was recorded after
+  // the last chat message (or there's no chat yet). Gone once they send anything.
+  const showLatestSessionChip = historyLoaded && !!latestSessionAt && !chattedThisVisit && !loading
+    && !(lastMessage?.createdAt && new Date(lastMessage.createdAt) > new Date(latestSessionAt));
+  const latestSessionChip = showLatestSessionChip ? (
+    <TouchableOpacity
+      style={styles.latestChip}
+      onPress={() => {
+        amplitudeService.trackEvent('Chat Latest Session Used', { chat: 'module_coach', moduleKey });
+        sendText(t('moduleChat.latestSessionPrompt'));
+      }}
+      activeOpacity={0.8}
+    >
+      <Ionicons name="sparkles" size={16} color="#fff" />
+      <Text style={styles.latestChipText}>{t('moduleChat.latestSessionLabel')}</Text>
+    </TouchableOpacity>
+  ) : null;
+
+  const handleQuickReply = useCallback((option: string) => {
+    amplitudeService.trackEvent('Chat Quick Reply Used', { chat: 'module_coach', moduleKey, option });
+    const fixedReply = checkInReplies[option];
+    if (fixedReply) {
+      sendScripted([{ role: 'user', text: option }, { role: 'model', text: fixedReply }]);
+    } else {
+      sendText(option);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [moduleKey, sendScripted, sendText, checkInTried, checkInClarify, childName]);
 
   const handleRequestHuman = useCallback(() => {
     amplitudeService.trackEvent('Coach Chat Human Request Tapped');
@@ -407,9 +620,16 @@ export const ModuleChatScreen: React.FC = () => {
           <Text style={styles.headerSub}>{t('coachChat.headerSub')}</Text>
         </View>
         {/* "Talk to a psychologist" is hidden in the module chat (it's the only
-            entry to the psychologist request modal below) — a spacer the
-            width of the back arrow keeps the title centered. */}
-        <View style={styles.headerSpacer} />
+            entry to the psychologist request modal below). Bookmarks instead —
+            the same width as the back arrow keeps the title centered. */}
+        <TrackedTouchable
+          analyticsId="Module Chat Bookmarks"
+          onPress={() => navigation.navigate('ModuleChatBookmarks', { moduleKey })}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityLabel={t('moduleChat.bookmarks.title')}
+        >
+          <Ionicons name="bookmarks-outline" size={24} color={COLORS.textDark} style={styles.headerSpacer} />
+        </TrackedTouchable>
       </View>
 
       <KeyboardAvoidingView
@@ -420,9 +640,16 @@ export const ModuleChatScreen: React.FC = () => {
         {/* Messages */}
         <FlatList
           ref={flatListRef}
-          data={showGuide ? [] : messages.filter(m => m.role !== 'psychologist' && m.role !== 'user_psych')}
+          data={showGuide ? [] : visibleMessages}
           keyExtractor={m => m.id}
-          renderItem={({ item }) => <Bubble message={item} />}
+          renderItem={({ item }) => (
+            <Bubble
+              message={item}
+              bookmarked={bookmarkedIds.has(item.id)}
+              onToggleBookmark={isBookmarkable(item) ? () => toggleBookmark(item.id) : undefined}
+            />
+          )}
+          extraData={bookmarkedIds}
           ListHeaderComponent={showGuide ? (
             <View style={styles.guideContainer}>
               <Video
@@ -435,6 +662,7 @@ export const ModuleChatScreen: React.FC = () => {
               />
               {/* Welcome text introduces the ideas below: the last session's
                   strategies, or (before any report) the coach chat's greeting. */}
+              {latestSessionChip}
               {suggestedStrategies.length > 0 ? (
                 <Text style={[styles.guideTitle, styles.suggestedTitle]}>{t('moduleChat.suggestedLabel')}</Text>
               ) : (
@@ -453,6 +681,10 @@ export const ModuleChatScreen: React.FC = () => {
                     key={s.title}
                     style={styles.suggestionCard}
                     onPress={() => {
+                      if (s.sendNow) {
+                        sendStrategy(s.title, 'welcome');
+                        return;
+                      }
                       amplitudeService.trackEvent('Chat Suggestion Used', { chat: 'module_coach', moduleKey, suggestion: s.title });
                       setInput(s.prompt);
                     }}
@@ -468,15 +700,32 @@ export const ModuleChatScreen: React.FC = () => {
               </View>
             </View>
           ) : null}
-          contentContainerStyle={styles.messageList}
-          onLayout={(e) => setFlatListHeight(e.nativeEvent.layout.height)}
-          onContentSizeChange={(_, h) => {
+          // Messages stack up from the input bar, not down from the header.
+          contentContainerStyle={[styles.messageList, !showGuide && styles.messageListBottom]}
+          // Taps on chips/cards work with the keyboard up; dragging the list closes it.
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          onContentSizeChange={() => {
             if (pinToBottomRef.current && !showGuide) scrollToEnd(false);
-            prevContentHeightRef.current = h;
           }}
           maintainVisibleContentPosition={showGuide ? undefined : { minIndexForVisible: 0 }}
           ListFooterComponent={
             <>
+              {!showGuide && latestSessionChip}
+              {quickReplies.length > 0 && (
+                <View style={styles.quickReplies}>
+                  {quickReplies.map(option => (
+                    <TouchableOpacity
+                      key={option}
+                      style={styles.quickReplyChip}
+                      onPress={() => handleQuickReply(option)}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={styles.quickReplyText}>{option}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
               {loading && (
                 <View style={styles.typingRow}>
                   <View style={styles.avatarWrap}>
@@ -490,14 +739,38 @@ export const ModuleChatScreen: React.FC = () => {
                   </View>
                 </View>
               )}
-              {showSpacer && <View style={{ height: flatListHeight }} />}
             </>
           }
         />
 
+        {/* Suggested strategies, once the welcome ideas are gone */}
+        {showStrategyRow && (
+          <View style={styles.strategyRow}>
+            <Text style={styles.strategyRowLabel}>{t('moduleChat.strategiesLabel')}</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.strategyRowChips}
+              keyboardShouldPersistTaps="handled"
+            >
+              {suggestedStrategies.map(strategy => (
+                <TouchableOpacity
+                  key={strategy.name}
+                  style={styles.strategyChip}
+                  onPress={() => sendStrategy(strategy.name, 'strategy_row')}
+                  activeOpacity={0.75}
+                >
+                  <Text style={styles.strategyChipText} numberOfLines={1}>{strategy.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
         {/* Input bar */}
         <View style={styles.inputBar}>
           <TextInput
+            ref={inputRef}
             style={styles.input}
             value={input}
             onChangeText={setInput}
@@ -672,7 +945,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
   },
-  headerSpacer: { width: 26 },
+  headerSpacer: { width: 26, textAlign: 'right' },
+  bookmarkButton: { alignSelf: 'flex-start', marginTop: 4, marginLeft: 6 },
   headerTitle: {
     fontFamily: FONTS.bold,
     fontSize: 16,
@@ -690,6 +964,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 8,
+  },
+  messageListBottom: {
+    flexGrow: 1,
+    justifyContent: 'flex-end',
   },
   bubbleRow: {
     flexDirection: 'row',
@@ -964,6 +1242,25 @@ const styles = StyleSheet.create({
   },
   // No subtitle under it, so it carries the gap before the ideas itself.
   suggestedTitle: { marginBottom: 20 },
+
+
+  // ── "Chat about latest session" ──
+  latestChip: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: COLORS.mainPurple,
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginBottom: 16,
+  },
+  latestChipText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: '#fff',
+  },
   guideSubtitle: {
     fontFamily: FONTS.bold,
     fontSize: 18,
@@ -1006,5 +1303,58 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6B7280',
     lineHeight: 17,
+  },
+
+  // ── Quick replies (under the coach's latest message, aligned with its bubble) ──
+  quickReplies: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginLeft: 36, // avatar 28 + gap 8
+    marginBottom: 12,
+  },
+  quickReplyChip: {
+    borderWidth: 1.5,
+    borderColor: COLORS.mainPurple,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: '#fff',
+  },
+  quickReplyText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: COLORS.mainPurple,
+  },
+
+  // ── Suggested strategies row (above the input) ──
+  strategyRow: {
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    backgroundColor: '#fff',
+  },
+  strategyRowLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 12,
+    color: '#6B7280',
+    paddingHorizontal: 16,
+    marginBottom: 6,
+  },
+  strategyRowChips: {
+    gap: 8,
+    paddingHorizontal: 16,
+  },
+  strategyChip: {
+    maxWidth: 240,
+    backgroundColor: '#F1EBFB',
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  strategyChipText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: COLORS.mainPurple,
   },
 });

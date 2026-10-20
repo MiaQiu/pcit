@@ -53,6 +53,7 @@ import { ModuleRecordGuideScreen } from '../screens/ModuleRecordGuideScreen';
 import { ModulePlanDetailScreen } from '../screens/ModulePlanDetailScreen';
 import { ModuleCheatSheetScreen } from '../screens/ModuleCheatSheetScreen';
 import { ModuleChatScreen } from '../screens/ModuleChatScreen';
+import { ModuleChatBookmarksScreen } from '../screens/ModuleChatBookmarksScreen';
 import { ModuleLearnScreen } from '../screens/ModuleLearnScreen';
 import { GetReadySectionScreen } from '../screens/GetReadySectionScreen';
 import { RootStackParamList, OnboardingStackParamList } from './types';
@@ -600,6 +601,13 @@ export const RootNavigator: React.FC = () => {
         component={ModuleChatScreen}
         options={{
           animation: 'slide_from_bottom',
+        }}
+      />
+      <Stack.Screen
+        name="ModuleChatBookmarks"
+        component={ModuleChatBookmarksScreen}
+        options={{
+          animation: 'slide_from_right',
         }}
       />
       <Stack.Screen

@@ -138,8 +138,32 @@ export interface ModulePlanData {
   crisisTool: { isNeeded: boolean; title: string; action: string; script: string };
 }
 
+// Section of a free-form Day 1 report, split out by the server's format call.
+export type ModuleReportSectionKind = 'win' | 'learned' | 'emotion' | 'grow' | 'reflect' | 'expectations' | 'other';
+
+// One point of the child's outburst level (0 calm – 5 aggression) over a session.
+export interface EmotionTimelinePoint {
+  seconds: number;
+  level: number;
+  label: string;
+}
+export interface ModuleReportSection {
+  kind: ModuleReportSectionKind;
+  title: string;
+  body: string;
+  quote?: string;  // the parent's own words from the session
+  script?: string; // what to say next time
+}
+
 export interface ModuleCoachingData {
-  coachingReport: {
+  // 'narrative': free-form Day 1 write-up (`narrative`) shown as `report`'s
+  // sections. Absent: the fixed `coachingReport` cards (Day 2+, older Day 1).
+  format?: 'narrative';
+  narrative?: string;
+  report?: { headline: string; sections: ModuleReportSection[] };
+  emotionTimeline?: EmotionTimelinePoint[]; // drawn in the 'emotion' section
+  suggestedStrategies?: { name: string; description: string }[];
+  coachingReport?: {
     introduction: string;
     topMoment: { title: string; quote: string; explanation: string };
     nextGrowthFocus: {

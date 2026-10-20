@@ -197,8 +197,11 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   const hasStarted = progressLoaded ? !!latestSession || serverDay > 1
     : cachedStarted || progressFailed ? true
     : null;
+  // __DEV__ only: force the Day 1 or following-day Today (null = real state).
+  const [devFirstTime, setDevFirstTime] = useState<boolean | null>(null);
   // null = still finding out (Today shows a spinner).
-  const isFirstTime = hasStarted === null ? null : !hasStarted && currentDay === 1;
+  const isFirstTime = __DEV__ && devFirstTime !== null ? devFirstTime
+    : hasStarted === null ? null : !hasStarted && currentDay === 1;
 
   const loadLatestSession = useCallback(() => {
     authService.authenticatedRequest(`${API_URL}/api/learn-modules/${moduleKey}/latest-session`)
@@ -417,6 +420,22 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
         />
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          {__DEV__ && (
+            <View style={styles.devBar}>
+              <Text style={styles.devBarLabel}>PREVIEW (dev only)</Text>
+              <View style={styles.devChipRow}>
+                {([[null, 'Real'], [true, 'Day 1'], [false, 'Following day']] as const).map(([value, label]) => (
+                  <TrackedTouchable key={label} analyticsId={`Dev Today Preview: ${label}`}
+                    onPress={() => setDevFirstTime(value)}
+                    style={[styles.devChip, devFirstTime === value && styles.devChipActive]}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.devChipText, devFirstTime === value && styles.devChipTextActive]}>{label}</Text>
+                  </TrackedTouchable>
+                ))}
+              </View>
+            </View>
+          )}
           {isFirstTime === null ? (
             <ActivityIndicator style={styles.firstTimeLoading} color={COLORS.mainPurple} />
           ) : isFirstTime ? (
@@ -638,6 +657,22 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
   flex: { flex: 1 },
   content: { paddingHorizontal: H_PAD, paddingBottom: 24 },
+
+  // ── Dev preview bar (__DEV__ only) ──
+  devBar: {
+    marginBottom: 12,
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderStyle: 'dashed',
+  },
+  devBarLabel: { fontFamily: FONTS.bold, fontSize: 10, letterSpacing: 0.5, color: '#9CA3AF', marginBottom: 8 },
+  devChipRow: { flexDirection: 'row', gap: 8 },
+  devChip: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, backgroundColor: '#F3F4F6' },
+  devChipActive: { backgroundColor: COLORS.mainPurple },
+  devChipText: { fontFamily: FONTS.semiBold, fontSize: 12, color: '#4B5563' },
+  devChipTextActive: { color: '#FFFFFF' },
 
   // ── Tab bar ──
   tabBarWrap: { paddingHorizontal: 12, paddingTop: 8, backgroundColor: BG },

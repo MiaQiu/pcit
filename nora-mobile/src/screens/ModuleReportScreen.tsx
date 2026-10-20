@@ -47,11 +47,12 @@ import { COLORS, FONTS, REPORT_DETAIL_DRAGON, DRAGON_WAVING_SMALL } from '../con
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService, useLessonService } from '../contexts/AppContext';
 import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
-import type { ModuleCoachingData } from '../constants/learnModules';
+import type { ModuleCoachingData, ModuleReportSectionKind } from '../constants/learnModules';
 import type { RecordingAnalysis, User, DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling, ParentSkillLevel, DemoVideo, ChildSnapshotSurvey } from '@nora/core';
 import { computeFocusAreas, primaryFocusAreas, type FocusAreaData } from '../utils/snapshotFocusAreas';
 import { MomentPlayer } from '../components/MomentPlayer';
 import { RadarChart } from '../components/RadarChart';
+import { EmotionTimelineChart } from '../components/EmotionTimelineChart';
 import { DomainMilestoneModal } from '../components/DomainMilestoneModal';
 import { NextLevelOverviewModal } from '../components/NextLevelOverviewModal';
 import { MarkdownText } from '../utils/MarkdownText';
@@ -83,6 +84,17 @@ const FIRST_SESSION_CHALLENGE_ACCENT = { color: '#E08A3C', background: '#FBE7D2'
 
 // PDI command-sequence label badges — same mapping as ReportScreen.tsx's
 // PDICoachCorner; unknown labels read as "Needs Work".
+// Card icon per section kind of a narrative module report (moduleCoaching.report).
+const NARRATIVE_SECTION_ICONS: Record<ModuleReportSectionKind, keyof typeof Ionicons.glyphMap> = {
+  win:          'star',
+  learned:      'heart',
+  emotion:      'pulse',
+  grow:         'trending-up',
+  reflect:      'chatbubbles',
+  expectations: 'compass',
+  other:        'sparkles',
+};
+
 const PDI_SEQ_LABEL_COLORS: Record<string, { bg: string; text: string }> = {
   'Great!': { bg: '#DCFCE7', text: '#15803D' },
   'Needs Work': { bg: '#FEF3C7', text: '#B45309' },
@@ -561,11 +573,18 @@ export const ModuleReportScreen: React.FC = () => {
     );
   }
 
-  // Learn module report — from the module coaching call
-  // (prompts/coaching-screentime.txt), not the PCIT pipeline.
+  // Learn module report — from the module coaching call, not the PCIT
+  // pipeline. Day 1 is a free-form write-up split into sections by a format
+  // call (format 'narrative': coaching-screentime_1st*.txt); Day 2+ and older
+  // Day 1 reports are fixed cards (coachingReport: coaching-screentime*.txt).
   const { moduleCoaching, fromSurvey } = reportData as unknown as { moduleCoaching?: ModuleCoachingData; fromSurvey?: boolean };
   if (moduleCoaching) {
-    const { introduction, topMoment, nextGrowthFocus, whatWeLearned } = moduleCoaching.coachingReport;
+    const narrativeReport = moduleCoaching.format === 'narrative' ? moduleCoaching.report : undefined;
+    const coachingReport = moduleCoaching.coachingReport;
+    const heroText = narrativeReport ? narrativeReport.headline : coachingReport?.introduction;
+    // Outburst graph goes in the 'emotion' section; the first section if the formatter tagged none.
+    const emotionTimeline = moduleCoaching.emotionTimeline ?? [];
+    const emotionSectionIndex = Math.max(0, narrativeReport?.sections.findIndex(s => s.kind === 'emotion') ?? 0);
     return (
       <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
         <View style={styles.header}>
@@ -581,44 +600,75 @@ export const ModuleReportScreen: React.FC = () => {
               side-by-side hero. */}
           <View style={styles.moduleHeroCard}>
             <View style={styles.moduleHeroBubble}>
-              <Text style={styles.moduleHeroText}>{introduction}</Text>
+              <Text style={styles.moduleHeroText}>{heroText}</Text>
             </View>
             <View style={styles.moduleHeroBubbleTail} />
             <Image source={REPORT_DETAIL_DRAGON} style={styles.moduleHeroDragon} resizeMode="contain" />
           </View>
 
-          {/* Top Moment — recordings only; a survey-based report has no moment to quote */}
-          {!fromSurvey && (
-            <ReportCard icon="star" title={t('reportDetail.topMoment.title')} tip={topMoment.explanation || undefined}>
-              <Text style={styles.moduleSubheading}>{topMoment.title}</Text>
-              {!!topMoment.quote && <Text style={styles.moduleQuote}>{`\u201C${topMoment.quote}\u201D`}</Text>}
-            </ReportCard>
-          )}
-
-          {/* What we learned — recordings only; a survey-based report has no observed session */}
-          {!fromSurvey && (
-            <ReportCard icon="heart" title={whatWeLearned.title || t('reportDetail.childInsight.title', { childName })}>
-              <Text style={styles.moduleBody}>{whatWeLearned.description}</Text>
-            </ReportCard>
-          )}
-
-          {/* Next growth focus */}
-          <ReportCard icon="trending-up" title={t('moduleReport.nextGrowthFocus')} tip={nextGrowthFocus.rationale || undefined}>
-            <Text style={styles.moduleSubheading}>{nextGrowthFocus.title}</Text>
-            <Text style={styles.moduleBody}>{nextGrowthFocus.explanation}</Text>
-            {nextGrowthFocus.strategies.map((strategy, i) => (
-              <View key={i} style={styles.moduleStrategy}>
-                <Text style={styles.moduleStrategyName}>{strategy.name}</Text>
-                <Text style={styles.moduleBody}>{strategy.description}</Text>
-              </View>
-            ))}
-            {!!nextGrowthFocus.exampleQuote && (
-              <View style={styles.moduleTryThis}>
-                <Text style={styles.moduleTryThisLabel}>{t('moduleReport.trySaying')}</Text>
-                <Text style={styles.moduleQuote}>{`\u201C${nextGrowthFocus.exampleQuote}\u201D`}</Text>
-              </View>
+          {narrativeReport ? (
+            /* One card per section of the write-up, in the coach's order */
+            narrativeReport.sections.map((section, i) => (
+              <ReportCard key={i} icon={NARRATIVE_SECTION_ICONS[section.kind] ?? 'sparkles'} title={section.title}>
+                {!!section.quote && <Text style={styles.moduleQuote}>{`\u201C${section.quote}\u201D`}</Text>}
+                {i === emotionSectionIndex && emotionTimeline.length > 1 && <EmotionTimelineChart points={emotionTimeline} />}
+                {!!section.body && <MarkdownText style={styles.moduleBody}>{section.body}</MarkdownText>}
+                {!!section.script && (
+                  <View style={styles.moduleTryThis}>
+                    <Text style={styles.moduleTryThisLabel}>{t('moduleReport.trySaying')}</Text>
+                    <Text style={styles.moduleQuote}>{`\u201C${section.script}\u201D`}</Text>
+                  </View>
+                )}
+                {/* Reflective questions: answer them with Nora in the module chat */}
+                {section.kind === 'reflect' && (
+                  <TrackedTouchable analyticsId="moduleReport.reflectWithNora" style={styles.moduleReflectButton} activeOpacity={0.85}
+                    onPress={() => {
+                      amplitudeService.trackEvent('Module Report Reflect Tapped', { recordingId, moduleKey });
+                      navigation.navigate('ModuleChat', { moduleKey, draft: t('moduleReport.reflectDraft', { title: section.title }) });
+                    }}
+                  >
+                    <Ionicons name="chatbubbles-outline" size={16} color={COLORS.mainPurple} />
+                    <Text style={styles.moduleReflectButtonText}>{t('moduleReport.reflectWithNora')}</Text>
+                  </TrackedTouchable>
+                )}
+              </ReportCard>
+            ))
+          ) : coachingReport ? (
+            <>
+            {/* Top Moment — recordings only; a survey-based report has no moment to quote */}
+            {!fromSurvey && (
+              <ReportCard icon="star" title={t('reportDetail.coachingReport.topMoment.title')} tip={coachingReport.topMoment.explanation || undefined}>
+                <Text style={styles.moduleSubheading}>{coachingReport.topMoment.title}</Text>
+                {!!coachingReport.topMoment.quote && <Text style={styles.moduleQuote}>{`\u201C${coachingReport.topMoment.quote}\u201D`}</Text>}
+              </ReportCard>
             )}
-          </ReportCard>
+
+            {/* What we learned — recordings only; a survey-based report has no observed session */}
+            {!fromSurvey && (
+              <ReportCard icon="heart" title={coachingReport.whatWeLearned.title || t('reportDetail.childInsight.title', { childName })}>
+                <Text style={styles.moduleBody}>{coachingReport.whatWeLearned.description}</Text>
+              </ReportCard>
+            )}
+
+            {/* Next growth focus */}
+            <ReportCard icon="trending-up" title={t('moduleReport.nextGrowthFocus')} tip={coachingReport.nextGrowthFocus.rationale || undefined}>
+              <Text style={styles.moduleSubheading}>{coachingReport.nextGrowthFocus.title}</Text>
+              <Text style={styles.moduleBody}>{coachingReport.nextGrowthFocus.explanation}</Text>
+              {coachingReport.nextGrowthFocus.strategies.map((strategy, i) => (
+                <View key={i} style={styles.moduleStrategy}>
+                  <Text style={styles.moduleStrategyName}>{strategy.name}</Text>
+                  <Text style={styles.moduleBody}>{strategy.description}</Text>
+                </View>
+              ))}
+              {!!coachingReport.nextGrowthFocus.exampleQuote && (
+                <View style={styles.moduleTryThis}>
+                  <Text style={styles.moduleTryThisLabel}>{t('moduleReport.trySaying')}</Text>
+                  <Text style={styles.moduleQuote}>{`\u201C${coachingReport.nextGrowthFocus.exampleQuote}\u201D`}</Text>
+                </View>
+              )}
+            </ReportCard>
+            </>
+          ) : null}
 
           {/* Full Transcript — none for a report written from survey answers */}
           {!fromSurvey && (
@@ -2039,15 +2089,17 @@ const styles = StyleSheet.create({
     borderRightColor: 'transparent',
     borderTopColor: '#FFFFFF',
   },
-  moduleHeroText: { fontFamily: FONTS.semiBold, fontSize: 16, lineHeight: 23, color: '#000000' },
+  moduleHeroText: { fontFamily: FONTS.semiBold, fontSize: 18, lineHeight: 25, color: '#000000' },
   moduleHeroDragon: { alignSelf: 'flex-start', width: 160, height: 160, marginTop: 2, marginBottom: -12, marginLeft: -8 },
-  moduleSubheading: { fontFamily: FONTS.bold, fontSize: 16, lineHeight: 22, color: REPORT_CARD_COLORS.title },
-  moduleBody: { fontFamily: FONTS.regular, fontSize: 15, lineHeight: 22, color: REPORT_CARD_COLORS.title, marginTop: 4 },
-  moduleQuote: { fontFamily: FONTS.regularItalic, fontSize: 15, lineHeight: 22, color: COLORS.mainPurple, marginTop: 6 },
+  moduleSubheading: { fontFamily: FONTS.bold, fontSize: 18, lineHeight: 24, color: REPORT_CARD_COLORS.title },
+  moduleBody: { fontFamily: FONTS.regular, fontSize: 17, lineHeight: 24, color: REPORT_CARD_COLORS.title, marginTop: 4 },
+  moduleQuote: { fontFamily: FONTS.regularItalic, fontSize: 17, lineHeight: 24, color: COLORS.mainPurple, marginTop: 6 },
   moduleStrategy: { marginTop: 12 },
-  moduleStrategyName: { fontFamily: FONTS.bold, fontSize: 15, color: COLORS.mainPurple },
+  moduleStrategyName: { fontFamily: FONTS.bold, fontSize: 17, color: COLORS.mainPurple },
   moduleTryThis: { marginTop: 14, backgroundColor: '#F5EAFB', borderRadius: 14, padding: 12 },
-  moduleTryThisLabel: { fontFamily: FONTS.semiBold, fontSize: 12, letterSpacing: 0.6, color: '#6B7280', textTransform: 'uppercase' },
+  moduleTryThisLabel: { fontFamily: FONTS.semiBold, fontSize: 14, letterSpacing: 0.6, color: '#6B7280', textTransform: 'uppercase' },
+  moduleReflectButton: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, marginTop: 14, borderWidth: 1, borderColor: COLORS.mainPurple, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 14 },
+  moduleReflectButtonText: { fontFamily: FONTS.semiBold, fontSize: 16, color: COLORS.mainPurple },
 
   // ── See you tomorrow (report exit) ──
   seeYouTomorrowButton: {

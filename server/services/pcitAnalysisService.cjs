@@ -16,6 +16,7 @@ const { decryptSensitiveData } = require('../utils/encryption.cjs');
 const { getLanguageInstruction } = require('../utils/languageUtils.cjs');
 const { classifySpeakersML } = require('./mlDiarizationService.cjs');
 const { parseUserIssues } = require('./priorityEngine.cjs');
+const { formatScreenTimeIntakeForPrompt, reportedDifferences } = require('../utils/screenTimeIntake.cjs');
 
 // DPICS asset paths — referenced by gateway cache config for coding and review feedback
 const DPICS_PDF_PATH      = process.env.DPICS_PDF_PATH      || require('path').join(__dirname, '../assets/DPICS-Manual.2.18.pdf');
@@ -440,6 +441,24 @@ function formatUtterancesForPsychologist(utterances) {
     }).join('\n');
 }
 
+/**
+ * Same as formatUtterancesForPsychologist, each line prefixed with its
+ * [mm:ss] start time — the Day 1 screen-time prompt plots the child's
+ * outburst level over time from these.
+ */
+function formatUtterancesWithTimestamps(utterances) {
+  const clock = (seconds) => {
+    const total = Math.max(0, Math.floor(seconds || 0));
+    return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+  };
+  return utterances
+    .filter(u => u.speaker !== SILENT_SPEAKER_ID)
+    .map(u => {
+      const roleLabel = u.role === 'adult' ? 'Parent' : u.role === 'child' ? 'Child' : u.speaker;
+      return `[${clock(u.startTime)}] ${roleLabel}: ${u.text}`;
+    }).join('\n');
+}
+
 // Human-readable labels for the 10 Child Snapshot ("WACB") behavior items.
 // Mirrors nora-mobile en.json onboarding.page7.wacbQuestions — keep in sync.
 // Used so issuePriority rows sourced from the snapshot survey render as plain
@@ -723,17 +742,24 @@ async function generateAboutChild(utterances, childInfo, tagCounts = {}, session
 // ============================================================================
 
 // Learn modules whose recordings get a module coaching call instead of the
-// PCIT pipeline, mapped to their prompt file and response schema.
-// Day 1 uses `prompt`; Day 2+ (once a plan exists) uses `followupPrompt`,
-// which gets the strategy knowledge base cut from the Day 1 prompt (the
-// section between KNOWLEDGE_BASE_START and KNOWLEDGE_BASE_END) so the
-// strategies are edited in one place.
+// PCIT pipeline, mapped to their prompt files and response schemas.
+// Day 1 uses `prompt`: with a `formatPrompt` it writes a free-form report,
+// then the format call splits it into display sections and extracts the
+// "My Plan" (`formatSchema`); without one, `prompt` returns `schema` JSON.
+// Day 2+ (once a plan exists) uses `followupPrompt`. Both the format and
+// follow-up prompts get the strategy knowledge base cut from
+// `knowledgeBasePrompt` (the section between KNOWLEDGE_BASE_START and
+// KNOWLEDGE_BASE_END) so the strategies are edited in one place.
 const MODULE_COACHING_CONFIG = {
   screenTime: {
-    prompt:         'coaching-screentime',
-    schema:         SCHEMAS.SCREENTIME_COACHING,
+    prompt:         'coaching-screentime_1st',
+    formatPrompt:   'coaching-screentime_1st-format',
+    formatSchema:   SCHEMAS.SCREENTIME_NARRATIVE_FORMAT,
     followupPrompt: 'coaching-screentime-followup',
     followupSchema: SCHEMAS.SCREENTIME_FOLLOWUP_COACHING,
+    knowledgeBasePrompt: 'coaching-screentime',
+    // Module chat system prompt (routes/coach.cjs, see getModuleChatPrompt).
+    chatPrompt:     'coach-screentime',
     // Strategies in the Knowledge Base — valid active_strategy_id range.
     strategyCount:  10,
   },
@@ -846,34 +872,175 @@ function formatModuleSurveyForPrompt(survey) {
     .join('\n');
 }
 
+// Strategy check-in feedback from the module chat (ModuleStrategyFeedback,
+// saved by the coach's save_strategy_feedback tool), as prompt lines.
+const STRATEGY_FEEDBACK_TRIED_TEXT = {
+  yes:     'tried it',
+  not_yet: "hasn't tried it yet",
+  unsure:  "isn't sure how to do it",
+};
+const STRATEGY_FEEDBACK_OUTCOME_TEXT = {
+  went_well: 'it went well',
+  partly:    'it partly worked',
+  hard:      'it was hard',
+};
+
+function formatStrategyFeedback(rows) {
+  return rows.map(f => {
+    const parts = [`"${f.strategy}": parent ${STRATEGY_FEEDBACK_TRIED_TEXT[f.tried] || f.tried}`];
+    if (f.outcome) parts.push(STRATEGY_FEEDBACK_OUTCOME_TEXT[f.outcome] || f.outcome);
+    if (f.obstacle) parts.push(`difficulty: ${f.obstacle}`);
+    if (f.nextStep) parts.push(`agreed next step: ${f.nextStep}`);
+    if (f.notes) parts.push(`notes: ${f.notes}`);
+    return `- ${f.createdAt.toISOString().slice(0, 10)} ${parts.join('; ')}`;
+  }).join('\n');
+}
+
+// Module reports for this parent, oldest first.
+function getModuleReports(userId, moduleKey, before = undefined) {
+  return prisma.session.findMany({
+    where: {
+      userId,
+      moduleKey,
+      analysisStatus: 'COMPLETED',
+      moduleCoaching: { not: Prisma.DbNull },
+      ...(before ? { createdAt: { lt: before } } : {}),
+    },
+    orderBy: { createdAt: 'asc' },
+    select: { id: true, createdAt: true, moduleCoaching: true, moduleSurveyId: true },
+  });
+}
+
+// Strategy feedback given in the module chat after the report before
+// `session` and up to `session` — what's new for the next report.
+async function moduleStrategyFeedbackNotes(session) {
+  const prior = await getModuleReports(session.userId, session.moduleKey, session.createdAt);
+  const since = prior[prior.length - 1]?.createdAt;
+  const rows = await prisma.moduleStrategyFeedback.findMany({
+    where: {
+      userId: session.userId,
+      moduleKey: session.moduleKey,
+      createdAt: { ...(since ? { gt: since } : {}), lte: session.createdAt },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+  if (rows.length === 0) return '';
+  return `What the parent told Nora in the chat about the suggested strategies since the last report:\n${formatStrategyFeedback(rows)}`;
+}
+
+/**
+ * System prompt for a Learn module's chat (POST /api/coach/chat with
+ * moduleKey): the module's chat prompt filled with the family's context —
+ * child, day, the latest report's plan, focus areas and suggested strategies,
+ * mastered strategies and the strategy feedback already given since that
+ * report. Returns null for a module without a chat prompt.
+ */
+async function getModuleChatPrompt(userId, moduleKey) {
+  const config = MODULE_COACHING_CONFIG[moduleKey];
+  if (!config?.chatPrompt) return null;
+
+  const [user, reports] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { childName: true, childBirthYear: true, childBirthday: true },
+    }),
+    getModuleReports(userId, moduleKey),
+  ]);
+  let childName = 'the child';
+  try {
+    if (user?.childName) childName = decryptSensitiveData(user.childName);
+  } catch {
+    // keep the generic name
+  }
+  const childAge = user?.childBirthYear ? calculateChildAge(user.childBirthYear, user.childBirthday) : null;
+
+  const latest = reports[reports.length - 1];
+  const coaching = latest?.moduleCoaching || {};
+  const plan = coaching.myPlan || {};
+  const report = coaching.coachingReport || {};
+  const suggested = coaching.suggestedStrategies || report.nextGrowthFocus?.strategies;
+  const mastered = [...new Set(
+    reports
+      .map(r => r.moduleCoaching?.progress)
+      .filter(p => p?.strategyMastered && p.practicedStrategy)
+      .map(p => p.practicedStrategy),
+  )];
+  const feedback = latest
+    ? await prisma.moduleStrategyFeedback.findMany({
+        where: { userId, moduleKey, createdAt: { gt: latest.createdAt } },
+        orderBy: { createdAt: 'asc' },
+      })
+    : [];
+
+  const list = (items, fmt) => (items?.length ? items.map(fmt).join('\n') : '  none yet');
+  const lastSession = latest
+    ? [
+        latest.moduleSurveyId ? '(From the parent\'s questionnaire answers, no recording.)' : null,
+        coaching.progress?.todaysOutcome ? `Outcome: ${coaching.progress.todaysOutcome}. ${coaching.progress.outcomeReason || ''}` : null,
+        report.topMoment?.quote ? `Top moment: "${report.topMoment.quote}" — ${report.topMoment.explanation || ''}` : null,
+        report.whatWeLearned?.description || null,
+        report.nextGrowthFocus?.explanation || null,
+        coaching.narrative || null,
+      ].filter(Boolean).join(' ')
+    : 'none yet (no session recorded or check-in answered yet)';
+
+  return loadPromptWithVariables(config.chatPrompt, {
+    CHILD_NAME:           childName,
+    CHILD_AGE:            childAge != null ? `${childAge} years old` : 'age unknown',
+    DAY_NUMBER:           String(reports.length + 1),
+    ACTIVE_STRATEGY:      plan.activeStrategy || 'none yet',
+    PROTOCOL_STEPS:       list(plan.protocolSteps, (step, i) => `  ${i + 1}. ${step}`),
+    FOCUS_AREAS:          list(plan.focusAreas, f => `  - ${f.title}: ${f.detail}`),
+    SUGGESTED_STRATEGIES: list(suggested, s => `  - ${s.name}: ${s.description}`),
+    LAST_SESSION_SUMMARY: lastSession,
+    MASTERED_STRATEGIES:  mastered.join(', ') || 'none yet',
+    RECENT_FEEDBACK:      feedback.length ? formatStrategyFeedback(feedback) : '  none yet',
+  });
+}
+
 /**
  * Generate the Learn module report + "My Plan" (e.g. for a screen-time
- * ending) in a single call — from a recording's transcript, or from the
- * parent's "Tell Nora" survey answers when they chose not to record.
+ * ending) — from a recording's transcript, or from the parent's "Tell Nora"
+ * survey answers when they chose not to record.
  *
- * Day 1 (no plan yet) uses the module's first prompt; Day 2+ uses its
+ * Day 1 (no plan yet) uses the module's first prompt (with a formatPrompt:
+ * a free-form write-up, then a format call for sections + plan); Day 2+ uses its
  * follow-up prompt with the parent's progress state (see
  * getModuleProgressState) and also returns today's outcome.
  *
  * @param {string} moduleKey      - Key in MODULE_COACHING_CONFIG (e.g. 'screenTime')
  * @param {string} transcriptText - Fills {{TRANSCRIPT}}: formatted utterances, or the survey block
- * @param {Object} childInfo      - { name, ageYears, traitsText, sessionNotes }
+ * @param {Object} childInfo      - { name, ageYears, traitsText, sessionNotes, screenTimeIntake }
  * @param {Object} [progressState] - getModuleProgressState() result (defaults to Day 1)
  * @param {string|null} [selfReport] - session.moduleSelfReport ('success' | 'struggle' | 'not_attempted')
- * @returns {Promise<Object>} { coachingReport, myPlan, progress } (camelCased); progress
+ * @returns {Promise<Object>} { coachingReport, myPlan, progress } (camelCased), or on a
+ *   narrative Day 1 { format: 'narrative', narrative, report, myPlan, suggestedStrategies, progress }; progress
  *   carries dayNumber and, on Day 2+, practicedStrategy/daysOnStrategy/todaysOutcome/strategyMastered
  */
 async function generateModuleCoaching(moduleKey, transcriptText, childInfo, sessionId = null, language = null, progressState = { dayNumber: 1 }, selfReport = null) {
   const config = MODULE_COACHING_CONFIG[moduleKey];
   if (!config) throw new PermanentFailureError(`Unknown module: ${moduleKey}`, 'An error occurred while analyzing your recording. Please try again.');
 
-  const { name, ageYears, traitsText, sessionNotes } = childInfo;
+  const { name, ageYears, traitsText, sessionNotes, screenTimeIntake } = childInfo;
+  // A learning/thinking difference reported in onboarding (anything but
+  // "None that I know of") → special play time right away, not only once the
+  // screen-time steps have failed.
+  const differences = reportedDifferences(screenTimeIntake);
+  const specialPlaytimeRule = differences.length
+    ? `  IMPORTANT for this family: in onboarding the parent reported this about ${name || 'the child'}: ${differences.join('; ')}. `
+      + 'Do NOT wait for the steps above to fail. In this report, introduce special play time (a few minutes every day of '
+      + 'child-led play where the parent follows the child\'s lead and praises, describes and reflects what the child does), '
+      + 'explain briefly why it helps a child like this, and suggest the parent start it right away, alongside the screen-time strategy.'
+    : '';
   const isFollowup = !!progressState.currentStrategy;
   const variables = {
     CHILD_NAME:    name || 'the child',
     CHILD_AGE:     ageYears != null ? `${ageYears} years` : 'unknown',
     CHILD_TRAITS:  traitsText || 'none reported',
     SESSION_NOTES: sessionNotes || 'none',
+    // Screen-time onboarding Q&A (User.screenTimeIntake).
+    ONBOARDING_ANSWERS:    formatScreenTimeIntakeForPrompt(screenTimeIntake) || 'none provided',
+    SPECIAL_PLAYTIME_RULE: specialPlaytimeRule,
     TRANSCRIPT:    transcriptText,
   };
   if (isFollowup) {
@@ -884,9 +1051,10 @@ async function generateModuleCoaching(moduleKey, transcriptText, childInfo, sess
       DAYS_ON_CURRENT_STRATEGY: String(progressState.daysOnStrategy),
       MASTERED_STRATEGIES:      progressState.masteredStrategies.join(', ') || 'none yet',
       PARENT_SELF_REPORT:       MODULE_SELF_REPORT_TEXT[selfReport] || 'Not provided',
-      STRATEGY_KNOWLEDGE_BASE:  moduleKnowledgeBase(config.prompt),
+      STRATEGY_KNOWLEDGE_BASE:  moduleKnowledgeBase(config.knowledgeBasePrompt),
     });
   }
+  const isNarrative = !isFollowup && !!config.formatPrompt;
   const prompt = loadPromptWithVariables(isFollowup ? config.followupPrompt : config.prompt, variables);
   const languageInstruction = getLanguageInstruction(language);
   const promptFinal = languageInstruction ? `${prompt}\n\n${languageInstruction}` : prompt;
@@ -897,17 +1065,49 @@ async function generateModuleCoaching(moduleKey, transcriptText, childInfo, sess
   const coachingModel = process.env.GEMINI_STREAMING_MODEL || undefined;
 
   console.log(`📊 [MODULE-COACHING] Generating ${moduleKey} day ${progressState.dayNumber} report + plan${isFollowup ? ` (on "${progressState.currentStrategy}" day ${progressState.daysOnStrategy})` : ''}${coachingModel ? ` (${coachingModel})` : ''}...`);
-  const raw = await llmCall(withChildNameDirective(promptFinal, name), {
-    profile: 'module-coaching',
-    ...(coachingModel ? { model: coachingModel } : {}),
-    schema:  isFollowup ? config.followupSchema : config.schema,
-    label:   `module-coaching-${moduleKey}${isFollowup ? '-followup' : ''}`,
-    sessionId,
-  });
-  if (!raw?.coaching_report || !raw?.my_plan) throw new Error('Module coaching response missing coaching_report/my_plan');
-  if (isFollowup && !raw.progress) throw new Error('Module coaching follow-up response missing progress');
+  let raw;
+  let narrative = null;
+  if (isNarrative) {
+    narrative = (await llmCall(withChildNameDirective(promptFinal, name), {
+      profile: 'coaching-narrative',
+      ...(coachingModel ? { model: coachingModel } : {}),
+      label:   `module-coaching-${moduleKey}-narrative`,
+      sessionId,
+    })).trim();
+    console.log(`📊 [MODULE-COACHING] Narrative received (${narrative.length} chars) — formatting...`);
+    const formatPrompt = loadPromptWithVariables(config.formatPrompt, {
+      COACHING_REPORT:         narrative,
+      CHILD_NAME:              variables.CHILD_NAME,
+      STRATEGY_KNOWLEDGE_BASE: moduleKnowledgeBase(config.knowledgeBasePrompt),
+      LANGUAGE_INSTRUCTION:    languageInstruction || '',
+    });
+    // Not best-effort like CDI's format pass: the plan comes from here, and
+    // Day 2+, the Cheat Sheet and the module chat all need it.
+    raw = await llmCall(withChildNameDirective(formatPrompt, name), {
+      profile: 'coaching-format',
+      schema:  config.formatSchema,
+      label:   `module-coaching-${moduleKey}-format`,
+      sessionId,
+    });
+    if (!raw?.report?.sections?.length || !raw?.my_plan) throw new Error('Module coaching format response missing report/my_plan');
+  } else {
+    raw = await llmCall(withChildNameDirective(promptFinal, name), {
+      profile: 'module-coaching',
+      ...(coachingModel ? { model: coachingModel } : {}),
+      schema:  isFollowup ? config.followupSchema : config.schema,
+      label:   `module-coaching-${moduleKey}${isFollowup ? '-followup' : ''}`,
+      sessionId,
+    });
+    if (!raw?.coaching_report || !raw?.my_plan) throw new Error('Module coaching response missing coaching_report/my_plan');
+    if (isFollowup && !raw.progress) throw new Error('Module coaching follow-up response missing progress');
+  }
 
   const result = snakeToCamelKeys(raw);
+  if (isNarrative) {
+    // App renders result.report's sections instead of coachingReport's cards.
+    result.format = 'narrative';
+    result.narrative = narrative;
+  }
   // The prompt asks for exactly 3; keep the Cheat Sheet to 3 if it returns more.
   result.myPlan.focusAreas = (result.myPlan.focusAreas || []).slice(0, 3);
   const strategyId = result.myPlan.activeStrategyId;
@@ -948,14 +1148,15 @@ async function analyzeModuleSession(session, user, childName, childAge, primaryL
     select: { answers: true, readableAnswers: true },
   });
   const surveyText = formatModuleSurveyForPrompt(survey);
-  const sessionNotes = surveyText
-    ? `Parent's earlier answers to the "Tell Nora" questionnaire about how this usually goes:\n${surveyText}`
-    : '';
+  const sessionNotes = [
+    surveyText ? `Parent's earlier answers to the "Tell Nora" questionnaire about how this usually goes:\n${surveyText}` : '',
+    await moduleStrategyFeedbackNotes(session),
+  ].filter(Boolean).join('\n\n');
 
   const moduleCoaching = await generateModuleCoaching(
     session.moduleKey,
-    formatUtterancesForPsychologist(utterances),
-    { name: childName, ageYears: childAge, traitsText: moduleTraitsText(user), sessionNotes },
+    formatUtterancesWithTimestamps(utterances),
+    { name: childName, ageYears: childAge, traitsText: moduleTraitsText(user), sessionNotes, screenTimeIntake: user.screenTimeIntake },
     sessionId,
     primaryLanguage,
     await getModuleProgressState(session),
@@ -1004,7 +1205,7 @@ async function generateSurveyModuleSession(sessionId) {
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
-    select: { childName: true, childBirthYear: true, childBirthday: true, issue: true, childConditions: true },
+    select: { childName: true, childBirthYear: true, childBirthday: true, issue: true, childConditions: true, screenTimeIntake: true },
   });
   let childName = 'the child';
   try {
@@ -1040,7 +1241,11 @@ async function generateSurveyModuleSession(sessionId) {
       name: childName,
       ageYears: childAge,
       traitsText: moduleTraitsText(user),
-      sessionNotes: 'Report based on the parent\'s questionnaire answers (no recording).',
+      sessionNotes: [
+        'Report based on the parent\'s questionnaire answers (no recording).',
+        await moduleStrategyFeedbackNotes(session),
+      ].filter(Boolean).join('\n\n'),
+      screenTimeIntake: user.screenTimeIntake,
     },
     sessionId,
     survey.language,
@@ -2388,7 +2593,8 @@ async function analyzePCITCoding(sessionId, userId, preferredLanguage = null) {
       childBirthday: true,
       issue: true,
       parentGoal: true,
-      childConditions: true
+      childConditions: true,
+      screenTimeIntake: true
     }
   });
   if (!user) {
@@ -3109,6 +3315,7 @@ module.exports = {
   generateFirstSessionInsights,
   generateModuleCoaching,
   generateSurveyModuleSession,
+  getModuleChatPrompt,
   LEARN_MODULE_KEYS: new Set(Object.keys(MODULE_COACHING_CONFIG)),
   MODULE_SELF_REPORTS,
   getParentSkillProgress,

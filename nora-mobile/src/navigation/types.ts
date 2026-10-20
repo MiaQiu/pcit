@@ -239,6 +239,12 @@ export type RootStackParamList = {
   // A Learn module's coach chat ("Daily check in"), copy of CoachChat.
   ModuleChat: {
     moduleKey: LearnModuleKey;
+    // Prefills the input (e.g. a report's reflective question to answer).
+    draft?: string;
+  };
+  // Coach replies bookmarked in a Learn module's chat.
+  ModuleChatBookmarks: {
+    moduleKey: LearnModuleKey;
   };
   // "Quick Cheat Sheet" (focus areas from the last session + fixed routine).
   ModuleCheatSheet: {

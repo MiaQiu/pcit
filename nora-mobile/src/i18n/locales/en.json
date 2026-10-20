@@ -3041,10 +3041,42 @@
   "moduleReport": {
     "nextGrowthFocus": "Next Growth Focus",
     "trySaying": "Try saying",
-    "seeMyPlan": "See my plan"
+    "seeMyPlan": "See my plan",
+    "reflectWithNora": "Talk it through with Nora",
+    "reflectDraft": "About “{{title}}” in my report: ",
+    "emotionLevels": {
+      "0": "Calm",
+      "1": "Asking",
+      "2": "Whining",
+      "3": "Crying",
+      "4": "Meltdown",
+      "5": "Hitting"
+    }
   },
   "moduleChat": {
-    "strategyPrompt": "How can I use “{{strategy}}” at our next screen-time ending?",
+    "greetingReply": "Hi {{name}}! I'm here to help make screen time easier with {{childName}}. What's on your mind today — how a screen-time ending went, or one of your strategies?",
+    "latestSessionLabel": "Chat about latest session",
+    "latestSessionPrompt": "I'd like to chat about my latest session.",
+    "strategyPrompt": "I'd like to talk about “{{strategy}}”.",
+    "strategiesLabel": "Talk about a strategy",
+    "bookmarks": {
+      "title": "Bookmarks",
+      "add": "Bookmark this reply",
+      "remove": "Remove bookmark",
+      "removeTitle": "Remove this bookmark?",
+      "removeConfirm": "Remove",
+      "removeError": "Couldn't remove the bookmark. Please try again.",
+      "loadError": "Couldn't load your bookmarks. Please try again later.",
+      "emptyTitle": "No bookmarks yet",
+      "emptyBody": "Tap the bookmark under any of Nora's replies to save it here."
+    },
+    "checkIn": {
+      "question": "Have you had a chance to try “{{strategy}}” yet?",
+      "tried": "I've tried it",
+      "clarify": "I want to clarify before I try",
+      "triedReply": "That's great! Tell me how it went — how did {{childName}} react, and what felt easy or hard?",
+      "clarifyReply": "Of course! Which part would you like to clarify — what to say, when to do it, or something else?"
+    },
     "suggestedLabel": "Strategies suggested based on your last session"
   }
 }
