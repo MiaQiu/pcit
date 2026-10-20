@@ -26,7 +26,13 @@ const YES_NO = { yes: 'Yes', no: 'No' };
 
 // Single-answer and multi-answer questions, in onboarding order.
 const QUESTIONS = [
-  { field: 'hardest', question: "What's hardest about screen time right now?", options: {
+  { field: 'hardest', question: 'What feels hardest right now?', options: {
+    resist:         'My child resists or refuses to stop.',
+    long_meltdowns: 'The meltdowns can last a long time.',
+    stay_calm:      'I find it hard to stay calm.',
+    consistency:    "It's difficult to be consistent.",
+    exhausted:      "I'm exhausted and don't know what else to try.",
+    // Earlier option set, still on accounts onboarded before the change
     stop:  'Getting the child to stop',
     more:  'The child keeps asking for more',
     upset: 'The child gets very upset when it ends',
@@ -44,6 +50,7 @@ const QUESTIONS = [
     'My child sneaks using screen media.',
     'When my child has had a bad day, screen media seems to be the only thing that helps him/her feel better.',
   ], options: AGREEMENT },
+  // No longer asked in onboarding; kept for accounts that answered it
   { field: 'stops', question: "When it's time to stop, what usually happens?", options: {
     asks:     'The child asks for more',
     ignores:  'The child ignores me and keeps watching',
@@ -93,6 +100,7 @@ const QUESTIONS = [
     consistency: 'Lack of consistency',
     progress:    'Slow progress',
   } },
+  // No longer asked in onboarding; kept for accounts that answered it
   { field: 'goal', question: 'What would you most like to change?', options: {
     meltdowns:   'Fewer meltdowns',
     recovery:    'Faster recovery',

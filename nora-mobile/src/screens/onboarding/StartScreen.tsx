@@ -6,7 +6,7 @@
  */
 
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Image, Linking } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -48,15 +48,6 @@ export const StartScreen: React.FC = () => {
         <TrackedTouchable analyticsId="start.alreadyHaveAccount" style={styles.loginButton} onPress={handleLogin} activeOpacity={0.6}>
           <Text style={styles.loginButtonText}>{t('start.alreadyHaveAccount')}</Text>
         </TrackedTouchable>
-
-        <View style={styles.spacer} />
-
-        <Text style={styles.termsText}>
-          {t('start.termsPrefix')}
-          <Text style={styles.termsLink} onPress={() => Linking.openURL('https://hinora.co/terms')}>{t('start.termsOfService')}</Text>
-          {t('start.termsAnd')}
-          <Text style={styles.termsLink} onPress={() => Linking.openURL('https://hinora.co/privacy')}>{t('start.privacyPolicy')}</Text>
-        </Text>
       </View>
     </SafeAreaView>
   );
@@ -108,9 +99,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FFFFFF',
   },
-  spacer: {
-    flex: 1,
-  },
   loginButton: {
     alignItems: 'center',
     paddingVertical: 12,
@@ -120,17 +108,5 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_700Bold',
     fontSize: 15,
     color: '#5d438f',
-  },
-  termsText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    color: '#8C8C8C',
-    textAlign: 'center',
-    lineHeight: 18,
-    marginBottom: 8,
-  },
-  termsLink: {
-    color: '#1E2939',
-    textDecorationLine: 'underline',
   },
 });

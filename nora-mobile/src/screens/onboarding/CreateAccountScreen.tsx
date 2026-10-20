@@ -14,6 +14,7 @@ import {
   Platform,
   ActivityIndicator,
   ScrollView,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -320,11 +321,12 @@ export const CreateAccountScreen: React.FC = () => {
           </TrackedTouchable>
 
           {/* Terms */}
-          {/* <Text style={styles.terms}>
-            By continuing, you agree to our{'\n'}
-            <Text style={styles.termsLink}>Terms of Service</Text> and{' '}
-            <Text style={styles.termsLink}>Privacy Policy</Text>
-          </Text> */}
+          <Text style={styles.terms}>
+            {t('start.termsPrefix')}
+            <Text style={styles.termsLink} onPress={() => Linking.openURL('https://hinora.co/terms')}>{t('start.termsOfService')}</Text>
+            {t('start.termsAnd')}
+            <Text style={styles.termsLink} onPress={() => Linking.openURL('https://hinora.co/privacy')}>{t('start.privacyPolicy')}</Text>
+          </Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -441,15 +443,15 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
   terms: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
-    color: '#9CA3AF',
+    color: '#8C8C8C',
     textAlign: 'center',
-    marginTop: 8,
     lineHeight: 18,
+    marginBottom: 8,
   },
   termsLink: {
-    color: '#8C49D5',
+    color: '#1E2939',
     textDecorationLine: 'underline',
   },
 });

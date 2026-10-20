@@ -28,6 +28,8 @@ import {
   DEV_SAMPLE_ANSWERS,
   childAgeYears,
   genderContext,
+  screenTimePath,
+  adjacentStepIndex,
 } from './screenTimeFlow';
 import { ScreenTimeScene } from './ScreenTimeScene';
 import { OnboardingFooter } from '../../../components/OnboardingFooter';
@@ -43,23 +45,31 @@ const ANALYTICS_STEP_BASE = 100;
 // Text uses the Nora-Onboarding-1 prototype's fonts (Outfit titles, DM Sans body),
 // sized up for the app; layout and colors are the app's onboarding style.
 // Insight steps whose title is a full sentence get the smaller title size.
-const LONG_TITLE_STEPS = new Set(['transition']);
+const LONG_TITLE_STEPS = new Set(['transition', 'routine']);
 
 // A block renders one or more strings; several keys in one callout share a single box.
 type Block = { kind: 'p' | 'callout'; key: string | string[] };
 
 // Body of each insight screen, in order. Strings may use <hl> (purple) and <b> tags.
 const INSIGHT_BLOCKS: Record<string, Block[]> = {
-  intro: [{ kind: 'p', key: 'p1' }, { kind: 'p', key: 'p2' }, { kind: 'p', key: 'p3' }],
+  intro: [{ kind: 'p', key: 'p1' }, { kind: 'p', key: 'p2' }, { kind: 'p', key: 'p3' }, { kind: 'p', key: 'p4' }],
   // context.p2 ("When the stimulation suddenly stops…") is hidden; its copy stays in the locales
   context: [{ kind: 'p', key: 'lead' }, { kind: 'p', key: 'p1' }, { kind: 'callout', key: ['callout1', 'callout2'] }],
-  why: [{ kind: 'p', key: 'p1' }, { kind: 'p', key: 'p2' }, { kind: 'p', key: 'p3' }, { kind: 'callout', key: 'callout1' }, { kind: 'p', key: 'p4' }],
-  cortexHelp: [{ kind: 'p', key: 'p1' }, { kind: 'callout', key: 'callout1' }],
+  // why: copy by path (see screenTimePath); both versions share this layout
+  why: [{ kind: 'p', key: 'p1' }, { kind: 'p', key: 'p2' }, { kind: 'callout', key: 'callout1' }, { kind: 'p', key: 'p3' }],
+  cortexHelp: [{ kind: 'p', key: 'p1' }, { kind: 'p', key: 'p2' }],
+  canLearn: [{ kind: 'p', key: 'p1' }, { kind: 'callout', key: 'callout1' }],
+  easierEnd: [{ kind: 'p', key: 'p1' }, { kind: 'callout', key: 'callout1' }],
   windows: [{ kind: 'p', key: 'p1' }, { kind: 'p', key: 'p2' }, { kind: 'callout', key: 'callout1' }],
   practice: [{ kind: 'p', key: 'p1' }, { kind: 'callout', key: 'callout1' }],
   transition: [{ kind: 'callout', key: 'callout1' }],
   play: [{ kind: 'p', key: 'p1' }, { kind: 'callout', key: 'callout1' }, { kind: 'p', key: 'p2' }],
   nora: [],
+  routine: [{ kind: 'callout', key: 'callout1' }],
+  specialPlay: [{ kind: 'p', key: 'p1' }, { kind: 'callout', key: 'callout1' }],
+  // byPath steps can lay out each path differently, keyed `<id>.<path>`
+  'coaching.differences': [{ kind: 'p', key: 'p1' }],
+  'coaching.none': [{ kind: 'p', key: 'p1' }, { kind: 'callout', key: 'callout1' }],
 };
 
 const RichText: React.FC<{ i18nKey: string; style: any; values: Record<string, unknown>; context?: string }> = ({
@@ -105,20 +115,23 @@ export const ScreenTimeStepScreen: React.FC = () => {
   }, []);
 
   const authService = useAuthService();
+  // Steps for the other path (none / differences) are skipped
   const goNext = () => {
-    const nextStep = SCREEN_TIME_STEPS[index + 1];
+    const nextIndex = adjacentStepIndex(index, 1, data.screenTime ?? {});
+    const nextStep = SCREEN_TIME_STEPS[nextIndex];
     // Account-last signup: the account is created right before the plan (the prototype's
     // "Create an account to see your 8-week plan"); account-first parents go straight on
     if (nextStep?.kind === 'plan' && !authService.isAuthenticated()) {
-      navigation.navigate('CreateAccount', { next: 'ScreenTimeStep', nextParams: { step: index + 1 } });
+      navigation.navigate('CreateAccount', { next: 'ScreenTimeStep', nextParams: { step: nextIndex } });
       return;
     }
-    navigation.push('ScreenTimeStep', { step: index + 1 });
+    navigation.push('ScreenTimeStep', { step: nextIndex });
   };
   // A step resumed from a saved draft has no history behind it
   const goBack = () => {
+    const prevIndex = adjacentStepIndex(index, -1, data.screenTime ?? {});
     if (navigation.canGoBack()) navigation.goBack();
-    else if (index > 0) navigation.replace('ScreenTimeStep', { step: index - 1 });
+    else if (prevIndex >= 0) navigation.replace('ScreenTimeStep', { step: prevIndex });
     else navigation.replace('ChildIssue');
   };
 
@@ -165,12 +178,16 @@ const QuestionStep: React.FC<{
 }> = ({ step, index, screenName, analyticsStep, values, context, onNext }) => {
   const { t } = useTranslation();
   const optionsKey = step.optionsKey ?? `${step.id}.options`;
+  const prompt = step.subtitleKey ? t(`${NS}.${step.subtitleKey}`) : step.multi ? t(`${NS}.selectAll`) : '';
+  // Optional per-question note shown under the prompt (e.g. differences)
+  const note = t(`${NS}.${step.id}.note`, { ...values, context, defaultValue: '' });
+  const subtitle = [prompt, note].filter(Boolean).join('\n') || undefined;
 
   return (
     <MultipleChoiceScreen
       headerText=""
       title={t(`${NS}.${step.titleKey ?? `${step.id}.title`}`, { ...values, context })}
-      subtitle={step.subtitleKey ? t(`${NS}.${step.subtitleKey}`) : step.multi ? t(`${NS}.selectAll`) : undefined}
+      subtitle={subtitle}
       options={step.options.map((value) => ({
         value,
         label: t(`${NS}.${optionsKey}.${value}`, { ...values, context }),
@@ -209,19 +226,17 @@ type InsightProps = {
 const useInsightCopy = (step: ScreenTimeInsightStep, values: Record<string, unknown>) => {
   const { t } = useTranslation();
   const { data } = useOnboarding();
-  const key = (k: string) => `${NS}.${step.id}.${k}`;
+  const prefix = step.byPath ? `${step.id}.${screenTimePath(data.screenTime ?? {})}` : step.id;
+  const key = (k: string) => `${NS}.${prefix}.${k}`;
   const age = childAgeYears(data.childBirthday);
   const cta = t(key('cta'), { ...values, defaultValue: '' }) || t(`${NS}.continue`);
-  const blockKey = (k: string) => {
-    // The intro's first line names the child's age when we know it
-    if (step.id === 'intro' && k === 'p1') return age ? key('p1') : key('p1NoAge');
-    return key(k);
-  };
-  return { t, key, age, cta, blockKey };
+  const blockKey = (k: string) => key(k);
+  const blocks = INSIGHT_BLOCKS[prefix] ?? INSIGHT_BLOCKS[step.id] ?? [];
+  return { t, key, age, cta, blockKey, blocks };
 };
 
 const InsightStep: React.FC<InsightProps> = ({ step, values, context, onNext, onBack }) => {
-  const { t, key, age, cta, blockKey } = useInsightCopy(step, values);
+  const { t, key, age, cta, blockKey, blocks } = useInsightCopy(step, values);
   // Explicit size: a percentage width + aspectRatio didn't take effect on this Image
   const { width: windowWidth } = useWindowDimensions();
   const advisorWidth = (windowWidth - CONTENT_PADDING * 2) * ADVISOR_WIDTH_RATIO;
@@ -229,9 +244,6 @@ const InsightStep: React.FC<InsightProps> = ({ step, values, context, onNext, on
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {step.media === 'dragon' && (
-          <Image source={require('../../../../assets/images/dragon_image.png')} style={styles.dragon} resizeMode="contain" />
-        )}
         {step.media === 'advisor' ? (
           <>
             <Image
@@ -251,7 +263,7 @@ const InsightStep: React.FC<InsightProps> = ({ step, values, context, onNext, on
           />
         )}
 
-        {INSIGHT_BLOCKS[step.id]?.map((block) => {
+        {blocks.map((block) => {
           const keys = Array.isArray(block.key) ? block.key : [block.key];
           return (
             <View key={keys.join()} style={block.kind === 'callout' ? styles.callout : undefined}>
@@ -298,10 +310,9 @@ const PlanStep: React.FC<{
   const label = (group: string, value: string) => t(`${NS}.${group}.options.${value}`, { ...values, context });
   const sep = t(`${NS}.plan.listSeparator`);
 
-  const goal = asList(answers.goal).map((v) => label('goal', v)).join(sep);
   const hardMoment = [
-    ...asList(answers.hardest).map((v) => label('hardest', v)),
-    ...asList(answers.stops).map((v) => label('stops', v)),
+    // hardest options are full sentences; drop the final period inside the list
+    ...asList(answers.hardest).map((v) => label('hardest', v).replace(/[.。]$/, '')),
   ].join(sep);
   const tried = asList(answers.strategies).map((v) => label('strategies', v)).join(sep);
 
@@ -332,7 +343,6 @@ const PlanStep: React.FC<{
 
   // Plan card sections, in the prototype's order; empty answers are skipped
   const sections: { label: string; body: React.ReactNode }[] = [
-    { label: 'yourGoal', body: goal ? <Text style={styles.planStrong}>{goal}</Text> : null },
     { label: 'hardMoment', body: hardMoment ? <Text style={styles.planStrong}>{hardMoment}</Text> : null },
     { label: 'tried', body: tried ? <Text style={styles.planStrong}>{tried}</Text> : null },
     {
@@ -412,12 +422,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: CONTENT_PADDING,
     paddingTop: 60,
     paddingBottom: 24,
-  },
-  dragon: {
-    width: 96,
-    height: 96,
-    alignSelf: 'center',
-    marginBottom: 16,
   },
   advisor: {
     alignSelf: 'center',

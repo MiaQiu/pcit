@@ -25,13 +25,25 @@ export type ScreenTimeQuestionStep = {
   // i18n key for the title, when it isn't `<id>.title`
   titleKey?: string;
   subtitleKey?: string;
+  // Only shown on these paths (see screenTimePath); every path when unset
+  paths?: ScreenTimePath[];
 };
 
 export type ScreenTimeInsightStep = {
   kind: 'insight';
   id: string;
-  media?: 'dragon' | 'practiceScene' | 'playScene' | 'advisor';
+  media?: 'practiceScene' | 'playScene' | 'advisor';
+  // Copy differs by path: lives under `<id>.<path>.*` instead of `<id>.*`
+  byPath?: boolean;
+  paths?: ScreenTimePath[];
 };
+
+/**
+ * The branch splits on the differences answer: 'none' when the parent picked
+ * only "None that I know of" (or skipped it), 'differences' when they picked
+ * any difference, including a suspected one.
+ */
+export type ScreenTimePath = 'none' | 'differences';
 
 export type ScreenTimePlanStep = { kind: 'plan'; id: 'plan' };
 
@@ -45,14 +57,11 @@ export const PMUM_COUNT = 9;
 // Observation-only "hidden signal" questions, one screen each
 export const SIGNAL_COUNT = 6;
 
-export const HARDEST_OPTIONS = ['stop', 'more', 'upset', 'after', 'argue'];
-export const STOP_OPTIONS = ['asks', 'ignores', 'whines', 'meltdown', 'hits'];
+export const HARDEST_OPTIONS = ['resist', 'long_meltdowns', 'stay_calm', 'consistency', 'exhausted'];
 export const STRATEGY_OPTIONS = ['warning', 'timer', 'rules', 'activity', 'explaining', 'extra', 'away'];
-export const GOAL_OPTIONS = ['meltdowns', 'recovery', 'yelling', 'transitions', 'confidence'];
 
 export const SCREEN_TIME_STEPS: ScreenTimeStep[] = [
-  { kind: 'insight', id: 'intro', media: 'dragon' },
-  { kind: 'question', id: 'hardest', field: 'hardest', options: HARDEST_OPTIONS },
+  { kind: 'insight', id: 'intro' },
   ...Array.from({ length: PMUM_COUNT }, (_, i): ScreenTimeQuestionStep => ({
     kind: 'question',
     id: `pmum${i}`,
@@ -62,7 +71,6 @@ export const SCREEN_TIME_STEPS: ScreenTimeStep[] = [
     titleKey: `pmum.statement${i}`,
     subtitleKey: 'pmum.prompt',
   })),
-  { kind: 'question', id: 'stops', field: 'stops', options: STOP_OPTIONS, multi: true },
   { kind: 'question', id: 'dopamine', field: 'dopamine', options: ['yes', 'no'], optionsKey: 'yesNo' },
   { kind: 'insight', id: 'context' },
   {
@@ -76,10 +84,9 @@ export const SCREEN_TIME_STEPS: ScreenTimeStep[] = [
   { kind: 'question', id: 'strategies', field: 'strategies', options: STRATEGY_OPTIONS, multi: true },
   { kind: 'question', id: 'worked', field: 'worked', options: ['smoothly', 'improvement', 'sometimes', 'no_change', 'harder'] },
   { kind: 'question', id: 'stress', field: 'stress', options: ['manageable', 'somewhat', 'very', 'overwhelming'] },
+  { kind: 'question', id: 'hardest', field: 'hardest', options: HARDEST_OPTIONS },
   { kind: 'question', id: 'teen', field: 'teen', options: ['yes', 'no', 'not_sure'] },
-  { kind: 'question', id: 'barriers', field: 'barriers', options: ['resistance', 'burnout', 'meltdowns', 'consistency', 'progress'] },
-  { kind: 'question', id: 'goal', field: 'goal', options: GOAL_OPTIONS },
-  { kind: 'insight', id: 'why' },
+  { kind: 'insight', id: 'why', byPath: true },
   ...Array.from({ length: SIGNAL_COUNT }, (_, i): ScreenTimeQuestionStep => ({
     kind: 'question',
     id: `signal${i}`,
@@ -88,14 +95,16 @@ export const SCREEN_TIME_STEPS: ScreenTimeStep[] = [
     optionsKey: 'frequency',
     titleKey: `signals.question${i}`,
   })),
-  { kind: 'question', id: 'cortex', field: 'cortex', options: ['yes', 'not_really'] },
-  { kind: 'insight', id: 'cortexHelp' },
-  { kind: 'insight', id: 'windows' },
-  { kind: 'insight', id: 'practice', media: 'practiceScene' },
-  { kind: 'insight', id: 'transition' },
-  { kind: 'question', id: 'playAwareness', field: 'playAwareness', options: ['yes', 'no'], optionsKey: 'yesNo' },
-  { kind: 'insight', id: 'play', media: 'playScene' },
-  { kind: 'insight', id: 'nora', media: 'advisor' },
+  // Differences path: what Nora will do and Special Play Time
+  { kind: 'insight', id: 'routine', paths: ['differences'] },
+  { kind: 'insight', id: 'specialPlay', paths: ['differences'] },
+  // None path: the prefrontal cortex, learning the transition, the routine, then coaching and the account
+  { kind: 'question', id: 'cortex', field: 'cortex', options: ['yes', 'not_really'], paths: ['none'] },
+  { kind: 'insight', id: 'cortexHelp', paths: ['none'] },
+  { kind: 'insight', id: 'canLearn', paths: ['none'] },
+  { kind: 'insight', id: 'easierEnd', paths: ['none'] },
+  // Both paths end on coaching (copy by path), then CreateAccount and the plan
+  { kind: 'insight', id: 'coaching', byPath: true },
   { kind: 'plan', id: 'plan' },
 ];
 
@@ -104,36 +113,55 @@ export type ScreenTimeAnswers = Record<string, string | string[]>;
 // DEV ONLY: filled in when a dev force-landing passes `devSample`, so a jump
 // straight to the plan shows every section
 export const DEV_SAMPLE_ANSWERS: ScreenTimeAnswers = {
-  hardest: 'upset',
-  stops: ['asks', 'meltdown'],
+  hardest: 'resist',
   strategies: ['warning', 'timer'],
-  goal: 'transitions',
+  differences: ['none'],
 };
 
 /** Shapes the flat answers into the object saved as User.screenTimeIntake. */
 export function buildScreenTimeIntake(answers: ScreenTimeAnswers) {
   const pick = (key: string) => answers[key] ?? null;
+  const path = screenTimePath(answers);
   return {
     version: 1,
-    hardest: pick('hardest'),
     pmum: Array.from({ length: PMUM_COUNT }, (_, i) => pick(`pmum${i}`)),
-    stops: pick('stops'),
     dopamine: pick('dopamine'),
     differences: pick('differences'),
     strategies: pick('strategies'),
     worked: pick('worked'),
     stress: pick('stress'),
+    hardest: pick('hardest'),
     teen: pick('teen'),
-    barriers: pick('barriers'),
-    goal: pick('goal'),
+    path,
     signals: Array.from({ length: SIGNAL_COUNT }, (_, i) => pick(`signal${i}`)),
-    cortex: pick('cortex'),
-    playAwareness: pick('playAwareness'),
+    // Only asked on the none path; drop an answer left over from switching paths
+    cortex: path === 'none' ? pick('cortex') : null,
     completedAt: new Date().toISOString(),
   };
 }
 
 /** i18next context for pronoun variants: 'boy' | 'girl' | undefined (neutral). */
+export function screenTimePath(answers: ScreenTimeAnswers): ScreenTimePath {
+  const differences = answers.differences;
+  const picked = Array.isArray(differences) ? differences : differences ? [differences] : [];
+  return picked.some((v) => v !== 'none') ? 'differences' : 'none';
+}
+
+const isOnPath = (step: ScreenTimeStep, path: ScreenTimePath) =>
+  step.kind === 'plan' || !step.paths || step.paths.includes(path);
+
+/**
+ * Index of the next (direction 1) or previous (-1) step on the parent's path,
+ * skipping steps meant for the other path; -1 past either end.
+ */
+export function adjacentStepIndex(from: number, direction: 1 | -1, answers: ScreenTimeAnswers): number {
+  const path = screenTimePath(answers);
+  for (let i = from + direction; i >= 0 && i < SCREEN_TIME_STEPS.length; i += direction) {
+    if (isOnPath(SCREEN_TIME_STEPS[i], path)) return i;
+  }
+  return -1;
+}
+
 export function genderContext(childGender: string | null | undefined): 'boy' | 'girl' | undefined {
   if (childGender === 'BOY') return 'boy';
   if (childGender === 'GIRL') return 'girl';

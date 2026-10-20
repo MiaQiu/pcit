@@ -22,7 +22,7 @@ Welcome → Start ─┬─ Login ──────────────► 
   Screen-time        ADHD / developmental /       anything else
   management         anxiety selected                  │
           │                  │                         │
-  ScreenTimeStep ×43   DiagnosisStatus             ParentGoal
+  ScreenTimeStep ×29–31   DiagnosisStatus             ParentGoal
   (CreateAccount       → ProfessionalSupport           │
   before its plan,           └────────────┬────────────┘
   then MainTabs)
@@ -87,36 +87,35 @@ Every step is the same route, `ScreenTimeStep`, with a `step` index into `SCREEN
 
 | # | Step | Type |
 |---|---|---|
-| 1 | `intro`: "You're not alone." (mentions the child's age) | Insight |
-| 2 | `hardest`: what's hardest about screen time | Single |
-| 3–11 | `pmum0`–`pmum8`: nine screen-media statements (agree/disagree) | Single |
-| 12 | `stops`: what happens when it's time to stop | Multi |
-| 13 | `dopamine`: heard of the dopamine loop? | Single |
-| 14 | `context`: screens are stimulating / the dopamine loop | Insight |
-| 15 | `differences`: learning and thinking differences ("None" clears the others) | Multi |
-| 16 | `strategies`: what you've tried | Multi |
-| 17 | `worked`: how well it worked | Single |
-| 18 | `stress`: how hard endings are on you | Single |
-| 19 | `teen`: worried it gets harder as a teen? | Single |
-| 20 | `barriers`: what's holding you back | Single |
-| 21 | `goal`: what you most want to change | Single |
-| 22 | `why`: why it hasn't worked so far | Insight |
-| 23–28 | `signal0`–`signal5`: hidden-signal frequency questions | Single |
-| 29 | `cortex`: heard of the prefrontal cortex? | Single |
-| 30 | `cortexHelp`: what the prefrontal cortex does | Insight |
-| 31 | `windows`: windows of opportunity | Insight |
-| 32 | `practice`: you're part of how your child learns (illustration) | Insight |
-| 33 | `transition`: we start with screen-time transitions | Insight |
-| 34 | `playAwareness`: heard that play is how kids learn? | Single |
-| 35 | `play`: why start with play (illustration) | Insight |
-| 36 | `nora`: clinical advisor card | Insight |
-| 37 | `plan`: the child's starting plan | Plan |
+| 1 | `intro`: "You're not alone." (screen time ending is hard for many parents) | Insight |
+| 2–10 | `pmum0`–`pmum8`: nine screen-media statements (agree/disagree) | Single |
+| 11 | `dopamine`: heard of the dopamine loop? | Single |
+| 12 | `context`: screens are stimulating / the dopamine loop | Insight |
+| 13 | `differences`: learning and thinking differences ("None" clears the others) | Multi |
+| 14 | `strategies`: what you've tried | Multi |
+| 15 | `worked`: how well it worked | Single |
+| 16 | `stress`: how hard endings are on you | Single |
+| 17 | `hardest`: what feels hardest right now | Single |
+| 18 | `teen`: worried it gets harder as a teen? | Single |
+| 19 | `why`: why it hasn't worked so far (copy by path, see below) | Insight |
+| 20–25 | `signal0`–`signal5`: hidden-signal frequency questions | Single |
+| | **Differences path** | |
+| 26 | `routine`: a predictable routine plus 5 minutes of Special Play Time | Insight |
+| 27 | `specialPlay`: what Special Play Time is | Insight |
+| | **None path** | |
+| 26 | `cortex`: heard of the prefrontal cortex? | Single |
+| 27 | `cortexHelp`: what the prefrontal cortex does | Insight |
+| 28 | `canLearn`: your child can learn to make the transition | Insight |
+| 29 | `easierEnd`: let's make screen time easier to end | Insight |
+| | **Both paths** | |
+| next | `coaching`: coaching from your voice recordings (copy by path); button "Create my account" | Insight |
+| last | `plan`: the child's starting plan | Plan |
 
-The pmum and signal questions take one screen each, so the branch has 43 screens in all. The plan screen:
-- shows the parent's goal, the hard moment (`hardest` plus `stops`) and what they've tried;
+The pmum and signal questions take one screen each. The plan screen:
+- shows the hard moment (`hardest`) and what they've tried;
 - shows a before/after image for a boy or girl (none for "prefer not to say");
-- comes right after `CreateAccount`: the `nora` screen's "Create an account to see your 8-week plan"
-  opens the account screen, which then continues to the plan;
+- comes right after `CreateAccount`: the `coaching` screen's "Create my account" opens the account
+  screen, which then continues to the plan;
 - on **Get started**, sends `screenTimeIntake` (see `buildScreenTimeIntake`) together with
   `relationshipToChild` and `childGender` to `PATCH /api/auth/complete-onboarding`;
 - then sets the local completed flag and goes to `MainTabs`.
@@ -125,6 +124,17 @@ This branch skips the letter/play/discipline intro screens and `ReminderTime`.
 
 Answers are saved in `User.screenTimeIntake` (JSONB; migration `20261015120000_add_user_screen_time_intake`).
 A failed save is logged and does not stop the parent from finishing.
+
+**Paths.** After `teen` the branch splits on the `differences` answer (`screenTimePath()` in
+`screenTimeFlow.ts`): **none** when the parent picked only "None that I know of", **differences**
+when they picked anything else (a suspected difference counts).
+- `why` and `coaching` have different copy per path, under `<id>.none.*` and `<id>.differences.*`
+  (insight steps with `byPath: true`; their layout can differ too, keyed `<id>.<path>` in `INSIGHT_BLOCKS`).
+- Both paths answer the hidden-signal questions. Then the differences path has `routine` → `specialPlay`,
+  the none path `cortex` → `cortexHelp` → `canLearn` → `easierEnd`. Both then go to `coaching`, `CreateAccount` and the plan.
+- A step's `paths` lists the paths it's shown on; next/back use `adjacentStepIndex()` to skip the others.
+  The differences path has 29 screens, the none path 31 (each plus the account screen).
+- `screenTimeIntake.path` records the path; `cortex` is null on the differences path.
 
 Pronouns use i18next context: `_boy` and `_girl` variants, with a gender-neutral base key that uses the child's name.
 
