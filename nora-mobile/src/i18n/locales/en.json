@@ -1903,6 +1903,17 @@
         "locked": "Locked",
         "lockedToast": "Finish your current goal to unlock this one.",
         "detailTitle": "Current plan"
+      },
+      "playTime": {
+        "eyebrow": "Play time",
+        "title": "Record 5 minutes of play time",
+        "body": "Play together with {{name}} for 5 minutes, letting them lead.",
+        "body_boy": "Play together with {{name}} for 5 minutes, letting him lead.",
+        "body_girl": "Play together with {{name}} for 5 minutes, letting her lead.",
+        "cta": "Start play recording",
+        "hint": "Follow {{name}}'s lead and enjoy playing together. The recording stops on its own after 5 minutes.",
+        "processing": "Nora is preparing your play time report…",
+        "tooShortMessage": "Play together for the full 5 minutes so Nora has enough to give you helpful feedback."
       }
     }
   },

@@ -5,6 +5,7 @@ const { requireAuth } = require('../middleware/auth.cjs');
 const prisma = require('../services/db.cjs');
 const { logError } = require('../utils/errorLogger.cjs');
 const { LEARN_MODULE_KEYS } = require('../services/pcitAnalysisService.cjs');
+const { reportedDifferences } = require('../utils/screenTimeIntake.cjs');
 
 const router = express.Router();
 
@@ -76,6 +77,8 @@ router.get('/:moduleKey/plan', async (req, res) => {
 // A module upload whose init ran but whose audio never arrived stays PENDING
 // with this storagePath forever — don't let it show as "processing" for good.
 const STALE_PENDING_UPLOAD_MS = 60 * 60 * 1000;
+// Unsubscribed parents get this many analyzed play recordings from the module.
+const FREE_PLAY_RECORDINGS = 3;
 
 /**
  * GET /api/learn-modules/:moduleKey/latest-session
@@ -85,6 +88,12 @@ const STALE_PENDING_UPLOAD_MS = 60 * 60 * 1000;
  * failed and abandoned uploads are skipped). activeStrategy is the strategy
  * from the newest plan, or null before the first report; dayNumber is the
  * day the parent is on (analyzed reports + 1).
+ *
+ * Also for the following-day "Play time recording" card: hasDifferences (the parent
+ * reported a learning and thinking difference in onboarding) and playSession,
+ * the same status for their latest regular (non-module) play recording.
+ * playLimitReached: an unsubscribed parent has used their
+ * FREE_PLAY_RECORDINGS analyzed play recordings.
  */
 router.get('/:moduleKey/latest-session', async (req, res) => {
   try {
@@ -103,8 +112,32 @@ router.get('/:moduleKey/latest-session', async (req, res) => {
     });
 
     const now = Date.now();
-    const latest = sessions.find(s =>
-      !(s.storagePath === 'pending_upload' && now - s.createdAt.getTime() > STALE_PENDING_UPLOAD_MS));
+    const isLive = s => !(s.storagePath === 'pending_upload' && now - s.createdAt.getTime() > STALE_PENDING_UPLOAD_MS);
+    const latest = sessions.find(isLive);
+
+    const [user, playSessions, completedPlays] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { screenTimeIntake: true, isFreeAccount: true, subscriptionStatus: true, subscriptionEndDate: true },
+      }),
+      prisma.session.findMany({
+        where: { userId, moduleKey: null, analysisStatus: { not: 'FAILED' } },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        select: { id: true, createdAt: true, analysisStatus: true, storagePath: true },
+      }),
+      prisma.session.count({ where: { userId, moduleKey: null, analysisStatus: 'COMPLETED' } }),
+    ]);
+    const hasDifferences = reportedDifferences(user?.screenTimeIntake).length > 0;
+    // Same rule as GET /api/auth/me's isSubscribed.
+    const isSubscribed = !!user && (user.isFreeAccount
+      || (['ACTIVE', 'TRIAL', 'CANCELLED', 'PAST_DUE'].includes(user.subscriptionStatus)
+          && !!user.subscriptionEndDate && user.subscriptionEndDate > new Date()));
+    const playLimitReached = !isSubscribed && completedPlays >= FREE_PLAY_RECORDINGS;
+    const latestPlay = playSessions.find(isLive);
+    const playSession = latestPlay
+      ? { id: latestPlay.id, createdAt: latestPlay.createdAt, status: latestPlay.analysisStatus === 'COMPLETED' ? 'ready' : 'processing' }
+      : null;
 
     // Strategy the parent is practicing now (from the newest plan) — the app
     // asks how it went when the next recording stops.
@@ -117,7 +150,7 @@ router.get('/:moduleKey/latest-session', async (req, res) => {
     });
     const dayNumber = completedReports + 1;
 
-    if (!latest) return res.json({ session: null, activeStrategy, dayNumber });
+    if (!latest) return res.json({ session: null, activeStrategy, dayNumber, hasDifferences, playSession, playLimitReached });
 
     const ready = latest.analysisStatus === 'COMPLETED' && !!latest.moduleCoaching;
     // COMPLETED without coaching shouldn't happen; treat it like no report.
@@ -127,6 +160,9 @@ router.get('/:moduleKey/latest-session', async (req, res) => {
       session: status ? { id: latest.id, createdAt: latest.createdAt, status, fromSurvey: !!latest.moduleSurveyId } : null,
       activeStrategy,
       dayNumber,
+      hasDifferences,
+      playSession,
+      playLimitReached,
     });
   } catch (error) {
     logError(error, { route: 'learn-modules#Get latest module session error', userId: req.userId });

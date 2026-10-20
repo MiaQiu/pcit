@@ -7,6 +7,12 @@
  * with the module) as RecordScreen, without a fixed session length: the
  * parent stops it, with a MAX_MODULE_RECORDING_SECONDS safety auto-stop.
  *
+ * start('play') instead records a regular play session (the following-day "Play time
+ * recording" card): uploaded untagged, so it gets the regular PCIT report, and
+ * auto-stopped at PLAY_RECORDING_SECONDS like the Record tab's Special Time.
+ * One hook per screen records both, since every instance would catch the
+ * native auto-stop event.
+ *
  * On stop: recordings under MIN_SECONDS are rejected; otherwise it uploads
  * and onUploaded runs (the server session now exists, so the module screen
  * can show "processing").
@@ -35,23 +41,27 @@ import type { LearnModuleKey } from '../constants/learnModules';
 // Screen-time endings run 10–30 min (the module's tag); stop a forgotten
 // recording at 30.
 const MAX_MODULE_RECORDING_SECONDS = 30 * 60;
+const PLAY_RECORDING_SECONDS = 5 * 60;
 const MIN_SECONDS = 10;
 const POLL_MS = 500;
 
 export type ModuleRecorderState = 'idle' | 'recording' | 'stopping';
+export type ModuleRecorderKind = 'module' | 'play';
 
 export const useModuleRecorder = ({
   moduleKey,
   onUploaded,
 }: {
   moduleKey: LearnModuleKey;
-  onUploaded: () => void;
+  onUploaded: (kind: ModuleRecorderKind) => void;
 }) => {
   const { t } = useTranslation();
   const uploadProcessing = useUploadProcessing();
   const { isOnline } = useNetworkStatus();
   const [state, setState] = useState<ModuleRecorderState>('idle');
   const [durationMillis, setDurationMillis] = useState(0);
+  const [kind, setKind] = useState<ModuleRecorderKind>('module');
+  const kindRef = useRef<ModuleRecorderKind>('module');
   const stateRef = useRef<ModuleRecorderState>('idle');
   const autoStopRef = useRef<EmitterSubscription | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -83,20 +93,22 @@ export const useModuleRecorder = ({
     await getPendingRecording().catch(() => null); // clear native pending copy (auto-stop path)
 
     const durationSeconds = Math.floor(millis / 1000);
-    amplitudeService.trackRecordingCompleted(durationSeconds, undefined, { source: 'learn_module', moduleKey });
+    const isPlay = kindRef.current === 'play';
+    amplitudeService.trackRecordingCompleted(durationSeconds, undefined, { source: isPlay ? 'learn_module_play' : 'learn_module', moduleKey });
     if (durationSeconds < MIN_SECONDS) {
       setRecorderState('idle');
       finishingRef.current = false;
       await endBackgroundTask();
-      Alert.alert(t('learnV2.moduleRecorder.tooShortTitle'), t('learnV2.moduleRecorder.tooShortMessage'));
+      Alert.alert(t('learnV2.moduleRecorder.tooShortTitle'),
+        t(isPlay ? 'learnV2.moduleScreenV2.playTime.tooShortMessage' : 'learnV2.moduleRecorder.tooShortMessage'));
       return;
     }
 
     const upload = async () => {
       try {
-        await uploadProcessing.startUpload(uri, durationSeconds, 'CDI', moduleKey);
+        await uploadProcessing.startUpload(uri, durationSeconds, 'CDI', isPlay ? undefined : moduleKey);
         setRecorderState('idle');
-        onUploaded();
+        onUploaded(isPlay ? 'play' : 'module');
       } catch (error) {
         reportError(error, 'useModuleRecorder.upload');
         Alert.alert(t('record.uploadFailedTitle'), t('record.uploadFailedMessage'), [
@@ -110,7 +122,7 @@ export const useModuleRecorder = ({
     finishingRef.current = false;
   };
 
-  const start = async () => {
+  const start = async (nextKind: ModuleRecorderKind = 'module') => {
     if (stateRef.current !== 'idle') return;
     if (!isOnline) {
       Alert.alert(t('learnV2.moduleRecorder.offlineTitle'), t('learnV2.moduleRecorder.offlineMessage'));
@@ -134,10 +146,14 @@ export const useModuleRecorder = ({
       autoStopRef.current = addAutoStopListener(event => {
         finish(event.uri, event.durationMillis).catch(err => reportError(err, 'useModuleRecorder.autoStop'));
       });
-      await startNativeRecording(MAX_MODULE_RECORDING_SECONDS);
+      kindRef.current = nextKind;
+      setKind(nextKind);
+      await startNativeRecording(nextKind === 'play' ? PLAY_RECORDING_SECONDS : MAX_MODULE_RECORDING_SECONDS);
       setDurationMillis(0);
       setRecorderState('recording');
-      amplitudeService.trackRecordingStarted({ source: 'learn_module', sessionType: moduleKey });
+      amplitudeService.trackRecordingStarted(nextKind === 'play'
+        ? { source: 'learn_module_play', sessionType: 'specialTime' }
+        : { source: 'learn_module', sessionType: moduleKey });
 
       pollRef.current = setInterval(async () => {
         try {
@@ -177,5 +193,5 @@ export const useModuleRecorder = ({
     }
   };
 
-  return { state, durationMillis, start, stop, isRecording: state !== 'idle' };
+  return { state, kind, durationMillis, start, stop, isRecording: state !== 'idle' };
 };

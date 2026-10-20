@@ -1945,6 +1945,17 @@
         "locked": "未解锁",
         "lockedToast": "完成当前目标后即可解锁。",
         "detailTitle": "当前计划"
+      },
+      "playTime": {
+        "eyebrow": "游戏时间",
+        "title": "录下 5 分钟游戏时间",
+        "body": "和{{name}}一起玩 5 分钟，让孩子来主导。",
+        "body_boy": "和{{name}}一起玩 5 分钟，让他来主导。",
+        "body_girl": "和{{name}}一起玩 5 分钟，让她来主导。",
+        "cta": "开始录制游戏时间",
+        "hint": "跟随{{name}}的引导，享受一起玩的时光。录音会在 5 分钟后自动停止。",
+        "processing": "Nora 正在准备你的游戏时间报告…",
+        "tooShortMessage": "请一起玩满 5 分钟，这样 Nora 才有足够的内容给你有用的反馈。"
       }
     }
   },
