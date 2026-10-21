@@ -12,17 +12,19 @@ import { useAuthService } from '../contexts/AppContext';
 import { DraftStep, isResumableStep, saveDraft } from '../utils/onboardingDraft';
 import { previousOnboardingStep } from './onboardingPreviousStep';
 
-// Flow (account-last signup): Welcome → Start → (Login | NameInput) →
-//   Relationship → ChildName → ChildGender → ChildBirthday →
+// Flow (account-first signup): Welcome → Start → (Login | CreateAccount) →
+//   OB1V2 → OB2V2 → NameInput → Relationship → ChildName → ChildGender → ChildBirthday →
 //   ChildIssue → [branch] → ParentGoalIntro → OBLetterV2 → OBLetterContent →
-//   OBPlay1V2 → OBPlay2V2 → OBDisciplineV2 → OBIntro1V2 → CreateAccount →
+//   OBPlay1V2 → OBPlay2V2 → OBDisciplineV2 → OBIntro1V2 →
 //   ReminderTime → OBIntro2V2 → MainTabs (OBIntro2V2 completes onboarding directly)
-// The account is created near the end with every answer; until then answers live on
-// the device as a draft (utils/onboardingDraft.ts) that resumes after an app restart.
-// Email already registered → CreateAccount offers a new email, or Login with
+// Answers are saved to the account screen by screen; OBIntro1V2 (or the screen-time
+// plan) saves the full profile once more for the fields that aren't.
+// Account-last leftovers: a parent with a device draft from the earlier account-last
+// flow (utils/onboardingDraft.ts) resumes without an account, and OBIntro1V2 / the
+// screen-time plan send them to CreateAccount with `next` before continuing.
+// Email already registered there → CreateAccount offers a new email, or Login with
 // overrideWithOnboarding (overwrites that account's child profile, then continues).
-// Parents with an account from the older account-first flow skip CreateAccount.
-// OB1V2–OB3V2 are no longer in the flow (Start now carries the prototype welcome).
+// OB3V2 is no longer in the flow (OB2V2 goes straight to NameInput).
 // Branch at ChildIssue: selecting ADHD Support, Developmental Concerns, or
 // Anxiety routes through DiagnosisStatus → ProfessionalSupport instead of
 // ParentGoal (see ChildIssueScreen's nextScreen resolver /

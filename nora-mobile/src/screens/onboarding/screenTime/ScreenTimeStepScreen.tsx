@@ -120,8 +120,8 @@ export const ScreenTimeStepScreen: React.FC = () => {
   const goNext = () => {
     const nextIndex = adjacentStepIndex(index, 1, data.screenTime ?? {});
     const nextStep = SCREEN_TIME_STEPS[nextIndex];
-    // Account-last signup: the account is created right before the plan (the prototype's
-    // "Create an account to see your 8-week plan"); account-first parents go straight on
+    // Parents resumed from an account-last draft create their account right before the
+    // plan; account-first parents go straight on
     if (nextStep?.kind === 'plan' && !authService.isAuthenticated()) {
       navigation.navigate('CreateAccount', { next: 'ScreenTimeStep', nextParams: { step: nextIndex } });
       return;

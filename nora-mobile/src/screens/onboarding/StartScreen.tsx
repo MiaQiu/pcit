@@ -1,19 +1,26 @@
 /**
  * Start Screen
- * Welcome screen after the Nora-Onboarding-1 prototype ("Beyond Parenting Advice.
- * Build Real Skills."). Account-last signup: "Let's start" goes straight into the
- * questions; the account is created at the end of onboarding. Returning users log in here.
+ * Introduction screen with "Get Started" button. Account-first signup: Get Started
+ * creates the account, then onboarding continues at OB1V2. The Terms and Privacy
+ * line is on CreateAccount.
  */
 
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Dimensions,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
+import { MaskedDinoImage } from '../../components/MaskedDinoImage';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../../services/amplitudeService';
 import { TrackedTouchable } from '../../components/TrackedTouchable';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const StartScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -25,7 +32,7 @@ export const StartScreen: React.FC = () => {
 
   const handleGetStarted = () => {
     amplitudeService.trackOnboardingStepCompleted('start', 2);
-    navigation.navigate('NameInput');
+    navigation.navigate('CreateAccount');
   };
 
   const handleLogin = () => {
@@ -35,25 +42,49 @@ export const StartScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <View style={styles.content}>
-        <Image source={require('../../../assets/images/dragon_waving.png')} style={styles.art} resizeMode="contain" />
+        {/* Dragon Image Section */}
+        <View style={styles.dragonSection}>
+          {/* Dragon Image - Figma node 35:798 */}
+          <View style={styles.dragonContainer}>
+            <MaskedDinoImage style={styles.dragonImage} />
+          </View>
+        </View>
 
-        <Text style={styles.title}>{t('start.welcomeTitle')}</Text>
-        <Text style={styles.subtitle}>{t('start.welcomeSubtitle')}</Text>
+        {/* Spacer before title */}
+        <View style={styles.spacer} />
 
-        <TrackedTouchable analyticsId="start.getStarted" style={styles.button} onPress={handleGetStarted} activeOpacity={0.85}>
-          <Text style={styles.buttonText}>{t('start.letsStart')}</Text>
-          <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+        {/* Title */}
+        <Text style={styles.title}>Nora</Text>
+
+        {/* Subtitle */}
+        <Text style={styles.subtitle}>{t('start.subtitle')}</Text>
+
+        {/* Spacer after title */}
+        <View style={styles.spacer} />
+
+        {/* Get Started Button */}
+        <TrackedTouchable analyticsId="start.getStarted"
+          style={styles.button}
+          onPress={handleGetStarted}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.buttonText}>{t('start.getStarted')}</Text>
         </TrackedTouchable>
 
-        <TrackedTouchable analyticsId="start.alreadyHaveAccount" style={styles.loginButton} onPress={handleLogin} activeOpacity={0.6}>
+        {/* Login Button */}
+        <TrackedTouchable analyticsId="start.alreadyHaveAccount"
+          style={styles.loginButton}
+          onPress={handleLogin}
+          activeOpacity={0.8}
+        >
           <Text style={styles.loginButtonText}>{t('start.alreadyHaveAccount')}</Text>
         </TrackedTouchable>
+
       </View>
     </SafeAreaView>
   );
 };
 
-// After the prototype's welcome (index.css .nora-welcome), at the app's text scale
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -61,52 +92,84 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 110,
+    alignItems: 'center',
+    paddingHorizontal: 32,
   },
-  // dragon_waving.png carries its own mint arch background, so no tile around it
-  art: {
-    width: 110,
-    height: 110 * (690 / 640),
-    marginBottom: 28,
-  },
-  title: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 32,
-    lineHeight: 36,
-    letterSpacing: -1.4,
-    color: '#292631',
-  },
-  subtitle: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
-    lineHeight: 29,
-    color: '#716d77',
-    marginTop: 18,
-  },
-  button: {
-    flexDirection: 'row',
+  dragonSection: {
+    position: 'relative',
+    width: SCREEN_WIDTH * 0.8,
+    height: SCREEN_WIDTH * 0.8,
+    marginTop: -20,
+    marginBottom: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
-    minHeight: 54,
-    marginTop: 32,
+  },
+  dragonContainer: {
+    position: 'absolute',
+    width: '125%',
+    height: '125%',
+    alignItems: 'center',
+    //marginBottom: 20,
+
+  },
+  dragonImage: {
+    width: '100%',
+    height: '100%',
+  },
+  title: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 40,
+    color: '#1E2939',
+    marginTop: 10,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontFamily: 'PlusJakartaSans_400Medium',
+    fontSize: 20,
+    color: '#1E2939',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  spacer: {
+    flex: 1,
+  },
+  button: {
+    width: '100%',
+    height: 56,
+    backgroundColor: '#1E2939',
     borderRadius: 10,
-    backgroundColor: '#8C49D5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    //shadowColor: '#8C49D5',
+    // shadowOffset: {
+    //   width: 0,
+    //   height: 4,
+    // },
+    //shadowOpacity: 0.3,
+    //shadowRadius: 8,
+   //elevation: 8,
   },
   buttonText: {
-    fontFamily: 'DMSans_700Bold',
+    fontFamily: 'PlusJakartaSans_600SemiBold',
     fontSize: 16,
     color: '#FFFFFF',
   },
   loginButton: {
+    width: '100%',
+    height: 56,
+    backgroundColor: 'transparent',
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
     alignItems: 'center',
-    paddingVertical: 12,
-    marginTop: 8,
+    justifyContent: 'center',
+    marginBottom: 32,
   },
   loginButtonText: {
-    fontFamily: 'DMSans_700Bold',
-    fontSize: 15,
-    color: '#5d438f',
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 16,
+    color: '#1E2939',
   },
 });

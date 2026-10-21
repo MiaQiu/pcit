@@ -47,9 +47,13 @@ export function previousOnboardingStep(
 ): OnboardingStep | null {
   const params = (step.params ?? {}) as Record<string, unknown>;
   switch (step.name) {
-    // Parents with an account resumed here; Start would offer to begin again
+    // Account-first: the account is made by OB1V2, so history stops there
     case 'NameInput':
-      return isAuthenticated ? null : { name: 'Start' };
+      return { name: 'OB2V2' };
+    case 'OB2V2':
+      return { name: 'OB1V2' };
+    case 'OB1V2':
+      return isAuthenticated ? null : { name: 'CreateAccount' };
     case 'ParentGoalIntro':
       return { name: hasAdhdOrDevelopmentalConcern(data.issue) ? 'ProfessionalSupport' : 'ParentGoal' };
     case 'ScreenTimeStep': {
@@ -58,6 +62,7 @@ export function previousOnboardingStep(
       return index > 0 ? screenTimeStepBefore(index, data) : { name: 'ChildIssue' };
     }
     case 'CreateAccount': {
+      if (!params.next) return { name: 'Start' };
       if (params.next !== 'ScreenTimeStep') return { name: 'OBIntro1V2' };
       const nextParams = (params.nextParams ?? {}) as Record<string, unknown>;
       const planIndex = typeof nextParams.step === 'number' ? nextParams.step : SCREEN_TIME_STEPS.length - 1;

@@ -1,6 +1,6 @@
 # Nora Mobile — Onboarding Flow
 
-_Last updated: 2026-10-15 (branch `feat/screen-time-module`)_
+_Last updated: 2026-10-21 (branch `feat/screen-time-module`)_
 
 This describes the onboarding flow as it currently runs, traced from the
 `navigate` calls in each screen. Navigator: `nora-mobile/src/navigation/OnboardingNavigator.tsx`.
@@ -8,12 +8,14 @@ Screens: `nora-mobile/src/screens/onboarding/`.
 
 ## Flow at a glance
 
-Account-last signup: the parent answers everything first and creates the account near
-the end (see "Account creation").
+Account-first signup: the parent creates the account on the second screen, then answers
+the questions (see "Account creation").
 
 ```
 Welcome → Start ─┬─ Login ──────────────► MainTabs, or resume onboarding (see below)
-                 └─ Let's start
+                 └─ Get Started
+                        │
+                 CreateAccount → OB1V2 → OB2V2
                         │
                  NameInput → Relationship → ChildName → ChildGender
                    → ChildBirthday → ChildIssue                (profile)
@@ -23,14 +25,13 @@ Welcome → Start ─┬─ Login ──────────────► 
   management         anxiety selected                  │
           │                  │                         │
   ScreenTimeStep ×29–31   DiagnosisStatus             ParentGoal
-  (CreateAccount       → ProfessionalSupport           │
-  before its plan,           └────────────┬────────────┘
-  then MainTabs)
+  (ends on its plan,   → ProfessionalSupport           │
+  then MainTabs)             └────────────┬────────────┘
                         │
                  ParentGoalIntro → OBLetterV2 → OBLetterContent
                    → OBPlay1V2 → OBPlay2V2 → OBDisciplineV2 → OBIntro1V2
                         │
-                 CreateAccount → ReminderTime → OBIntro2V2 → MainTabs
+                 ReminderTime → OBIntro2V2 → MainTabs
 ```
 
 ## Steps
@@ -40,11 +41,14 @@ Welcome → Start ─┬─ Login ──────────────► 
 | Screen | What it does | Next |
 |---|---|---|
 | `Welcome` | Splash | `Start` (replace) |
-| `Start` | The prototype's welcome: "Beyond Parenting Advice. Build Real Skills." | **Let's start** → `NameInput`, or **I already have an account** → `Login` |
+| `Start` | Dragon, "Nora", "5 Minutes a Day to a Calmer, Happier Child." | **Get Started** → `CreateAccount`, or **I already have an account** → `Login` |
 | `Login` | Logs in, then runs `checkOnboardingStep` | `MainTabs`, or back into onboarding at the missing step |
+| `CreateAccount` | Email and password, with the Terms and Privacy line | `OB1V2` (stack reset, so back can't return to signup) |
+| `OB1V2` | "Parenting is hard. But you don't have to do it alone." Meet Nora | `OB2V2` |
+| `OB2V2` | Clinical advisor Prof. Yi-Chuen Chen: "Nora helps you build the skills for hard moments, together." | `NameInput` |
 
-`ForgotPassword` and `ResetPassword` branch off `Login`. `CreateAccount` now comes near the end
-(see "Account creation"). The old intro slides `OB1V2`–`OB3V2` are no longer in the flow.
+`ForgotPassword` and `ResetPassword` branch off `Login`. The intro slide `OB3V2` is no longer
+in the flow.
 
 ### 3. Profile questions
 
@@ -57,9 +61,9 @@ Welcome → Start ─┬─ Login ──────────────► 
 | `ChildBirthday` | `childBirthday` |
 | `ChildIssue` | `issue` (single choice; "Other" saves the typed text) |
 
-Answers stay in `OnboardingContext` (and the device draft) and go to the server all at once at
-account creation. Parents who already have an account from the older account-first flow still
-save each answer as they go (`saveOnboardingFields` in `utils/onboardingDraft.ts`).
+Each answer is saved to the account as it's given (`saveOnboardingFields` in
+`utils/onboardingDraft.ts`). `Relationship` and `ChildGender` don't save on their own screen;
+`OBIntro1V2` (or the screen-time plan) sends the full profile once more, which covers them.
 
 ### 4. Branch at `ChildIssue`
 
@@ -114,8 +118,7 @@ Every step is the same route, `ScreenTimeStep`, with a `step` index into `SCREEN
 The pmum and signal questions take one screen each. The plan screen:
 - shows the hard moment (`hardest`) and what they've tried;
 - shows a before/after image for a boy or girl (none for "prefer not to say");
-- comes right after `CreateAccount`: the `coaching` screen's "Create my account" opens the account
-  screen, which then continues to the plan;
+- comes right after the `coaching` screen (its button still reads "Create my account");
 - on **Get started**, sends `screenTimeIntake` (see `buildScreenTimeIntake`) together with
   `relationshipToChild` and `childGender` to `PATCH /api/auth/complete-onboarding`;
 - then sets the local completed flag and goes to `MainTabs`.
@@ -131,9 +134,9 @@ when they picked anything else (a suspected difference counts).
 - `why` and `coaching` have different copy per path, under `<id>.none.*` and `<id>.differences.*`
   (insight steps with `byPath: true`; their layout can differ too, keyed `<id>.<path>` in `INSIGHT_BLOCKS`).
 - Both paths answer the hidden-signal questions. Then the differences path has `routine` → `specialPlay`,
-  the none path `cortex` → `cortexHelp` → `canLearn` → `easierEnd`. Both then go to `coaching`, `CreateAccount` and the plan.
+  the none path `cortex` → `cortexHelp` → `canLearn` → `easierEnd`. Both then go to `coaching` and the plan.
 - A step's `paths` lists the paths it's shown on; next/back use `adjacentStepIndex()` to skip the others.
-  The differences path has 29 screens, the none path 31 (each plus the account screen).
+  The differences path has 29 screens, the none path 31.
 - `screenTimeIntake.path` records the path; `cortex` is null on the differences path.
 
 Pronouns use i18next context: `_boy` and `_girl` variants, with a gender-neutral base key that uses the child's name.
@@ -155,22 +158,25 @@ Pronouns use i18next context: `_boy` and `_girl` variants, with a gender-neutral
 
 ## Account creation
 
-`CreateAccount` sits at the end of each path: after `OBIntro1V2` (before `ReminderTime`, which
-registers push with the server) and, on the screen-time branch, right before the plan.
+`CreateAccount` comes right after `Start` (**Get Started**). It signs up with
+`POST /api/auth/signup` (name and child fields empty; they're filled in screen by screen) and
+resets the onboarding stack to `OB1V2`. A taken email shows the signup error.
 
-- **Sign up:** `POST /api/auth/signup` with the real name, child name, birthday and issue, then
+**Account-last leftovers.** Parents who started on the earlier account-last build have a device
+draft and no account. They resume where they were, and `OBIntro1V2` (or the screen-time `coaching`
+step) sends them to `CreateAccount` with a `next` route param:
+- **Sign up:** signup with the real name, child name, birthday and issue, then
   `PATCH /api/auth/complete-onboarding` with every other answer (`buildProfilePayload`). The device
-  draft is cleared, then onboarding continues (`next` route param).
+  draft is cleared, then onboarding continues at `next`.
 - **Email already registered** (`CONFLICT`): an alert offers
   - *Use a different email*: stay and create a new account;
   - *Log in and update it*: `Login` with `overrideWithOnboarding`. After login, the onboarding answers
     overwrite that account's child profile, and onboarding continues where `CreateAccount` would have.
-- **Already logged in** (account-first parents resuming older onboarding): `CreateAccount` is skipped.
 
 ## Resume logic
 
-**Logged out, unfinished onboarding.** Until the account exists, `OnboardingNavigator` saves the
-answers and the current screen to the device (`@nora_onboarding_draft`, `utils/onboardingDraft.ts`).
+**Logged out, unfinished onboarding.** Until the account exists (only on `CreateAccount`, or for
+account-last leftovers), `OnboardingNavigator` saves the answers and the current screen to the device (`@nora_onboarding_draft`, `utils/onboardingDraft.ts`).
 On launch, `RootNavigator` resumes a logged-out parent at that screen with their answers restored.
 
 **Logged in.** `RootNavigator` (on app start) and `Login` (after sign-in) both call `checkOnboardingStep()`
@@ -193,7 +199,7 @@ Only those four fields are required. Relationship, gender, diagnosis, goal and r
 Still registered in the navigator so deep links and old resume state don't crash. Nothing in the
 flow navigates to them:
 
-- **Old intro slides:** `OB1V2`–`OB3V2`, replaced by the welcome on `Start`.
+- **Old intro slide:** `OB3V2` (`OB2V2` now goes straight to `NameInput`).
 - **V1 versions of the V2 screens:** `OB1`–`OB3`, `OBLetter`, `OBPlay1`, `OBPlay2`, `OBDiscipline`,
   `OBIntro1`, `OBIntro2`. These are kept on purpose (see below).
 - **Older flows:** `Demo1`–`Demo5`, `Demo1B`, `Demo2B`, `ParentingIntro`, `ChildSnapshotIntro`,
@@ -216,9 +222,3 @@ Keep the V1 screens until the V2 review is done.
 
 To preview any onboarding screen in dev, set `DEV_FORCE_ONBOARDING_SCREEN` in
 `nora-mobile/src/navigation/RootNavigator.tsx`.
-
-## Known issues
-
-- **Account-first parents still lose `relationshipToChild` and `childGender`.** For new parents
-  these are sent at account creation. Parents with an older account who resume onboarding save
-  answers screen by screen, and `Relationship` / `ChildGender` don't save to the server.

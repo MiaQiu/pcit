@@ -53,7 +53,7 @@ export const NameInputScreen: React.FC = () => {
 
       <OnboardingFooter
         parentPadding={20}
-        onBack={() => goBackTo(navigation, 'Start')}
+        onBack={() => goBackTo(navigation, 'OB2V2')}
         onContinue={handleContinue}
         continueDisabled={!isValid}
       />

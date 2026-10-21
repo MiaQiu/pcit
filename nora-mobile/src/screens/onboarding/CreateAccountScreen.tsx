@@ -17,7 +17,7 @@ import {
   Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { CommonActions, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Purchases from 'react-native-purchases';
 import { OnboardingStackNavigationProp, OnboardingStackParamList } from '../../navigation/types';
@@ -40,8 +40,10 @@ export const CreateAccountScreen: React.FC = () => {
   const route = useRoute<RouteProp<OnboardingStackParamList, 'CreateAccount'>>();
   const { data, updateData } = useOnboarding();
   const authService = useAuthService();
-  // Account-last signup: this screen comes at the end of onboarding, then continues here
-  const next = route.params?.next ?? 'ReminderTime';
+  // Account-first signup: Start opens this screen with no params and onboarding
+  // continues at OB1V2. With `next`, it's the end-of-onboarding signup for a
+  // parent whose answers are still only a device draft (account-last).
+  const next = route.params?.next;
   const nextParams = route.params?.nextParams;
 
   const [email, setEmail] = useState('');
@@ -52,8 +54,12 @@ export const CreateAccountScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Resumed from a saved draft, this screen has no history behind it: go to the
-  // screen that opens it (the step before the screen-time plan, or OBIntro1V2)
+  // screen that opens it (Start, the step before the screen-time plan, or OBIntro1V2)
   const handleBack = () => {
+    if (!next) {
+      goBackTo(navigation, 'Start');
+      return;
+    }
     if (next === 'ScreenTimeStep') {
       const planIndex = typeof nextParams?.step === 'number' ? nextParams.step : SCREEN_TIME_STEPS.length - 1;
       const prevIndex = adjacentStepIndex(planIndex, -1, data.screenTime ?? {});
@@ -102,8 +108,9 @@ export const CreateAccountScreen: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Account-last signup: every onboarding answer is already collected, so the account
-      // is created with the real profile; fields signup doesn't take follow right after
+      // Account-first, answers are empty here and filled in screen by screen. Account-last,
+      // every answer is already collected, so the account is created with the real
+      // profile; fields signup doesn't take follow right after
       const birthday = data.childBirthday ? new Date(data.childBirthday) : null;
       const response = await authService.signup({
         email: email.toLowerCase().trim(),
@@ -117,11 +124,14 @@ export const CreateAccountScreen: React.FC = () => {
       });
       handleApiSuccess(); // Mark server as up
 
-      try {
-        await authService.completeOnboarding(buildProfilePayload(data));
-      } catch (profileError) {
-        // The account exists; don't strand the parent over the follow-up save
-        reportError(profileError, 'CreateAccountScreen.saveProfile');
+      const profile = buildProfilePayload(data);
+      if (Object.keys(profile).length > 0) {
+        try {
+          await authService.completeOnboarding(profile);
+        } catch (profileError) {
+          // The account exists; don't strand the parent over the follow-up save
+          reportError(profileError, 'CreateAccountScreen.saveProfile');
+        }
       }
       await clearDraft();
 
@@ -161,10 +171,16 @@ export const CreateAccountScreen: React.FC = () => {
       // Store email in onboarding context
       updateData({ email: email.toLowerCase().trim() });
 
+      if (!next) {
+        // Onboarding starts here; with the account made, there's no going back to Start or signup
+        navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'OB1V2' }] }));
+        return;
+      }
       // Continue the onboarding flow (reminder, or the screen-time plan)
       navigation.navigate(next as any, nextParams as any);
     } catch (error: any) {
-      if (error?.code === 'CONFLICT') {
+      // Account-first there are no answers to carry over, so a taken email is a plain signup error
+      if (error?.code === 'CONFLICT' && next) {
         // Email already registered: start over with another email (new account), or log
         // in to that account and overwrite its child profile with these answers
         Alert.alert(t('createAccount.emailInUseTitle'), t('createAccount.emailInUseMessage'), [
