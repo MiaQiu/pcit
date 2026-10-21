@@ -988,6 +988,7 @@ async function getModuleChatPrompt(userId, moduleKey) {
     CHILD_NAME:           childName,
     CHILD_AGE:            childAge != null ? `${childAge} years old` : 'age unknown',
     DAY_NUMBER:           String(reports.length + 1),
+    ONBOARDING_ANSWERS:   formatScreenTimeIntakeForPrompt(user?.screenTimeIntake) || '  none provided',
     ACTIVE_STRATEGY:      plan.activeStrategy || 'none yet',
     PROTOCOL_STEPS:       list(plan.protocolSteps, (step, i) => `  ${i + 1}. ${step}`),
     FOCUS_AREAS:          list(plan.focusAreas, f => `  - ${f.title}: ${f.detail}`),
