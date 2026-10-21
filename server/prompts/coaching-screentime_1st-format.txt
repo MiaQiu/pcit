@@ -39,6 +39,7 @@ PERMITTED — and nothing else:
 - Moving one parent quote and one example script per section into "quote" / "script".
 - Stripping delimiters around a value — never words: heading numbers ("1.", "Step 2:"), a "**" that wraps a whole heading, "#" markers, the quotation marks around a quote or script.
 - Normalizing the child's name to "{{CHILD_NAME}}" where the write-up uses a placeholder or a different form of the name.
+- Adding paragraph breaks (a blank line) inside a "win" section so each thing the parent did well is its own paragraph, with any sentences about that point kept with it. Example: "You used a timer. Most importantly, you held firm and didn't give the phone back. That takes strength!" → "You used a timer." / blank line / "Most importantly, you held firm and didn't give the phone back. That takes strength!". Only break between sentences; never split, merge or reword one.
 - Removing the "[mm:ss] Level N: …" timeline lines from the "emotion" section's body: the app draws them as a graph (see PART 2). Keep the rest of that section.
 
 FORBIDDEN:
