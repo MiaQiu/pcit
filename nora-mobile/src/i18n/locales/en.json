@@ -3237,6 +3237,21 @@
         ],
         "tip": "Announce the exciting bridging activity before taking the device away so {{childName}} anticipates what comes next."
       }
+    },
+    "nextStep": {
+      "title": "Next time screen time ends, how can Nora help?",
+      "subtitle": "Choose what works best for you.",
+      "record": {
+        "title": "Record the next transition",
+        "body": "See how your child responds and track changes over time.",
+        "confirmation": "Sounds good! When it’s nearly time to turn off the screen, come back to Nora and record the transition. We’ll help you see what changes."
+      },
+      "chat": {
+        "title": "Chat with Nora",
+        "body": "Talk through challenges and find solutions together.",
+        "confirmation": "Of course. Whenever a screen-time struggle comes up, come back and tell Nora what happened. We’ll work through it together."
+      },
+      "footnote": "You can always choose the other option later."
     }
   },
   "moduleChat": {

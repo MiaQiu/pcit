@@ -280,6 +280,8 @@ export const ModuleReportScreen: React.FC = () => {
   const [reportData, setReportData] = useState<RecordingAnalysis | null>(null);
   const [pollingCount, setPollingCount] = useState(0);
   const [childName, setChildName] = useState('Your Child');
+  // Day 1 report's "how can Nora help next time" choice (shows its confirmation).
+  const [nextStepChoice, setNextStepChoice] = useState<'record' | 'chat' | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [parentLevel, setParentLevel] = useState<ParentSkillLevel>(1);
   const [crisisExpanded, setCrisisExpanded] = useState(true);
@@ -669,6 +671,39 @@ export const ModuleReportScreen: React.FC = () => {
                   </>
                 );
               })()}
+            </ReportCard>
+
+            {/* What's next: record the next ending, or talk it through with Nora */}
+            <ReportCard title={t('moduleReport.nextStep.title')} subtitle={t('moduleReport.nextStep.subtitle')}>
+              <View style={styles.moduleNextOptions}>
+                {([['record', 'mic-outline'], ['chat', 'chatbubble-outline']] as const).map(([choice, icon]) => {
+                  const selected = nextStepChoice === choice;
+                  return (
+                    <TrackedTouchable key={choice} analyticsId={`moduleReport.nextStep.${choice}`} activeOpacity={0.85}
+                      style={[styles.moduleNextOption, selected && styles.moduleNextOptionSelected]}
+                      onPress={() => {
+                        amplitudeService.trackEvent('Module Report Next Step Tapped', { recordingId, moduleKey, choice });
+                        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                        setNextStepChoice(choice);
+                      }}
+                    >
+                      <View style={styles.moduleNextOptionHeader}>
+                        <Ionicons name={icon} size={22} color={COLORS.mainPurple} />
+                        <Text style={styles.moduleNextOptionTitle}>{t(`moduleReport.nextStep.${choice}.title`)}</Text>
+                        {selected && <Ionicons name="checkmark-circle" size={22} color={COLORS.mainPurple} />}
+                      </View>
+                      <Text style={styles.moduleNextOptionBody}>{t(`moduleReport.nextStep.${choice}.body`)}</Text>
+                    </TrackedTouchable>
+                  );
+                })}
+              </View>
+              {nextStepChoice && (
+                <View style={styles.moduleNextConfirm}>
+                  <Ionicons name="heart" size={18} color={COLORS.mainPurple} style={styles.moduleNextConfirmIcon} />
+                  <Text style={styles.moduleNextConfirmText}>{t(`moduleReport.nextStep.${nextStepChoice}.confirmation`)}</Text>
+                </View>
+              )}
+              <Text style={styles.moduleNextFootnote}>{t('moduleReport.nextStep.footnote')}</Text>
             </ReportCard>
             </>
           ) : coachingReport ? (
@@ -2136,6 +2171,16 @@ const styles = StyleSheet.create({
   moduleStrategyName: { fontFamily: FONTS.bold, fontSize: 17, color: COLORS.mainPurple },
   moduleTryThis: { marginTop: 14, backgroundColor: '#F5EAFB', borderRadius: 14, padding: 12 },
   moduleTryThisLabel: { fontFamily: FONTS.semiBold, fontSize: 14, letterSpacing: 0.6, color: '#6B7280', textTransform: 'uppercase' },
+  moduleNextOptions: { gap: 12, marginTop: 14 },
+  moduleNextOption: { borderWidth: 1, borderColor: '#E5E1EA', borderRadius: 16, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: '#FFFFFF' },
+  moduleNextOptionSelected: { borderColor: COLORS.mainPurple, borderWidth: 2, backgroundColor: '#FBF7FE' },
+  moduleNextConfirm: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: '#F4ECFC', borderRadius: 16, padding: 14, marginTop: 14 },
+  moduleNextConfirmIcon: { marginTop: 2 },
+  moduleNextConfirmText: { flex: 1, fontFamily: FONTS.regular, fontSize: 16, lineHeight: 23, color: REPORT_CARD_COLORS.title },
+  moduleNextOptionHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  moduleNextOptionTitle: { flex: 1, fontFamily: FONTS.bold, fontSize: 17, lineHeight: 23, color: REPORT_CARD_COLORS.title },
+  moduleNextOptionBody: { fontFamily: FONTS.regular, fontSize: 15, lineHeight: 21, color: REPORT_CARD_COLORS.subtitle, marginTop: 6 },
+  moduleNextFootnote: { fontFamily: FONTS.regular, fontSize: 14, lineHeight: 20, color: REPORT_CARD_COLORS.subtitle, textAlign: 'center', marginTop: 14 },
   moduleAlertRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginTop: 14, backgroundColor: '#FDEFEF', borderRadius: 16, padding: 14 },
   moduleAlertIcon: { width: 28, height: 28, borderRadius: 14, backgroundColor: MODULE_ALERT_RED, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
   moduleAlertText: { flex: 1, minWidth: 0 },
