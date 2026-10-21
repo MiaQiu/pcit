@@ -3113,7 +3113,6 @@
   "moduleReport": {
     "nextGrowthFocus": "下一步成長重點",
     "trySaying": "試著這樣說",
-    "seeMyPlan": "查看我的計畫",
     "reflectWithNora": "和 Nora 聊聊",
     "reflectDraft": "關於報告裡的「{{title}}」：",
     "emotionLevels": {
@@ -3124,7 +3123,7 @@
       "4": "崩潰",
       "5": "動手"
     },
-    "recommendedStrategies": "推薦策略",
+    "recommendedStrategies": "其他最佳做法",
     "keyStrategies": {
       "countdown": {
         "name": "給出簡單的倒數提醒",
@@ -3244,7 +3243,11 @@
         "confirmation": "沒問題。每當螢幕時間遇到困難，就回來告訴 Nora 發生了什麼。我們一起想辦法。"
       },
       "footnote": "之後你隨時可以選擇另一個方式。"
-    }
+    },
+    "whatWeObserved": "我們觀察到的",
+    "emotionTimeline": "情緒時間線",
+    "showMoments": "查看所有情緒時刻",
+    "hideMoments": "收起情緒時刻"
   },
   "moduleChat": {
     "greetingReply": "{{name}}你好！我在這裡幫你讓{{childName}}的螢幕時間更輕鬆。今天想聊什麼——最近一次結束螢幕時間的情況，還是你正在練習的策略？",

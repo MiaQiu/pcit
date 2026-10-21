@@ -148,11 +148,19 @@ export type ModuleReportSectionKind = 'win' | 'learned' | 'emotion' | 'strategie
 // moduleReport.keyStrategies.<id>.
 export type KeyStrategyId = 'countdown' | 'timer' | 'bridging';
 
-// One point of the child's outburst level (0 calm – 5 aggression) over a session.
+// One point of the child's outburst level (continuous 0 calm – 5 aggression) over a session.
 export interface EmotionTimelinePoint {
   seconds: number;
   level: number;
   label: string;
+  added?: boolean; // placed by the formatter for a moment the coaching names
+}
+
+// A moment the report's coaching is about, marked on the outburst graph.
+export interface EmotionCallout {
+  seconds: number;
+  label: string;
+  kind: 'trigger' | 'fuel' | 'calm';
 }
 export interface ModuleReportSection {
   kind: ModuleReportSectionKind;
@@ -169,6 +177,7 @@ export interface ModuleCoachingData {
   narrative?: string;
   report?: { headline: string; sections: ModuleReportSection[] };
   emotionTimeline?: EmotionTimelinePoint[]; // drawn in the 'emotion' section
+  emotionCallouts?: EmotionCallout[];
   recommendedStrategies?: KeyStrategyId[]; // listed in the 'strategies' section
   suggestedStrategies?: { name: string; description: string }[];
   coachingReport?: {

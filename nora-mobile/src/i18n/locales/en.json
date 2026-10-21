@@ -3123,7 +3123,6 @@
   "moduleReport": {
     "nextGrowthFocus": "Next Growth Focus",
     "trySaying": "Try saying",
-    "seeMyPlan": "See my plan",
     "reflectWithNora": "Talk it through with Nora",
     "reflectDraft": "About “{{title}}” in my report: ",
     "emotionLevels": {
@@ -3134,7 +3133,7 @@
       "4": "Meltdown",
       "5": "Hitting"
     },
-    "recommendedStrategies": "Recommended Strategies",
+    "recommendedStrategies": "Other Best Practices",
     "keyStrategies": {
       "countdown": {
         "name": "Give simple countdown warnings",
@@ -3254,7 +3253,11 @@
         "confirmation": "Of course. Whenever a screen-time struggle comes up, come back and tell Nora what happened. We’ll work through it together."
       },
       "footnote": "You can always choose the other option later."
-    }
+    },
+    "whatWeObserved": "What We Observed",
+    "emotionTimeline": "Emotion Timeline",
+    "showMoments": "Show all emotion moments",
+    "hideMoments": "Hide emotion moments"
   },
   "moduleChat": {
     "greetingReply": "Hi {{name}}! I'm here to help make screen time easier with {{childName}}. What's on your mind today — how a screen-time ending went, or one of your strategies?",

@@ -64,7 +64,6 @@ import { useScreenViewDuration } from '../hooks/useScreenViewDuration';
 import { useScrollDepthTracking } from '../hooks/useScrollDepthTracking';
 import { deriveGoalFromLevel as deriveGoalNumbersFromLevel } from '../utils/goalFallback';
 import { TrackedTouchable } from '../components/TrackedTouchable';
-import { returnToModule } from '../navigation/moduleNavigation';
 
 type ModuleReportRouteProp = RouteProp<RootStackParamList, 'ModuleReport'>;
 
@@ -86,6 +85,34 @@ const FIRST_SESSION_CHALLENGE_ACCENT = { color: '#E08A3C', background: '#FBE7D2'
 // PDI command-sequence label badges — same mapping as ReportScreen.tsx's
 // PDICoachCorner; unknown labels read as "Needs Work".
 const MODULE_ALERT_RED = '#D64545';
+
+// "**Observation:**" / "**Core focus for next session:**" blocks of a report's
+// emotion section: the label (on its own line) gets an icon; the rest renders
+// as before. Matches any "**Label:**" (also "：") so translated labels work.
+const LABEL_BLOCK = /^\*\*([^*\n]+?)[:：]\*\*[ \t]*\n?/;
+const LABEL_ICONS: { match: RegExp; icon: keyof typeof Ionicons.glyphMap; color: string; bg: string }[] = [
+  { match: /focus|重点|重點/i, icon: 'locate', color: '#8C49D5', bg: '#F1E8FB' },
+  { match: /./,                icon: 'eye',    color: '#3E77A8', bg: '#E3EEFA' },
+];
+const renderLabeledBody = (body: string) => body
+  .split(/\n+(?=\*\*[^*\n]+?[:：]\*\*)/)
+  .map((block, i) => {
+    const match = block.match(LABEL_BLOCK);
+    const rest = (match ? block.slice(match[0].length) : block).trim();
+    if (!match) return !!rest && <MarkdownText key={i} style={labeledStyles.body}>{rest}</MarkdownText>;
+    const { icon, color, bg } = LABEL_ICONS.find(l => l.match.test(match[1]))!;
+    return (
+      <View key={i} style={[labeledStyles.block, i > 0 && labeledStyles.blockSpaced]}>
+        <View style={labeledStyles.labelRow}>
+          <View style={[labeledStyles.labelIcon, { backgroundColor: bg }]}>
+            <Ionicons name={icon} size={15} color={color} />
+          </View>
+          <Text style={labeledStyles.label}>{match[1]}</Text>
+        </View>
+        {!!rest && <MarkdownText style={labeledStyles.body}>{rest}</MarkdownText>}
+      </View>
+    );
+  });
 
 // Card icon per section kind of a narrative module report (moduleCoaching.report).
 const NARRATIVE_SECTION_ICONS: Record<ModuleReportSectionKind, keyof typeof Ionicons.glyphMap> = {
@@ -545,7 +572,7 @@ export const ModuleReportScreen: React.FC = () => {
       <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
         <View style={styles.header}>
           <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.headerButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="chevron-back" size={22} color={COLORS.mainPurple} />
+            <Ionicons name="chevron-back" size={24} color="#000000" />
           </TrackedTouchable>
           <Text style={styles.headerTitle}>{t('reportDetail.headerTitle')}</Text>
         </View>
@@ -564,7 +591,7 @@ export const ModuleReportScreen: React.FC = () => {
       <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
         <View style={styles.header}>
           <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.headerButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="chevron-back" size={22} color={COLORS.mainPurple} />
+            <Ionicons name="chevron-back" size={24} color="#000000" />
           </TrackedTouchable>
           <Text style={styles.headerTitle}>{t('reportDetail.headerTitle')}</Text>
         </View>
@@ -596,7 +623,7 @@ export const ModuleReportScreen: React.FC = () => {
       <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
         <View style={styles.header}>
           <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.headerButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="chevron-back" size={22} color={COLORS.mainPurple} />
+            <Ionicons name="chevron-back" size={24} color="#000000" />
           </TrackedTouchable>
           <Text style={styles.headerTitle}>{t('reportDetail.headerTitle')}</Text>
         </View>
@@ -607,7 +634,8 @@ export const ModuleReportScreen: React.FC = () => {
               side-by-side hero. */}
           <View style={styles.moduleHeroCard}>
             <View style={styles.moduleHeroBubble}>
-              <Text style={styles.moduleHeroText}>{heroText}</Text>
+              {/* Regular weight; only **key phrases** are bold */}
+              {!!heroText && <MarkdownText style={styles.moduleHeroText} boldFontFamily={FONTS.bold}>{heroText}</MarkdownText>}
             </View>
             <View style={styles.moduleHeroBubbleTail} />
             <Image source={REPORT_DETAIL_DRAGON} style={styles.moduleHeroDragon} resizeMode="contain" />
@@ -621,12 +649,14 @@ export const ModuleReportScreen: React.FC = () => {
               const showKeyStrategies = section.kind === 'strategies' && recommendedStrategies.length > 0;
               return (
               <ReportCard key={i} icon={NARRATIVE_SECTION_ICONS[section.kind] ?? 'sparkles'}
-                title={showKeyStrategies ? t('moduleReport.recommendedStrategies') : section.title}>
+                title={showKeyStrategies ? t('moduleReport.recommendedStrategies') : section.kind === 'emotion' ? t('moduleReport.whatWeObserved') : section.title}>
                 {!!section.quote && <Text style={styles.moduleQuote}>{`\u201C${section.quote}\u201D`}</Text>}
-                {i === emotionSectionIndex && emotionTimeline.length > 1 && <EmotionTimelineChart points={emotionTimeline} />}
+                {i === emotionSectionIndex && emotionTimeline.length > 1 && <EmotionTimelineChart points={emotionTimeline} callouts={moduleCoaching.emotionCallouts} />}
                 {showKeyStrategies ? (
                   <KeyStrategyList strategies={recommendedStrategies} childName={childName !== 'Your Child' ? childName : undefined}
                     onOpen={(strategy) => amplitudeService.trackEvent('Module Report Strategy Opened', { recordingId, moduleKey, strategy })} />
+                ) : section.kind === 'emotion' && !!section.body ? (
+                  renderLabeledBody(section.body)
                 ) : !!section.body && <MarkdownText style={styles.moduleBody}>{section.body}</MarkdownText>}
                 {!!section.script && (
                   <View style={styles.moduleTryThis}>
@@ -679,7 +709,8 @@ export const ModuleReportScreen: React.FC = () => {
                 {([['record', 'mic-outline'], ['chat', 'chatbubble-outline']] as const).map(([choice, icon]) => {
                   const selected = nextStepChoice === choice;
                   return (
-                    <TrackedTouchable key={choice} analyticsId={`moduleReport.nextStep.${choice}`} activeOpacity={0.85}
+                    <React.Fragment key={choice}>
+                    <TrackedTouchable analyticsId={`moduleReport.nextStep.${choice}`} activeOpacity={0.85}
                       style={[styles.moduleNextOption, selected && styles.moduleNextOptionSelected]}
                       onPress={() => {
                         amplitudeService.trackEvent('Module Report Next Step Tapped', { recordingId, moduleKey, choice });
@@ -690,19 +721,20 @@ export const ModuleReportScreen: React.FC = () => {
                       <View style={styles.moduleNextOptionHeader}>
                         <Ionicons name={icon} size={22} color={COLORS.mainPurple} />
                         <Text style={styles.moduleNextOptionTitle}>{t(`moduleReport.nextStep.${choice}.title`)}</Text>
-                        {selected && <Ionicons name="checkmark-circle" size={22} color={COLORS.mainPurple} />}
                       </View>
                       <Text style={styles.moduleNextOptionBody}>{t(`moduleReport.nextStep.${choice}.body`)}</Text>
                     </TrackedTouchable>
+                    {/* Confirmation right under the chosen option */}
+                    {selected && (
+                      <View style={styles.moduleNextConfirm}>
+                        <Ionicons name="heart" size={18} color={COLORS.mainPurple} style={styles.moduleNextConfirmIcon} />
+                        <Text style={styles.moduleNextConfirmText}>{t(`moduleReport.nextStep.${choice}.confirmation`)}</Text>
+                      </View>
+                    )}
+                    </React.Fragment>
                   );
                 })}
               </View>
-              {nextStepChoice && (
-                <View style={styles.moduleNextConfirm}>
-                  <Ionicons name="heart" size={18} color={COLORS.mainPurple} style={styles.moduleNextConfirmIcon} />
-                  <Text style={styles.moduleNextConfirmText}>{t(`moduleReport.nextStep.${nextStepChoice}.confirmation`)}</Text>
-                </View>
-              )}
               <Text style={styles.moduleNextFootnote}>{t('moduleReport.nextStep.footnote')}</Text>
             </ReportCard>
             </>
@@ -743,8 +775,8 @@ export const ModuleReportScreen: React.FC = () => {
             </>
           ) : null}
 
-          {/* Full Transcript — none for a report written from survey answers */}
-          {!fromSurvey && (
+          {/* Full Transcript — Day 2+ only; none for a survey-based report */}
+          {!fromSurvey && !narrativeReport && (
             <ReportCard
               icon="document-text"
               title={t('reportDetail.transcript.title')}
@@ -754,14 +786,14 @@ export const ModuleReportScreen: React.FC = () => {
             />
           )}
 
-          {/* Exit to the plan this report just produced */}
-          <TrackedTouchable analyticsId="moduleReport.seeMyPlan" style={styles.seeYouTomorrowButton} activeOpacity={0.85}
+          {/* Back to the home screen */}
+          <TrackedTouchable analyticsId="moduleReport.seeYouTomorrow" style={styles.seeYouTomorrowButton} activeOpacity={0.85}
             onPress={() => {
-              amplitudeService.trackEvent('Module Report See My Plan Tapped', { recordingId, moduleKey });
-              returnToModule(navigation, moduleKey, { initialTab: 'plan' });
+              amplitudeService.trackEvent('Module Report See You Tomorrow Tapped', { recordingId, moduleKey });
+              navigation.navigate('MainTabs', { screen: 'Home' });
             }}
           >
-            <Text style={styles.seeYouTomorrowButtonText}>{t('moduleReport.seeMyPlan')}</Text>
+            <Text style={styles.seeYouTomorrowButtonText}>{t('reportDetail.seeYouTomorrow')}</Text>
           </TrackedTouchable>
         </ScrollView>
       </SafeAreaView>
@@ -1494,7 +1526,7 @@ export const ModuleReportScreen: React.FC = () => {
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.headerButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="chevron-back" size={22} color={COLORS.mainPurple} />
+          <Ionicons name="chevron-back" size={24} color="#000000" />
         </TrackedTouchable>
         <Text style={styles.headerTitle}>{t('reportDetail.headerTitle')}</Text>
       </View>
@@ -1905,8 +1937,6 @@ const styles = StyleSheet.create({
   headerButton: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F5EAFB',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -2130,7 +2160,7 @@ const styles = StyleSheet.create({
 
   // ── Learn module report ──
   moduleHeroCard: {
-    backgroundColor: '#FCEFE0',
+    backgroundColor: '#FFFFFF',
     borderRadius: 28,
     paddingTop: 22,
     paddingHorizontal: 20,
@@ -2142,9 +2172,10 @@ const styles = StyleSheet.create({
     shadowRadius: 28,
     elevation: 3,
   },
+  // Tinted so it still reads as a speech bubble on the white card.
   moduleHeroBubble: {
     alignSelf: 'stretch',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F5EFFC',
     borderRadius: 20,
     paddingVertical: 14,
     paddingHorizontal: 16,
@@ -2160,9 +2191,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 14,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    borderTopColor: '#FFFFFF',
+    borderTopColor: '#F5EFFC',
   },
-  moduleHeroText: { fontFamily: FONTS.semiBold, fontSize: 18, lineHeight: 25, color: '#000000' },
+  moduleHeroText: { fontFamily: FONTS.regular, fontSize: 18, lineHeight: 25, color: '#000000' },
   moduleHeroDragon: { alignSelf: 'flex-start', width: 160, height: 160, marginTop: 2, marginBottom: -12, marginLeft: -8 },
   moduleSubheading: { fontFamily: FONTS.bold, fontSize: 18, lineHeight: 24, color: REPORT_CARD_COLORS.title },
   moduleBody: { fontFamily: FONTS.regular, fontSize: 17, lineHeight: 24, color: REPORT_CARD_COLORS.title, marginTop: 4 },
@@ -2174,7 +2205,7 @@ const styles = StyleSheet.create({
   moduleNextOptions: { gap: 12, marginTop: 14 },
   moduleNextOption: { borderWidth: 1, borderColor: '#E5E1EA', borderRadius: 16, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: '#FFFFFF' },
   moduleNextOptionSelected: { borderColor: COLORS.mainPurple, borderWidth: 2, backgroundColor: '#FBF7FE' },
-  moduleNextConfirm: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: '#F4ECFC', borderRadius: 16, padding: 14, marginTop: 14 },
+  moduleNextConfirm: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: '#F4ECFC', borderRadius: 16, padding: 14 },
   moduleNextConfirmIcon: { marginTop: 2 },
   moduleNextConfirmText: { flex: 1, fontFamily: FONTS.regular, fontSize: 16, lineHeight: 23, color: REPORT_CARD_COLORS.title },
   moduleNextOptionHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -2350,4 +2381,13 @@ const styles = StyleSheet.create({
   unlockButtonText: { fontFamily: FONTS.bold, fontSize: 14, color: '#FFFFFF' },
   unlockTimeRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 12 },
   unlockTimeText: { fontFamily: FONTS.regular, fontSize: 13, color: '#9A8672' },
+});
+
+const labeledStyles = StyleSheet.create({
+  block: { marginTop: 12 },
+  blockSpaced: { marginTop: 26 }, // between labeled blocks (Observation → Core focus)
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  labelIcon: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  label: { flex: 1, fontFamily: FONTS.bold, fontSize: 17, lineHeight: 24, color: REPORT_CARD_COLORS.title },
+  body: { fontFamily: FONTS.regular, fontSize: 17, lineHeight: 24, color: REPORT_CARD_COLORS.title, marginTop: 6 },
 });
