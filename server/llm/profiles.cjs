@@ -169,6 +169,16 @@ const PROFILES = {
     output:      'json',
   },
 
+  // Learn module gate: also writes the parent-facing reason, and thinking
+  // alone can take ~500 tokens.
+  'module-quality-check': {
+    model:       'gemini',
+    temperature: 0,
+    maxTokens:   2048,
+    timeout:     30_000,
+    output:      'json',
+  },
+
   // ── Other services ────────────────────────────────────────────────────────
 
   'weekly-report': {

@@ -96,6 +96,23 @@ const QUALITY_MESSAGES = {
     'zh-CN': '您的录音无法分析。请重新录制一段您和孩子的亲子游戏。',
     'zh-TW': '您的錄音無法分析。請重新錄製一段您和孩子的親子遊戲。',
   },
+  // Learn module recordings (validateModuleSessionQuality). A rejected one
+  // doesn't use up the day: only analyzed reports count.
+  moduleNoSpeech: {
+    eng: 'Your recording didn\'t pick up any speech, so there\'s nothing to coach on yet. Keep your phone close and start recording just before screen time ends.',
+    'zh-CN': '录音没有采集到任何说话声，所以暂时无法给出建议。请把手机放在旁边，在屏幕时间快结束前开始录音。',
+    'zh-TW': '錄音沒有擷取到任何說話聲，所以暫時無法給出建議。請把手機放在旁邊，在螢幕時間快結束前開始錄音。',
+  },
+  moduleRehearsal: {
+    eng: 'It sounds like you were practicing the routine — great preparation! To coach you, Nora needs to hear the real moment with your child, so start recording the next time screen time ends.',
+    'zh-CN': '听起来您是在练习这个流程——准备得很好！为了给您建议，Nora 需要听到您和孩子真实的那一刻，请在下次屏幕时间结束时开始录音。',
+    'zh-TW': '聽起來您是在練習這個流程——準備得很好！為了給您建議，Nora 需要聽到您和孩子真實的那一刻，請在下次螢幕時間結束時開始錄音。',
+  },
+  moduleOffTopic: {
+    eng: 'We couldn\'t find a screen-time ending in this recording, so there\'s no report this time. Start recording just before you tell your child screen time is over, and keep your phone nearby until things settle.',
+    'zh-CN': '这段录音中没有找到屏幕时间结束的过程，所以这次无法生成报告。请在告诉孩子屏幕时间结束之前开始录音，并把手机放在旁边，直到情况平稳下来。',
+    'zh-TW': '這段錄音中沒有找到螢幕時間結束的過程，所以這次無法產生報告。請在告訴孩子螢幕時間結束之前開始錄音，並把手機放在旁邊，直到情況平穩下來。',
+  },
 };
 
 /**
@@ -163,6 +180,58 @@ async function validateSessionQuality(utterances, durationSeconds, roleIdentific
     throw new SessionQualityError(
       result.userMessage || qualityMessage('analysisFailed', language)
     );
+  }
+}
+
+/**
+ * Quality gate for Learn module recordings (in place of validateSessionQuality,
+ * whose play-session rules don't fit: a screen-time ending can be short, and
+ * a silent toddler handing over the tablet is a real, good ending). One LLM
+ * call classifies the recording; a parent practicing the routine alone
+ * ("rehearsal") or anything that isn't a screen-time ending ("off_topic") is
+ * rejected. Fails open: an unusable answer lets the recording through.
+ * Throws SessionQualityError if the recording should not get a report.
+ */
+async function validateModuleSessionQuality(session, transcriptText, childName, language = null) {
+  const sessionId = session.id;
+  const promptName = MODULE_COACHING_CONFIG[session.moduleKey]?.qualityCheckPrompt;
+  if (!promptName) return;
+
+  if (!transcriptText.trim()) {
+    throw new SessionQualityError(qualityMessage('moduleNoSpeech', language));
+  }
+
+  const languageInstruction = getLanguageInstruction(language);
+  const prompt = loadPromptWithVariables(promptName, {
+    CHILD_NAME: childName || 'your child',
+    DURATION_SECONDS: String(session.durationSeconds ?? 'unknown'),
+    TRANSCRIPT: transcriptText,
+    LANGUAGE_INSTRUCTION: languageInstruction
+      ? `${languageInstruction} This applies to "user_message" only — keep the JSON keys, the classification values and "reason" in English.`
+      : '',
+  });
+
+  let result;
+  try {
+    result = await llmCall(prompt, {
+      profile:  'module-quality-check',
+      label:    `module-quality-check-${session.moduleKey}`,
+      sessionId,
+    });
+  } catch (error) {
+    console.warn(`⚠️ [MODULE-QUALITY-GATE] Check failed, letting session ${sessionId.substring(0, 8)} through: ${error.message}`);
+    return;
+  }
+
+  const { classification, child_audible: childAudible, reason, user_message: userMessage } = result || {};
+  console.log(`📊 [MODULE-QUALITY-GATE] Session ${sessionId.substring(0, 8)} (${session.moduleKey}): ${classification}, child audible: ${childAudible} — ${reason}`);
+  // The model's message says what it heard; the fixed one covers an empty answer.
+  const message = (fallbackKey) => (typeof userMessage === 'string' && userMessage.trim()) || qualityMessage(fallbackKey, language);
+  if (classification === 'rehearsal') {
+    throw new SessionQualityError(message('moduleRehearsal'));
+  }
+  if (classification === 'off_topic') {
+    throw new SessionQualityError(message('moduleOffTopic'));
   }
 }
 
@@ -760,6 +829,8 @@ const MODULE_COACHING_CONFIG = {
     knowledgeBasePrompt: 'coaching-screentime',
     // Module chat system prompt (routes/coach.cjs, see getModuleChatPrompt).
     chatPrompt:     'coach-screentime',
+    // Quality gate: is this a real screen-time ending (validateModuleSessionQuality).
+    qualityCheckPrompt: 'moduleQualityCheck-screentime',
     // Strategies in the Knowledge Base — valid active_strategy_id range.
     strategyCount:  10,
   },
@@ -1166,11 +1237,15 @@ function cleanEmotionChart(timeline, callouts, transcriptText) {
  * Analysis path for Learn module recordings, called by analyzePCITCoding once
  * speaker roles are identified. Skips the PCIT quality gate, DPICS coding and
  * CDI coaching (none of which fit a screen-time ending) and stores the module
- * report + plan on session.moduleCoaching.
+ * report + plan on session.moduleCoaching — unless the module's own quality
+ * gate rejects the recording (validateModuleSessionQuality).
  */
 async function analyzeModuleSession(session, user, childName, childAge, primaryLanguage) {
   const sessionId = session.id;
   const utterances = await getUtterances(sessionId); // re-read: roles were just assigned
+  const transcriptText = formatUtterancesWithTimestamps(utterances);
+
+  await validateModuleSessionQuality(session, transcriptText, childName, primaryLanguage);
 
   // Background on how endings usually go — the Day 1 survey, not a Day 2+
   // check-in about one day's practice.
@@ -1187,7 +1262,7 @@ async function analyzeModuleSession(session, user, childName, childAge, primaryL
 
   const moduleCoaching = await generateModuleCoaching(
     session.moduleKey,
-    formatUtterancesWithTimestamps(utterances),
+    transcriptText,
     { name: childName, ageYears: childAge, traitsText: moduleTraitsText(user), sessionNotes, screenTimeIntake: user.screenTimeIntake },
     sessionId,
     primaryLanguage,
@@ -2419,7 +2494,7 @@ async function generatePDITwoChoicesAnalysis(utterances, childName, sessionId = 
  * @returns {{ roleIdentificationJson: Object, roleMap: Object }}
  *   roleMap: { speaker_0: 'adult', speaker_1: 'child', ... }  (lowercase)
  */
-async function identifyRolesWithVoting(utterancesForPrompt, utterances, storagePath, sessionId) {
+async function identifyRolesWithVoting(utterancesForPrompt, utterances, storagePath, sessionId, { expectChild = true } = {}) {
   const prompt = loadPromptWithVariables('roleIdentification', {
     UTTERANCES_JSON: JSON.stringify(utterancesForPrompt, null, 2)
   });
@@ -2545,9 +2620,12 @@ async function identifyRolesWithVoting(utterancesForPrompt, utterances, storageP
   // ── Fallback: every speaker labeled ADULT ────────────────────────────────
   // A PCIT play session always contains a child. If role-ID came back with no
   // CHILD at all, demote the speaker whose ADULT call is weakest — lowest LLM
-  // confidence, falling back to ML confidence — to CHILD.
+  // confidence, falling back to ML confidence — to CHILD. Not for Learn module
+  // recordings (expectChild false): the child may be silent, or absent (a
+  // parent rehearsing alone, which the module quality gate then rejects), and
+  // a demoted parent voice would be read as the child's outbursts.
   const allSpeakerIds = Object.keys(roleMap);
-  if (allSpeakerIds.length >= 2 && allSpeakerIds.every(id => roleMap[id] === 'adult')) {
+  if (expectChild && allSpeakerIds.length >= 2 && allSpeakerIds.every(id => roleMap[id] === 'adult')) {
     const confidenceOf = (id) => {
       const llmConf = baseSpeakers[id]?.confidence;
       if (typeof llmConf === 'number') return llmConf;
@@ -2692,6 +2770,8 @@ async function analyzePCITCoding(sessionId, userId, preferredLanguage = null) {
   console.log(`✅ [ANALYSIS-STEP-2] Found ${utterances.length} utterances`);
 
   if (utterances.length === 0) {
+    // A silent module recording is the parent's to redo, not a system failure.
+    if (session.moduleKey) throw new SessionQualityError(qualityMessage('moduleNoSpeech', preferredLanguage));
     throw new Error('No utterances found in session data');
   }
 
@@ -2740,7 +2820,7 @@ async function analyzePCITCoding(sessionId, userId, preferredLanguage = null) {
   } else {
     try {
       const { roleIdentificationJson: rij, roleMap } = await identifyRolesWithVoting(
-        utterancesForPrompt, utterances, session.storagePath, sessionId
+        utterancesForPrompt, utterances, session.storagePath, sessionId, { expectChild: !session.moduleKey }
       );
       roleIdentificationJson = rij;
 
@@ -3334,6 +3414,7 @@ module.exports = {
   PermanentFailureError,
   analyzePCITCoding,
   validateSessionQuality,
+  validateModuleSessionQuality,
   identifyRolesWithVoting,
   generateCDIFeedback,
   generateReportHighlights,

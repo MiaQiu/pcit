@@ -96,6 +96,7 @@ Write the timeline as a list, one line per moment, in time order, exactly in thi
   - [mm:ss] Level N: what happened (max 8 words)     (N with one decimal, e.g. Level 2.5)
 Use 5-12 moments: the start, every rise and fall, the peak(s) and the end. Rate only what the transcript shows; do not invent moments.
 If the transcript has no [mm:ss] times, write no timeline and describe the outburst in words instead.
+The child may say little or nothing (a quiet or very young child). Then rate the child from what the parent's lines show (e.g. the parent thanking the child for handing over the tablet = Level 0) and never rate the parent's own voice as the child's outburst. If the parent's lines don't show how the child reacted either, write no timeline and say in words that the recording didn't capture the child's reaction.
 After the timeline, write two short paragraphs, each starting with its label in bold on a line of its own, exactly:
   **Observation:** the pattern (when it rose, what kept it going, how it ended).
   **Core focus for next session:** the one core focus.
