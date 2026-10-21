@@ -1745,6 +1745,7 @@
         "cheatSheet": {
           "title": "Quick Cheat Sheet",
           "subtitle": "What to Say & Do",
+          "focusTitle_one": "Your Focus Area",
           "focusTitle": "Your {{count}} Focus Areas",
           "focusSubtitle": "Based on your last recording",
           "routineHeading": "Other steps in your screen-time routine",

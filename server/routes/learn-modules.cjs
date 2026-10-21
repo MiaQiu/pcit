@@ -21,6 +21,9 @@ router.use(requireAuth);
  * strategies a Day 2+ report judged mastered, first mastery only, in order.
  * suggestedStrategies are the latest report's "Next Growth Focus" strategies
  * ({ name, description }) — the module chat's suggested ideas.
+ * recommendedStrategies are the key strategies ('countdown' | 'timer' |
+ * 'bridging') of the newest report that lists any — the Cheat Sheet's focus
+ * areas. Only the Day 1 write-up picks them, so later reports keep Day 1's.
  */
 router.get('/:moduleKey/plan', async (req, res) => {
   try {
@@ -61,6 +64,9 @@ router.get('/:moduleKey/plan', async (req, res) => {
       });
     });
 
+    const recommendedStrategies = [...sessions].reverse()
+      .find(s => s.moduleCoaching?.recommendedStrategies?.length)?.moduleCoaching.recommendedStrategies || [];
+
     res.json({
       plan: session?.moduleCoaching?.myPlan || null,
       recordingId: session?.id || null,
@@ -68,6 +74,7 @@ router.get('/:moduleKey/plan', async (req, res) => {
       masteredStrategies,
       suggestedStrategies: session?.moduleCoaching?.suggestedStrategies
         || session?.moduleCoaching?.coachingReport?.nextGrowthFocus?.strategies || [],
+      recommendedStrategies,
     });
   } catch (error) {
     logError(error, { route: 'learn-modules#Get module plan error', userId: req.userId });

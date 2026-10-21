@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { COLORS, FONTS } from '../constants/assets';
 import { useAuthService } from '../contexts/AppContext';
-import { LEARN_MODULES, LearnModuleConfig, LearnModuleKey, MasteredStrategy, ModulePlanData, SuggestedStrategy } from '../constants/learnModules';
+import { KeyStrategyId, LEARN_MODULES, LearnModuleConfig, LearnModuleKey, MasteredStrategy, ModulePlanData, SuggestedStrategy } from '../constants/learnModules';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -27,6 +27,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 const planCache = new Map<LearnModuleKey, ModulePlanData | null>();
 const masteredCache = new Map<LearnModuleKey, MasteredStrategy[]>();
 const suggestedCache = new Map<LearnModuleKey, SuggestedStrategy[]>();
+const recommendedCache = new Map<LearnModuleKey, KeyStrategyId[]>();
 
 export interface PlanDisplay {
   strategy: string;
@@ -73,6 +74,10 @@ export const useModulePlan = (moduleKey: LearnModuleKey, refreshKey?: unknown) =
   const [suggestedStrategies, setSuggestedStrategies] = useState<SuggestedStrategy[]>(
     suggestedCache.get(moduleKey) ?? [],
   );
+  // Key strategies of the newest report that lists any (Cheat Sheet focus areas).
+  const [recommendedStrategies, setRecommendedStrategies] = useState<KeyStrategyId[]>(
+    recommendedCache.get(moduleKey) ?? [],
+  );
 
   useEffect(() => {
     authService.getCurrentUser()
@@ -93,6 +98,9 @@ export const useModulePlan = (moduleKey: LearnModuleKey, refreshKey?: unknown) =
         const suggested: SuggestedStrategy[] = data?.suggestedStrategies ?? [];
         suggestedCache.set(moduleKey, suggested);
         setSuggestedStrategies(suggested);
+        const recommended: KeyStrategyId[] = data?.recommendedStrategies ?? [];
+        recommendedCache.set(moduleKey, recommended);
+        setRecommendedStrategies(recommended);
       })
       .catch(err => {
         console.error('Failed to load module plan:', err);
@@ -101,7 +109,7 @@ export const useModulePlan = (moduleKey: LearnModuleKey, refreshKey?: unknown) =
       });
   }, [authService, moduleKey, refreshKey]);
 
-  return { generatedPlan, childName, masteredStrategies, suggestedStrategies };
+  return { generatedPlan, childName, masteredStrategies, suggestedStrategies, recommendedStrategies };
 };
 
 // What the plan screens render: the generated plan, or the module's template

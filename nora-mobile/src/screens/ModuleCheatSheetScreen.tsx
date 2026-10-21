@@ -2,9 +2,10 @@
  * ModuleCheatSheetScreen
  * "Quick Cheat Sheet — What to Say & Do", opened from "Cheat Sheet from Last
  * Session" on LearnModuleScreen_v2. Two parts:
- * - Your 3 Focus Areas: from the last report (myPlan.focusAreas, written by
- *   the coaching prompt); reports from before that field fall back to the
- *   plan's protocol steps.
+ * - Your Focus Areas: the key strategies (countdown / timer / bridging) of the
+ *   newest report that recommends any, with their standard copy
+ *   (moduleReport.keyStrategies.<id>). Without any, the last plan's
+ *   myPlan.focusAreas, or for plans from before that field its protocol steps.
  * - The module's fixed screen-time routine (i18n
  *   learnV2.modules.<moduleKey>.cheatSheet.routine.<n>), as an accordion.
  */
@@ -38,10 +39,15 @@ export const ModuleCheatSheetScreen: React.FC = () => {
   const { t } = useTranslation();
   const { moduleKey } = route.params;
   const base = `learnV2.modules.${moduleKey}.cheatSheet`;
-  const { generatedPlan } = useModulePlan(moduleKey);
+  const { generatedPlan, recommendedStrategies } = useModulePlan(moduleKey);
   const [openStep, setOpenStep] = useState<number | null>(1);
 
-  const focusAreas = generatedPlan?.focusAreas?.length
+  const focusAreas = recommendedStrategies.length
+    ? recommendedStrategies.map(id => ({
+        title: t(`moduleReport.keyStrategies.${id}.name`),
+        detail: t(`moduleReport.keyStrategies.${id}.summary`),
+      }))
+    : generatedPlan?.focusAreas?.length
     ? generatedPlan.focusAreas
     : (generatedPlan?.protocolSteps ?? []).map(step => ({ title: step, detail: '' }));
 
