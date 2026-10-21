@@ -50,7 +50,7 @@ const QUESTIONS = [
     'My child sneaks using screen media.',
     'When my child has had a bad day, screen media seems to be the only thing that helps him/her feel better.',
   ], options: AGREEMENT },
-  // No longer asked in onboarding; kept for accounts that answered it
+  // No longer asked in onboarding (the module chat asks it); kept for accounts that answered it
   { field: 'stops', question: "When it's time to stop, what usually happens?", options: {
     asks:     'The child asks for more',
     ignores:  'The child ignores me and keeps watching',
@@ -159,4 +159,79 @@ function reportedDifferences(intake) {
   return value.filter(v => v && v !== 'none').map(v => label(options, v));
 }
 
-module.exports = { formatScreenTimeIntakeForPrompt, reportedDifferences };
+// Short names for the signal statements (same order as QUESTIONS' signals).
+const SIGNAL_SHORT = [
+  'fidgets with objects',
+  'chews on things',
+  'compulsive habits (nail-biting, lip-chewing, nose-picking)',
+  'avoids eye contact or people when upset',
+  'fights sleep before a hard day',
+  'frustrations turn into yelling meltdowns',
+];
+const AGREES = new Set(['somewhat_agree', 'agree']);
+const OFTEN = new Set(['quite_often', 'almost_always']);
+
+/**
+ * What the answers add up to, for the coach to act on without decoding the
+ * raw Q&A: the main problem, what happens at the end, what's been tried and
+ * how it went, the parent's stress, how intense the media pull is, and the
+ * regulation signals seen often. Lines are left out for unanswered questions.
+ * @param {Object|null} intake - User.screenTimeIntake
+ * @returns {string} "  - " lines (nested under a heading), or '' when there are no answers
+ */
+function summarizeScreenTimeIntake(intake) {
+  if (!intake || typeof intake !== 'object') return '';
+  const q = field => QUESTIONS.find(x => x.field === field);
+  const labels = field => {
+    const value = intake[field];
+    const values = Array.isArray(value) ? value : value != null ? [value] : [];
+    return values.filter(Boolean).map(v => label(q(field).options, v));
+  };
+  const lines = [];
+
+  const [hardest] = labels('hardest');
+  if (hardest) lines.push(`- Main problem (their words): "${hardest}"`);
+  const stops = labels('stops');
+  if (stops.length) lines.push(`- When screen time ends: ${stops.join('; ')}`);
+  const tried = labels('strategies');
+  const [worked] = labels('worked');
+  if (tried.length) lines.push(`- Already tried: ${tried.join('; ')}${worked ? ` → result: ${worked}` : ''}`);
+  const [stress] = labels('stress');
+  if (stress) lines.push(`- How hard endings are on the parent: ${stress}`);
+
+  const differences = reportedDifferences(intake);
+  if (Array.isArray(intake.differences)) {
+    lines.push(`- Learning and thinking differences: ${differences.length ? differences.join('; ') : 'none reported'}`);
+  }
+
+  if (Array.isArray(intake.pmum)) {
+    const answered = intake.pmum.filter(Boolean).length;
+    const agreed = q('pmum').statements.filter((_, i) => AGREES.has(intake.pmum[i]));
+    if (answered) {
+      const level = agreed.length >= 6 ? 'strong' : agreed.length >= 3 ? 'moderate' : 'mild';
+      lines.push(`- Pull of screens: ${level} (agrees with ${agreed.length} of ${answered} problem-media statements)`
+        + (agreed.length ? `, e.g. ${agreed.slice(0, 3).map(s => `"${s}"`).join(', ')}` : ''));
+    }
+  }
+
+  if (Array.isArray(intake.signals)) {
+    const often = SIGNAL_SHORT.filter((_, i) => OFTEN.has(intake.signals[i]));
+    if (intake.signals.some(Boolean)) {
+      lines.push(often.length
+        ? `- Seen quite often or almost always: ${often.join('; ')}${often.length >= 3 ? ' (several signs the child struggles to regulate beyond screens)' : ''}`
+        : '- Regulation signals: none seen often');
+    }
+  }
+
+  const [teen] = labels('teen');
+  if (teen) lines.push(`- Worried it gets harder in the teen years: ${teen}`);
+  const knows = [
+    intake.dopamine && `dopamine loop: ${intake.dopamine === 'yes' ? 'had heard of it' : 'new to them'}`,
+    intake.cortex && `prefrontal cortex: ${intake.cortex === 'yes' ? 'had heard of it' : 'new to them'}`,
+  ].filter(Boolean);
+  if (knows.length) lines.push(`- Concepts onboarding then explained: ${knows.join('; ')}`);
+
+  return lines.map(line => `  ${line}`).join('\n');
+}
+
+module.exports = { formatScreenTimeIntakeForPrompt, summarizeScreenTimeIntake, reportedDifferences };

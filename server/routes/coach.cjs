@@ -22,6 +22,11 @@ const MODULE_CHAT_MODEL = process.env.GEMINI_MODULE_CHAT_MODEL || 'gemini-3.8-fl
 const MAX_AGENT_TURNS = 6;          // tool-call rounds before giving up
 const MAX_HISTORY_MESSAGES = 20;    // conversation turns sent to LLM
 
+// Hidden user turn that has a Learn module coach speak first (POST /start).
+// Also stands in front of a history that starts with the coach's opener, so
+// the LLM sees a user turn first (the Claude fallback drops leading replies).
+const OPENING_TRIGGER = '[App note: the parent just opened this chat for the first time and has not written anything yet. Write your opening message as described in "Before the First Recording".]';
+
 // ─── System prompt ────────────────────────────────────────────────────────────
 
 const BASE_SYSTEM_PROMPT = `**ROLE & OBJECTIVE**
@@ -866,6 +871,83 @@ router.get('/history', async (req, res, next) => {
 });
 
 /**
+ * POST /api/coach/start
+ * Body: { moduleKey: string, locale?: string }
+ * A Learn module chat opened for the first time — no chat messages at all and
+ * no module report yet: the coach writes its opening message from the
+ * onboarding answers ("Before the First Recording" in the module prompt),
+ * saved and published like any reply. Otherwise does nothing.
+ * Returns: { reply: string | null, message? }: the saved message; reply null =
+ * skipped or failed (the app shows its welcome screen instead).
+ */
+const openingInFlight = new Set();
+router.post('/start', async (req, res, next) => {
+  const { moduleKey, locale } = req.body;
+  if (!LEARN_MODULE_KEYS.has(moduleKey)) return res.status(400).json({ error: 'Unknown module' });
+  if (openingInFlight.has(req.userId)) return res.json({ reply: null });
+  openingInFlight.add(req.userId);
+  try {
+    const userLocale = (typeof locale === 'string' && LOCALE_NAMES[locale]) ? locale : 'en';
+    const [messageCount, reportCount] = await Promise.all([
+      prisma.coachChatMessage.count({ where: { userId: req.userId } }),
+      prisma.session.count({ where: { userId: req.userId, moduleKey, analysisStatus: 'COMPLETED', moduleCoaching: { not: Prisma.DbNull } } }),
+    ]);
+    if (messageCount > 0 || reportCount > 0) return res.json({ reply: null });
+
+    const agent = await buildAgent(req.userId, userLocale, moduleKey);
+    const label = `coach-chat-${moduleKey}-opening`;
+    const start = Date.now();
+    const attempts = [
+      { provider: 'gemini', model: agent.model, run: () => runAgentLoop(req.userId, OPENING_TRIGGER, [], undefined, agent) },
+      { provider: 'gemini', model: agent.model, run: () => runAgentLoop(req.userId, OPENING_TRIGGER, [], undefined, agent) },
+      { provider: 'anthropic', model: CLAUDE_FALLBACK_MODEL, run: () => runClaudeAgentLoop(req.userId, OPENING_TRIGGER, [], undefined, agent) },
+    ];
+    let result = null;
+    for (const [i, attempt] of attempts.entries()) {
+      try {
+        result = await attempt.run();
+      } catch (err) {
+        logLLMCall({
+          label, model: attempt.model, provider: attempt.provider,
+          latencyMs: Date.now() - start,
+          inputTokens: null, outputTokens: null,
+          hasSchema: false, usedFallback: i === 2, usedRepair: false, usedRetry: i > 0,
+          ok: false, error: err.message,
+        });
+        continue;
+      }
+      logLLMCall({
+        label, model: attempt.model, provider: attempt.provider,
+        latencyMs: Date.now() - start,
+        inputTokens: result.usage.inputTokens,
+        outputTokens: result.usage.outputTokens,
+        hasSchema: false, usedFallback: i === 2, usedRepair: false, usedRetry: i > 0,
+        ok: true, error: null,
+      });
+      break;
+    }
+    if (!result?.text?.trim()) return res.json({ reply: null });
+
+    // The parent may have written while the opener was being generated:
+    // don't drop an opener in after their message.
+    if (await prisma.coachChatMessage.count({ where: { userId: req.userId } }) > 0) return res.json({ reply: null });
+
+    const { text: reply, offered } = await prepareOfferReply(req.userId, result.text.trim());
+    const modelMsg = await prisma.coachChatMessage.create({
+      data: { userId: req.userId, role: 'model', text: reply },
+      select: { id: true, role: true, text: true, scripted: true, createdAt: true },
+    });
+    publish(req.userId, [modelMsg]);
+    if (offered) await recordOffer(req.userId, moduleKey, modelMsg.id);
+    res.json({ reply, message: modelMsg });
+  } catch (err) {
+    next(err);
+  } finally {
+    openingInFlight.delete(req.userId);
+  }
+});
+
+/**
  * POST /api/coach/chat
  * Body: { message: string, locale?: string, moduleKey?: string }
  * moduleKey (e.g. 'screenTime') = a Learn module's chat: same history, but the
@@ -899,6 +981,7 @@ router.post('/chat', async (req, res, next) => {
       select: { role: true, text: true },
     });
     dbHistory.reverse();
+    if (dbHistory[0] && dbHistory[0].role !== 'user') dbHistory.unshift({ role: 'user', text: OPENING_TRIGGER });
 
     const agent = await buildAgent(req.userId, userLocale, moduleKey);
     const label = moduleKey ? `coach-chat-${moduleKey}` : 'coach-chat';

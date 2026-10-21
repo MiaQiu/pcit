@@ -1347,139 +1347,6 @@
                 "title": "為什麼要錄音？",
                 "subtitle": "Nora 能從中發現什麼"
               }
-            },
-            "alternative": {
-              "eyebrow": "還沒準備好錄音？",
-              "title": "告訴 Nora 平時的情況",
-              "body": "花 2 分鐘告訴我們螢幕時間結束時通常會發生什麼。",
-              "cta": "告訴 Nora",
-              "ctaMeta": "2 分鐘"
-            }
-          }
-        },
-        "survey": {
-          "sections": {
-            "predictability": "可預測性",
-            "transition": "過渡準備",
-            "childResponse": "孩子的反應",
-            "parentResponse": "家長的回應",
-            "consistency": "一致性"
-          },
-          "questions": {
-            "knowsRoutine": {
-              "title": "孩子通常知道什麼時候可以看螢幕、什麼時候結束嗎？",
-              "options": {
-                "yes": "是的——我們有比較固定的習慣",
-                "somewhat": "有一點——要看當天情況",
-                "notReally": "不太知道——螢幕時間變化很大"
-              }
-            },
-            "stopPoint": {
-              "title": "螢幕時間結束時，你們通常在哪裡停下？",
-              "options": {
-                "episode": "🎬 一集/一個影片結束時",
-                "level": "🎮 一關/一局遊戲結束時",
-                "song": "🎵 一首歌/一個活動結束時",
-                "timer": "⏱️ 計時器響時",
-                "turnOff": "📴 時間到了就直接關掉",
-                "depends": "🔄 看情況"
-              }
-            },
-            "warning": {
-              "title": "你通常怎麼讓孩子知道螢幕時間快結束了？",
-              "options": {
-                "fiveMin": "提前 5 分鐘提醒",
-                "twoMin": "提前 2 分鐘提醒",
-                "lastOne": "「最後一個，然後就停」",
-                "timer": "計時器/鬧鐘",
-                "tellThem": "時間到了才告訴他們",
-                "noWarning": "通常不提前提醒",
-                "depends": "看情況"
-              }
-            },
-            "nextActivityPlanned": {
-              "title": "螢幕時間結束前，你通常知道孩子接下來要做什麼嗎？",
-              "options": {
-                "yes": "是的——通常已經準備好下一個活動",
-                "sometimes": "有時候",
-                "notUsually": "通常不知道"
-              }
-            },
-            "nextActivity": {
-              "title": "接下來通常做什麼？",
-              "options": {
-                "play": "🧸 玩耍",
-                "crafts": "🎨 塗色 / 手工",
-                "puzzle": "🧩 拼圖 / 積木",
-                "snack": "🍎 吃點心 / 吃飯",
-                "outside": "🌳 出門",
-                "bath": "🛁 洗澡 / 睡覺",
-                "homework": "📚 作業 / 閱讀",
-                "other": "其他"
-              }
-            },
-            "childResponse": {
-              "title": "螢幕時間結束時，孩子通常會怎樣？",
-              "options": {
-                "movesOn": "🙂 停下來去做別的",
-                "asksMore": "🙃 要求再多看一會兒",
-                "complains": "😣 抱怨或爭辯",
-                "tantrum": "😭 哭鬧或發脾氣",
-                "refuses": "🚫 拒絕停下",
-                "runsAway": "🏃 跑開 / 繼續玩",
-                "depends": "🔄 真的要看情況"
-              }
-            },
-            "recoveryTime": {
-              "title": "孩子通常需要多久才能平復並轉去做別的？",
-              "options": {
-                "under2": "不到 2 分鐘",
-                "twoToFive": "2–5 分鐘",
-                "fiveToTen": "5–10 分鐘",
-                "over10": "超過 10 分鐘",
-                "needsIntervention": "通常需要再介入才能轉移"
-              }
-            },
-            "parentResponse": {
-              "title": "孩子抗議或不高興時，你通常怎麼做？",
-              "options": {
-                "stayClose": "陪在身邊幫他們平靜下來",
-                "nameFeeling": "說出他們的感受",
-                "remind": "提醒他們螢幕時間結束了",
-                "explain": "解釋為什麼要停下",
-                "repeat": "重複指令",
-                "offerActivity": "提供另一個活動",
-                "offerMore": "再給一些螢幕時間",
-                "negotiate": "討價還價 / 做交換",
-                "giveSpace": "給他們一些空間",
-                "takeDevice": "把裝置拿走",
-                "notSure": "我不確定該怎麼做"
-              }
-            },
-            "outcome": {
-              "title": "如果孩子抗議或要求更多螢幕時間，通常結果如何？",
-              "options": {
-                "staysFinished": "螢幕時間就此結束",
-                "littleMore": "有時會多給一點時間",
-                "usuallyMore": "通常會多給時間",
-                "depends": "看情況"
-              }
-            },
-            "hardest": {
-              "title": "對你來說，螢幕時間結束時最難的是什麼？",
-              "options": {
-                "stop": "讓孩子停下來",
-                "tantrum": "處理發脾氣",
-                "calm": "讓自己保持冷靜",
-                "whatToSay": "不知道該說什麼",
-                "moveOn": "讓孩子轉去做別的",
-                "consistent": "保持一致",
-                "prepare": "做好過渡準備",
-                "notSure": "我不確定"
-              }
-            },
-            "anythingElse": {
-              "title": "還有什麼想分享的，能幫助我們了解情況嗎？"
             }
           }
         },
@@ -1496,219 +1363,6 @@
             "items": {
               "1": "**安靜陪伴：**坐在伸手可及的地方，不爭辯。",
               "2": "**簡短認可：**「我知道你非常生氣。在這裡哭是安全的。」"
-            }
-          }
-        },
-        "followupSurvey": {
-          "sections": {
-            "practice": "練習你的策略",
-            "strategy": "{{strategy}}",
-            "result": "結束得怎麼樣"
-          },
-          "questions": {
-            "tried": {
-              "title": "你在螢幕時間結束時試過「{{strategy}}」嗎？",
-              "options": {
-                "fully": "試過，我按步驟做了",
-                "partly": "部分做了",
-                "notYet": "還沒有"
-              }
-            },
-            "blocker": {
-              "title": "是什麼讓你沒能嘗試？",
-              "options": {
-                "forgot": "當時忘了",
-                "noScreenTime": "今天沒有螢幕時間",
-                "tooTired": "我太累或太忙",
-                "childUpset": "{{name}}當時已經不開心了",
-                "unsure": "我不確定該怎麼做"
-              }
-            },
-            "routineKnewEnding": {
-              "title": "不用提醒，{{name}}知道螢幕時間要結束了嗎？",
-              "options": {
-                "knew": "知道",
-                "remembered": "提醒後想起來了",
-                "surprised": "很意外"
-              }
-            },
-            "routineUsualTime": {
-              "title": "今天的螢幕時間和平時的時間、時長一樣嗎？",
-              "options": {
-                "yes": "一樣",
-                "differentTime": "時間不同",
-                "differentLength": "時長不同",
-                "both": "都不同"
-              }
-            },
-            "transitionToldWhen": {
-              "title": "你什麼時候告訴{{name}}接下來做什麼？",
-              "options": {
-                "beforeStart": "螢幕時間開始前",
-                "during": "螢幕時間中",
-                "atEnd": "關掉的時候才說",
-                "didnt": "沒有說"
-              }
-            },
-            "transitionWent": {
-              "title": "結束後，{{name}}去做那個活動了嗎？",
-              "options": {
-                "rightAway": "馬上就去了",
-                "afterProtest": "抗議了一下才去",
-                "whenTaken": "我帶過去才去",
-                "didnt": "沒有去"
-              }
-            },
-            "stoppingWhere": {
-              "title": "你們在哪裡停下的？",
-              "options": {
-                "naturalEnd": "一集 / 一關 / 一首歌結束時",
-                "partway": "中途"
-              }
-            },
-            "stoppingKnew": {
-              "title": "{{name}}事先知道會在哪裡停下嗎？",
-              "options": {
-                "beforeStart": "知道，開始前就說了",
-                "during": "知道，中途說的",
-                "no": "不知道"
-              }
-            },
-            "warningsGiven": {
-              "title": "你給了哪些提醒？",
-              "options": {
-                "fiveMin": "提前 5 分鐘提醒",
-                "twoMin": "提前 2 分鐘提醒",
-                "lastOne": "「最後一個，然後就停」",
-                "none": "沒有提醒"
-              }
-            },
-            "warningsReaction": {
-              "title": "{{name}}對提醒有什麼反應？",
-              "options": {
-                "acknowledged": "回應了",
-                "ignored": "沒理會",
-                "protested": "一提醒就抗議"
-              }
-            },
-            "timerUsed": {
-              "title": "你用了什麼？",
-              "options": {
-                "visual": "視覺化計時器",
-                "phoneOven": "手機 / 廚房計時器",
-                "tvAutoOff": "電視自動關機",
-                "none": "沒有用計時器"
-              }
-            },
-            "timerWhoCalled": {
-              "title": "時間到了，是誰宣布的？",
-              "options": {
-                "timer": "計時器（我指給他看）",
-                "me": "我說的",
-                "argued": "我們為計時器爭執了"
-              }
-            },
-            "commandWording": {
-              "title": "哪一句最接近你說的話？",
-              "options": {
-                "direct": "「請把電視關掉。」",
-                "question": "「我們現在可以關掉嗎？」",
-                "vague": "「好啦，時間到了，快點，你看夠了……」",
-                "silent": "我直接關掉，什麼都沒說"
-              }
-            },
-            "commandTimes": {
-              "title": "你說了幾次？",
-              "options": {
-                "once": "一次",
-                "twoThree": "2–3 次",
-                "moreThree": "3 次以上"
-              }
-            },
-            "followStopped": {
-              "title": "{{name}}在 5 秒左右內停下了嗎？",
-              "options": {
-                "yes": "停下了",
-                "no": "沒有"
-              }
-            },
-            "followPraise": {
-              "title": "你稱讚{{name}}了嗎？",
-              "options": {
-                "specific": "有，具體地稱讚（「謝謝你把它關掉！」）",
-                "general": "有，籠統地稱讚（「真棒」）",
-                "no": "沒有"
-              }
-            },
-            "followNext": {
-              "title": "接下來你做了什麼？",
-              "options": {
-                "choice": "給了選擇（「你來關，還是我來關」）",
-                "turnedOff": "我關掉了，並簡短說明原因",
-                "repeated": "重複說或解釋",
-                "moreTime": "多給了時間"
-              }
-            },
-            "coregFirst": {
-              "title": "{{name}}不高興時，你首先做了什麼？",
-              "options": {
-                "stayedClose": "陪在身邊 / 說出他的感受",
-                "explained": "解釋原因",
-                "tookDevice": "拿走裝置 / 提高聲音",
-                "notUpset": "{{name}}沒有不高興"
-              }
-            },
-            "coregKeptLimit": {
-              "title": "你堅持了界限嗎？",
-              "options": {
-                "yes": "堅持了",
-                "bitMore": "最後多給了一點時間",
-                "more": "多給了時間"
-              }
-            },
-            "bridgeStarted": {
-              "title": "關掉後，你自己先開始了下一個活動嗎？",
-              "options": {
-                "describing": "是的，並說出我在做什麼",
-                "quietly": "是的，安靜地做",
-                "toldThem": "沒有，我叫{{name}}去做"
-              }
-            },
-            "bridgeJoined": {
-              "title": "{{name}}加入你了嗎？",
-              "options": {
-                "withinMinute": "一分鐘內就加入了",
-                "fewMinutes": "幾分鐘後加入",
-                "didnt": "沒有加入"
-              }
-            },
-            "consistentProtested": {
-              "title": "{{name}}抗議或要求更多時間了嗎？",
-              "options": {
-                "yes": "有",
-                "no": "沒有"
-              }
-            },
-            "consistentStayed": {
-              "title": "螢幕時間就此結束了嗎？",
-              "options": {
-                "yes": "結束了",
-                "bitMore": "多給了一點",
-                "more": "多給了時間"
-              }
-            },
-            "moveOnTime": {
-              "title": "螢幕時間結束後，{{name}}多久才轉去做別的？",
-              "options": {
-                "under1": "不到 1 分鐘",
-                "oneToFive": "1–5 分鐘",
-                "fiveToTen": "5–10 分鐘",
-                "over10": "超過 10 分鐘",
-                "needsHelp": "需要我再幫忙才行"
-              }
-            },
-            "anythingElse": {
-              "title": "還有什麼想讓 Nora 知道的嗎？（選填）"
             }
           }
         },
@@ -1956,27 +1610,14 @@
       "processingStart": "做得好！我們正在分析你和",
       "processingEnd": "的錄音，報告很快就會準備好。",
       "readReport": "查看報告",
-      "processingSurvey": "我們正在根據你的回答生成報告和計畫，很快就會準備好。",
-      "surveyReportReady": "你的報告和計畫已經準備好了。",
       "followup": {
         "title": "繼續練習",
         "subtitle": "在下一次螢幕時間結束時使用今日步驟。",
-        "record": "錄音",
-        "altBody": "花 2 分鐘告訴我們，螢幕時間結束時「{{strategy}}」進行得怎麼樣。"
+        "record": "錄音"
       },
-      "doneForToday": "今天的練習完成了，明天再繼續。",
       "previousDay": "前一天",
       "nextDay": "後一天",
       "backToToday": "回到今天（第 {{day}} 天）"
-    },
-    "moduleSurvey": {
-      "headerTitle": "告訴 Nora",
-      "selectAll": "可多選",
-      "otherPlaceholder": "請說明...",
-      "textPlaceholder": "在這裡輸入（選填）",
-      "submit": "提交",
-      "thanks": "謝謝！Nora 正在根據你的回答撰寫報告和計畫。",
-      "submitError": "提交失敗，請檢查網路後重試。"
     },
     "moduleRecorder": {
       "recording": "錄音中…",
@@ -3280,6 +2921,28 @@
       "triedReply": "太好了！跟我說說進行得怎麼樣——{{childName}}有什麼反應？哪些部分容易，哪些比較難？",
       "clarifyReply": "當然可以！你想弄清楚哪一部分——該說什麼、什麼時候做，還是別的？"
     },
-    "suggestedLabel": "根據你上次紀錄建議的策略"
+    "suggestedLabel": "根據你上次紀錄建議的策略",
+    "firstTime": {
+      "guideSubtitle": "一起讓{{childName}}的螢幕時間更輕鬆。\n想從哪裡開始？",
+      "greetingReply": "{{name}}你好！我在這裡幫你讓{{childName}}的螢幕時間更輕鬆。你想先聊聊螢幕時間結束時通常會發生什麼，還是先計畫下一次怎麼結束？",
+      "suggestions": {
+        "wontStop": {
+          "title": "時間到了也不肯停",
+          "prompt": "螢幕時間到了，{{childName}}還是不肯停下來。我該怎麼辦？"
+        },
+        "planNext": {
+          "title": "計畫下一次怎麼結束",
+          "prompt": "幫我計畫下一次怎麼結束螢幕時間。"
+        },
+        "whyHard": {
+          "title": "為什麼停下來這麼難？",
+          "prompt": "為什麼讓{{childName}}停下螢幕這麼難？"
+        },
+        "recording": {
+          "title": "錄音怎麼用",
+          "prompt": "錄下一次螢幕時間結束的過程是怎麼操作的？我會得到什麼？"
+        }
+      }
+    }
   }
 }

@@ -46,7 +46,6 @@ import { HomeCardDetailScreen } from '../screens/HomeCardDetailScreen';
 import { GetReadyToPlayScreen } from '../screens/GetReadyToPlayScreen';
 import { QuickGuideScreen } from '../screens/QuickGuideScreen';
 import { LearnModuleScreen_v2 } from '../screens/LearnModuleScreen_v2';
-import { LearnModuleSurveyScreen } from '../screens/LearnModuleSurveyScreen';
 import { ModuleReportScreen } from '../screens/ModuleReportScreen';
 import { ModuleGuideScreen } from '../screens/ModuleGuideScreen';
 import { ModuleRecordGuideScreen } from '../screens/ModuleRecordGuideScreen';
@@ -554,14 +553,6 @@ export const RootNavigator: React.FC = () => {
         component={LearnModuleScreen_v2}
         options={{
           animation: 'slide_from_right',
-        }}
-      />
-      <Stack.Screen
-        name="LearnModuleSurvey"
-        component={LearnModuleSurveyScreen}
-        options={{
-          animation: 'slide_from_right',
-          gestureEnabled: false,
         }}
       />
       <Stack.Screen

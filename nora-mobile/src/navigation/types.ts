@@ -8,7 +8,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { NavigatorScreenParams } from '@react-navigation/native';
 import { Quiz, User, DemoVideo, ParentSkillLevel, SkillImproveResult } from '@nora/core';
 import type { LearnModuleKey, LearnModuleTabKey } from '../constants/learnModules';
-import type { SurveyVariant } from '../constants/learnModuleSurveys';
 
 export type RootTabParamList = {
   Home: { showModulePicker?: boolean; refreshAt?: number } | undefined;
@@ -230,14 +229,6 @@ export type RootStackParamList = {
     // Set by ModuleSpecialPlay's "Start 5-Min Special Playtime": add special
     // play and start a play recording on arrival (a timestamp, like above).
     startPlayRecordingAt?: number;
-  };
-  LearnModuleSurvey: {
-    moduleKey: LearnModuleKey;
-    // 'followup' = Day 2+ check-in on `strategy` (defaults to the Day 1 survey);
-    // strategyId (Knowledge Base 1-10) picks its strategy-specific questions.
-    variant?: SurveyVariant;
-    strategy?: string;
-    strategyId?: number;
   };
   // A Learn module's coach chat ("Daily check in"), copy of CoachChat.
   ModuleChat: {

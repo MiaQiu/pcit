@@ -652,8 +652,6 @@ async function buildAnalysisResponse(id, { requesterUserId } = {}) {
   }
 
   // Learn module sessions skip PCIT coding — their report is moduleCoaching.
-  // Checked before the transcript: survey-based ones (moduleSurveyId) never
-  // have a transcript.
   if (session.moduleKey) {
     if (session.analysisStatus !== 'COMPLETED' || !session.moduleCoaching) {
       return { status: 202, body: { status: 'processing', message: 'Module analysis processing' } };
@@ -667,7 +665,6 @@ async function buildAnalysisResponse(id, { requesterUserId } = {}) {
         durationSeconds: session.durationSeconds,
         mode: session.mode,
         moduleKey: session.moduleKey,
-        fromSurvey: !!session.moduleSurveyId,
         moduleCoaching: session.moduleCoaching,
       },
     };

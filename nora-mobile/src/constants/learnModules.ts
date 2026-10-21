@@ -15,7 +15,7 @@ type IconName = ComponentProps<typeof Ionicons>['name'];
 
 // What a button on the module screen does. LearnModuleScreen maps each to
 // a navigation target (or a "coming soon" toast until the target exists).
-export type LearnModuleAction = 'record' | 'howToRecord' | 'whatToRecord' | 'tellNora';
+export type LearnModuleAction = 'record' | 'howToRecord' | 'whatToRecord';
 
 // Bottom tab bar shared by every module screen.
 export const LEARN_MODULE_TABS = [
@@ -44,8 +44,6 @@ export interface LearnModuleDay {
   tags: LearnModuleTag[];
   primaryAction: { icon: IconName; action: LearnModuleAction };
   helpLinks: LearnModuleHelpLink[];
-  // Optional fallback card under the practice card ("Not ready to record?").
-  alternative?: { icon: IconName; action: LearnModuleAction };
 }
 
 // "My plan" tab. Copy (strategy, why, steps.<n>, crisis.title,
@@ -99,7 +97,6 @@ export const LEARN_MODULES = {
           { key: 'howTo', icon: 'play', action: 'howToRecord' },
           { key: 'whatTo', icon: 'help', action: 'whatToRecord' },
         ],
-        alternative: { icon: 'document-text-outline', action: 'tellNora' },
       },
     },
     plan: {
@@ -212,7 +209,6 @@ export interface ModuleDay {
   dayNumber: number;
   reportId: string;
   createdAt: string;
-  fromSurvey: boolean;
   plan: { activeStrategy: string; activeStrategyId: number | null; protocolSteps: string[] } | null;
 }
 

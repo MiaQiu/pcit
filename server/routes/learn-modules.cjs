@@ -141,7 +141,7 @@ router.get('/:moduleKey/latest-session', async (req, res) => {
       where: { userId, moduleKey, analysisStatus: { not: 'FAILED' } },
       orderBy: { createdAt: 'desc' },
       take: 5,
-      select: { id: true, createdAt: true, analysisStatus: true, storagePath: true, moduleCoaching: true, moduleSurveyId: true },
+      select: { id: true, createdAt: true, analysisStatus: true, storagePath: true, moduleCoaching: true },
     });
 
     const now = Date.now();
@@ -192,7 +192,7 @@ router.get('/:moduleKey/latest-session', async (req, res) => {
     const status = ready ? 'ready' : latest.analysisStatus === 'COMPLETED' ? null : 'processing';
 
     res.json({
-      session: status ? { id: latest.id, createdAt: latest.createdAt, status, fromSurvey: !!latest.moduleSurveyId } : null,
+      session: status ? { id: latest.id, createdAt: latest.createdAt, status } : null,
       activeStrategy,
       dayNumber,
       hasDifferences,
@@ -225,7 +225,7 @@ router.get('/:moduleKey/days', async (req, res) => {
     const sessions = await prisma.session.findMany({
       where: { userId, moduleKey, analysisStatus: 'COMPLETED', moduleCoaching: { not: Prisma.DbNull } },
       orderBy: { createdAt: 'asc' },
-      select: { id: true, createdAt: true, moduleSurveyId: true, moduleCoaching: true },
+      select: { id: true, createdAt: true, moduleCoaching: true },
     });
 
     res.json({
@@ -233,7 +233,6 @@ router.get('/:moduleKey/days', async (req, res) => {
         dayNumber: i + 1,
         reportId: s.id,
         createdAt: s.createdAt,
-        fromSurvey: !!s.moduleSurveyId,
         plan: s.moduleCoaching?.myPlan
           ? {
               activeStrategy: s.moduleCoaching.myPlan.activeStrategy,

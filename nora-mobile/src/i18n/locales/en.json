@@ -1305,139 +1305,6 @@
                 "title": "Why record?",
                 "subtitle": "What Nora learns from it"
               }
-            },
-            "alternative": {
-              "eyebrow": "Not ready to record?",
-              "title": "Tell Nora what happens instead",
-              "body": "Take 2 minutes to tell us what usually happens when screen time ends.",
-              "cta": "Tell Nora",
-              "ctaMeta": "2 minutes"
-            }
-          }
-        },
-        "survey": {
-          "sections": {
-            "predictability": "Predictability",
-            "transition": "Transition setup",
-            "childResponse": "Child's response",
-            "parentResponse": "Parent response",
-            "consistency": "Consistency"
-          },
-          "questions": {
-            "knowsRoutine": {
-              "title": "Does your child usually know when screen time happens and when it ends?",
-              "options": {
-                "yes": "Yes — we have a pretty consistent routine",
-                "somewhat": "Somewhat — it depends on the day",
-                "notReally": "Not really — screen time varies a lot"
-              }
-            },
-            "stopPoint": {
-              "title": "When screen time ends, where do you usually stop?",
-              "options": {
-                "episode": "🎬 At the end of an episode/video",
-                "level": "🎮 At the end of a level/game",
-                "song": "🎵 At the end of a song/activity",
-                "timer": "⏱️ When the timer ends",
-                "turnOff": "📴 We usually just turn it off when it's time",
-                "depends": "🔄 It depends"
-              }
-            },
-            "warning": {
-              "title": "How do you usually let your child know screen time is almost over?",
-              "options": {
-                "fiveMin": "5-minute warning",
-                "twoMin": "2-minute warning",
-                "lastOne": "“Last one, then we stop”",
-                "timer": "Timer/alarm",
-                "tellThem": "I usually tell them when it's time",
-                "noWarning": "I usually don't warn them",
-                "depends": "It depends"
-              }
-            },
-            "nextActivityPlanned": {
-              "title": "Before screen time ends, do you usually know what your child will do next?",
-              "options": {
-                "yes": "Yes — we usually have another activity ready",
-                "sometimes": "Sometimes",
-                "notUsually": "Not usually"
-              }
-            },
-            "nextActivity": {
-              "title": "What usually comes next?",
-              "options": {
-                "play": "🧸 Play",
-                "crafts": "🎨 Colouring / crafts",
-                "puzzle": "🧩 Puzzle / blocks",
-                "snack": "🍎 Snack / meal",
-                "outside": "🌳 Going outside",
-                "bath": "🛁 Bath / bedtime",
-                "homework": "📚 Homework / reading",
-                "other": "Other"
-              }
-            },
-            "childResponse": {
-              "title": "When screen time ends, what does your child usually do?",
-              "options": {
-                "movesOn": "🙂 Stops and moves on",
-                "asksMore": "🙃 Asks for more time",
-                "complains": "😣 Complains or argues",
-                "tantrum": "😭 Cries or has a tantrum",
-                "refuses": "🚫 Refuses to stop",
-                "runsAway": "🏃 Runs away / keeps playing",
-                "depends": "🔄 It really depends"
-              }
-            },
-            "recoveryTime": {
-              "title": "How long does it usually take for your child to move on?",
-              "options": {
-                "under2": "Less than 2 minutes",
-                "twoToFive": "2–5 minutes",
-                "fiveToTen": "5–10 minutes",
-                "over10": "More than 10 minutes",
-                "needsIntervention": "They often don't move on without another intervention"
-              }
-            },
-            "parentResponse": {
-              "title": "When your child protests or gets upset, what do you usually do?",
-              "options": {
-                "stayClose": "Stay close and help them calm down",
-                "nameFeeling": "Name what they're feeling",
-                "remind": "Remind them that screen time is finished",
-                "explain": "Explain why they need to stop",
-                "repeat": "Repeat the instruction",
-                "offerActivity": "Offer another activity",
-                "offerMore": "Offer more screen time",
-                "negotiate": "Negotiate / make a deal",
-                "giveSpace": "Give them space",
-                "takeDevice": "Take the device away",
-                "notSure": "I'm not sure what to do"
-              }
-            },
-            "outcome": {
-              "title": "If your child protests or asks for more screen time, what usually happens?",
-              "options": {
-                "staysFinished": "Screen time stays finished",
-                "littleMore": "Sometimes they get a little more time",
-                "usuallyMore": "Usually they get more time",
-                "depends": "It depends on the situation"
-              }
-            },
-            "hardest": {
-              "title": "What feels hardest about screen-time endings for you?",
-              "options": {
-                "stop": "Getting my child to stop",
-                "tantrum": "Handling the tantrum",
-                "calm": "Staying calm myself",
-                "whatToSay": "Knowing what to say",
-                "moveOn": "Getting my child to move on",
-                "consistent": "Staying consistent",
-                "prepare": "Preparing the transition",
-                "notSure": "I'm not sure"
-              }
-            },
-            "anythingElse": {
-              "title": "Anything else you would like to share that could help us understand what's happening?"
             }
           }
         },
@@ -1454,219 +1321,6 @@
             "items": {
               "1": "**The Silent Anchoring:** Sit within arm's reach, don't argue.",
               "2": "**Short validation script:** \"You're super angry, I know. It's safe to cry here.\""
-            }
-          }
-        },
-        "followupSurvey": {
-          "sections": {
-            "practice": "Practicing your strategy",
-            "strategy": "{{strategy}}",
-            "result": "How it ended"
-          },
-          "questions": {
-            "tried": {
-              "title": "Did you get to try \"{{strategy}}\" at a screen-time ending?",
-              "options": {
-                "fully": "Yes, I followed the steps",
-                "partly": "Partly",
-                "notYet": "Not yet"
-              }
-            },
-            "blocker": {
-              "title": "What got in the way?",
-              "options": {
-                "forgot": "I forgot in the moment",
-                "noScreenTime": "No screen time today",
-                "tooTired": "I was too tired or busy",
-                "childUpset": "{{name}} was already upset",
-                "unsure": "I wasn't sure how"
-              }
-            },
-            "routineKnewEnding": {
-              "title": "Did {{name}} know screen time was ending without being told?",
-              "options": {
-                "knew": "Yes, knew",
-                "remembered": "Remembered once reminded",
-                "surprised": "Was surprised"
-              }
-            },
-            "routineUsualTime": {
-              "title": "Was screen time at the usual time and for the usual length today?",
-              "options": {
-                "yes": "Yes",
-                "differentTime": "Different time",
-                "differentLength": "Different length",
-                "both": "Both different"
-              }
-            },
-            "transitionToldWhen": {
-              "title": "When did you tell {{name}} what comes next?",
-              "options": {
-                "beforeStart": "Before screen time started",
-                "during": "During screen time",
-                "atEnd": "Only when turning it off",
-                "didnt": "I didn't"
-              }
-            },
-            "transitionWent": {
-              "title": "When it ended, did {{name}} go to that activity?",
-              "options": {
-                "rightAway": "Right away",
-                "afterProtest": "After some protest",
-                "whenTaken": "Only when I took them",
-                "didnt": "Didn't"
-              }
-            },
-            "stoppingWhere": {
-              "title": "Where did you stop?",
-              "options": {
-                "naturalEnd": "End of an episode / level / song",
-                "partway": "Partway through"
-              }
-            },
-            "stoppingKnew": {
-              "title": "Did {{name}} know beforehand where it would stop?",
-              "options": {
-                "beforeStart": "Yes, before starting",
-                "during": "Yes, partway through",
-                "no": "No"
-              }
-            },
-            "warningsGiven": {
-              "title": "Which warnings did you give?",
-              "options": {
-                "fiveMin": "5-minute warning",
-                "twoMin": "2-minute warning",
-                "lastOne": "“Last one, then we stop”",
-                "none": "None"
-              }
-            },
-            "warningsReaction": {
-              "title": "How did {{name}} react to the warnings?",
-              "options": {
-                "acknowledged": "Acknowledged them",
-                "ignored": "Ignored them",
-                "protested": "Protested at the warning"
-              }
-            },
-            "timerUsed": {
-              "title": "What did you use?",
-              "options": {
-                "visual": "Visual timer",
-                "phoneOven": "Phone / oven timer",
-                "tvAutoOff": "TV auto-off",
-                "none": "No timer"
-              }
-            },
-            "timerWhoCalled": {
-              "title": "When time was up, who called it?",
-              "options": {
-                "timer": "The timer (I pointed to it)",
-                "me": "I did",
-                "argued": "We argued about the timer"
-              }
-            },
-            "commandWording": {
-              "title": "Which is closest to what you said?",
-              "options": {
-                "direct": "“Turn off the TV, please.”",
-                "question": "“Can we turn it off now?”",
-                "vague": "“OK, time's up, come on, you've had enough…”",
-                "silent": "I turned it off without saying anything"
-              }
-            },
-            "commandTimes": {
-              "title": "How many times did you say it?",
-              "options": {
-                "once": "Once",
-                "twoThree": "2–3 times",
-                "moreThree": "More than 3"
-              }
-            },
-            "followStopped": {
-              "title": "Did {{name}} stop within about 5 seconds?",
-              "options": {
-                "yes": "Yes",
-                "no": "No"
-              }
-            },
-            "followPraise": {
-              "title": "Did you praise {{name}}?",
-              "options": {
-                "specific": "Yes, specific (“Thank you for turning it off!”)",
-                "general": "Yes, general (“Good job”)",
-                "no": "No"
-              }
-            },
-            "followNext": {
-              "title": "What did you do next?",
-              "options": {
-                "choice": "Gave a choice (“You turn it off, or I will”)",
-                "turnedOff": "Turned it off and said why briefly",
-                "repeated": "Repeated or explained",
-                "moreTime": "Gave more time"
-              }
-            },
-            "coregFirst": {
-              "title": "When {{name}} got upset, what did you do first?",
-              "options": {
-                "stayedClose": "Stayed close / named the feeling",
-                "explained": "Explained why",
-                "tookDevice": "Took the device / raised my voice",
-                "notUpset": "{{name}} didn't get upset"
-              }
-            },
-            "coregKeptLimit": {
-              "title": "Did you keep the limit?",
-              "options": {
-                "yes": "Yes",
-                "bitMore": "Gave a bit more time in the end",
-                "more": "Gave more time"
-              }
-            },
-            "bridgeStarted": {
-              "title": "After turning it off, did you start the next activity yourself?",
-              "options": {
-                "describing": "Yes, and described what I was doing",
-                "quietly": "Yes, quietly",
-                "toldThem": "No, I told {{name}} to go"
-              }
-            },
-            "bridgeJoined": {
-              "title": "Did {{name}} join you?",
-              "options": {
-                "withinMinute": "Within a minute",
-                "fewMinutes": "After a few minutes",
-                "didnt": "Didn't join"
-              }
-            },
-            "consistentProtested": {
-              "title": "Did {{name}} protest or ask for more?",
-              "options": {
-                "yes": "Yes",
-                "no": "No"
-              }
-            },
-            "consistentStayed": {
-              "title": "Did screen time stay finished?",
-              "options": {
-                "yes": "Yes",
-                "bitMore": "A little more was given",
-                "more": "More was given"
-              }
-            },
-            "moveOnTime": {
-              "title": "After screen time ended, how long until {{name}} moved on?",
-              "options": {
-                "under1": "Under 1 minute",
-                "oneToFive": "1–5 minutes",
-                "fiveToTen": "5–10 minutes",
-                "over10": "Over 10 minutes",
-                "needsHelp": "Not without more help from me"
-              }
-            },
-            "anythingElse": {
-              "title": "Anything else you'd like Nora to know? (optional)"
             }
           }
         },
@@ -1915,27 +1569,14 @@
       "processingStart": "Great job! We're analyzing your recording with ",
       "processingEnd": ". Your report will be ready in a moment.",
       "readReport": "Read report",
-      "processingSurvey": "We're generating your report and plan from your answers. It will be ready in a moment.",
-      "surveyReportReady": "Your report and plan are ready.",
       "followup": {
         "title": "Keep practicing",
         "subtitle": "Use today's protocol at your next screen-time ending.",
-        "record": "Record",
-        "altBody": "Take 2 minutes to tell us how \"{{strategy}}\" is going when screen time ends."
+        "record": "Record"
       },
-      "doneForToday": "You're done for today. Your next practice is tomorrow.",
       "previousDay": "Previous day",
       "nextDay": "Next day",
       "backToToday": "Back to today (Day {{day}})"
-    },
-    "moduleSurvey": {
-      "headerTitle": "Tell Nora",
-      "selectAll": "Select all that apply",
-      "otherPlaceholder": "Please specify...",
-      "textPlaceholder": "Type here (optional)",
-      "submit": "Submit",
-      "thanks": "Thanks! Nora is writing your report and plan from your answers.",
-      "submitError": "Couldn't submit. Please check your connection and try again."
     },
     "moduleRecorder": {
       "recording": "Recording…",
@@ -3290,6 +2931,28 @@
       "triedReply": "That's great! Tell me how it went — how did {{childName}} react, and what felt easy or hard?",
       "clarifyReply": "Of course! Which part would you like to clarify — what to say, when to do it, or something else?"
     },
-    "suggestedLabel": "Strategies suggested based on your last session"
+    "suggestedLabel": "Strategies suggested based on your last session",
+    "firstTime": {
+      "guideSubtitle": "Let’s make screen time easier with {{childName}}.\nWhere would you like to start?",
+      "greetingReply": "Hi {{name}}! I’m here to help make screen time easier with {{childName}}. Would you like to start with what happens when screen time ends, or with planning the next one?",
+      "suggestions": {
+        "wontStop": {
+          "title": "Won’t stop when it’s time",
+          "prompt": "When screen time is over, {{childName}} won’t stop. What can I do?"
+        },
+        "planNext": {
+          "title": "Plan the next ending",
+          "prompt": "Help me plan how to end screen time next time."
+        },
+        "whyHard": {
+          "title": "Why is stopping so hard?",
+          "prompt": "Why is stopping screen time so hard for {{childName}}?"
+        },
+        "recording": {
+          "title": "How recording works",
+          "prompt": "How does recording a screen-time ending work, and what will I get?"
+        }
+      }
+    }
   }
 }

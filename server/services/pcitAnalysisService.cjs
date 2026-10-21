@@ -16,7 +16,7 @@ const { decryptSensitiveData } = require('../utils/encryption.cjs');
 const { getLanguageInstruction } = require('../utils/languageUtils.cjs');
 const { classifySpeakersML } = require('./mlDiarizationService.cjs');
 const { parseUserIssues } = require('./priorityEngine.cjs');
-const { formatScreenTimeIntakeForPrompt, reportedDifferences } = require('../utils/screenTimeIntake.cjs');
+const { formatScreenTimeIntakeForPrompt, summarizeScreenTimeIntake, reportedDifferences } = require('../utils/screenTimeIntake.cjs');
 
 // DPICS asset paths — referenced by gateway cache config for coding and review feedback
 const DPICS_PDF_PATH      = process.env.DPICS_PDF_PATH      || require('path').join(__dirname, '../assets/DPICS-Manual.2.18.pdf');
@@ -920,29 +920,6 @@ const snakeToCamelKeys = (value) => {
   return value;
 };
 
-// Survey → prompt text. Prefers readableAnswers (questions + answers as the
-// parent saw them, sent by the app); older rows only have answer keys, where
-// "Other" free text is stored under `<questionKey>Other` (see nora-mobile
-// LearnModuleSurveyScreen) and is folded in so there's one line per question.
-function formatModuleSurveyForPrompt(survey) {
-  if (Array.isArray(survey?.readableAnswers) && survey.readableAnswers.length > 0) {
-    return survey.readableAnswers
-      .map(({ question, answers }) => `Q: ${question}\nA: ${(answers || []).join('; ')}`)
-      .join('\n\n');
-  }
-  const answers = survey?.answers;
-  if (!answers || typeof answers !== 'object') return '';
-  return Object.entries(answers)
-    .filter(([key]) => !(key.endsWith('Other') && key.slice(0, -5) in answers))
-    .map(([key, value]) => {
-      const values = Array.isArray(value) ? value : [value];
-      const other = answers[`${key}Other`];
-      const shown = values.map(v => (v === 'other' && other ? `other (${other})` : v));
-      return `- ${key}: ${shown.join(', ')}`;
-    })
-    .join('\n');
-}
-
 // Strategy check-in feedback from the module chat (ModuleStrategyFeedback,
 // saved by the coach's save_strategy_feedback tool), as prompt lines.
 const STRATEGY_FEEDBACK_TRIED_TEXT = {
@@ -978,7 +955,7 @@ function getModuleReports(userId, moduleKey, before = undefined) {
       ...(before ? { createdAt: { lt: before } } : {}),
     },
     orderBy: { createdAt: 'asc' },
-    select: { id: true, createdAt: true, moduleCoaching: true, moduleSurveyId: true },
+    select: { id: true, createdAt: true, moduleCoaching: true },
   });
 }
 
@@ -999,12 +976,33 @@ async function moduleStrategyFeedbackNotes(session) {
   return `What the parent told Nora in the chat about the suggested strategies since the last report:\n${formatStrategyFeedback(rows)}`;
 }
 
+const CHILD_PRONOUNS = {
+  BOY:     'he/him',
+  GIRL:    'she/her',
+  UNKNOWN: 'not given: use the name or they/them, never guess he or she',
+};
+
+// What the screen-time onboarding told the parent Nora would do (nora-mobile
+// en.json onboarding.screenTime: easierEnd/routine/specialPlay, coaching, plan
+// — keep in sync), so the chat can pick up where it left off.
+function onboardingPlanText(childName, hasDifferences) {
+  return [
+    `  - Two-month goal: help ${childName} manage screen time without tantrums.`,
+    `  - Start with: helping ${childName} practise switching, coping and moving on in small moments together.`,
+    '  - Nora learns from voice recordings of real screen-time endings and suggests one small step to try next.',
+    hasDifferences
+      ? '  - A predictable screen-time routine plus 5 minutes of Special Play Time daily, from the start (it is on their home page).'
+      : `  - First a predictable screen-time routine; if ${childName} still struggles, Special Play Time comes in later.`,
+  ].join('\n');
+}
+
 /**
  * System prompt for a Learn module's chat (POST /api/coach/chat with
  * moduleKey): the module's chat prompt filled with the family's context —
- * child, day, the latest report's plan, focus areas and suggested strategies,
- * mastered strategies and the strategy feedback already given since that
- * report. Returns null for a module without a chat prompt.
+ * parent and child, the onboarding answers (summarized and in full) and the
+ * plan onboarding showed, day, the latest report's plan, focus areas and
+ * suggested strategies, mastered strategies and the strategy feedback already
+ * given since that report. Returns null for a module without a chat prompt.
  */
 async function getModuleChatPrompt(userId, moduleKey) {
   const config = MODULE_COACHING_CONFIG[moduleKey];
@@ -1013,17 +1011,20 @@ async function getModuleChatPrompt(userId, moduleKey) {
   const [user, reports] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
-      select: { childName: true, childBirthYear: true, childBirthday: true, screenTimeIntake: true, specialPlayAddedAt: true },
+      select: { name: true, childName: true, childGender: true, childBirthYear: true, childBirthday: true, screenTimeIntake: true, specialPlayAddedAt: true },
     }),
     getModuleReports(userId, moduleKey),
   ]);
   let childName = 'the child';
+  let parentName = '';
   try {
     if (user?.childName) childName = decryptSensitiveData(user.childName);
+    if (user?.name) parentName = decryptSensitiveData(user.name);
   } catch {
-    // keep the generic name
+    // keep the generic names
   }
   const childAge = user?.childBirthYear ? calculateChildAge(user.childBirthYear, user.childBirthday) : null;
+  const hasDifferences = reportedDifferences(user?.screenTimeIntake).length > 0;
 
   const latest = reports[reports.length - 1];
   const coaching = latest?.moduleCoaching || {};
@@ -1046,20 +1047,23 @@ async function getModuleChatPrompt(userId, moduleKey) {
   const list = (items, fmt) => (items?.length ? items.map(fmt).join('\n') : '  none yet');
   const lastSession = latest
     ? [
-        latest.moduleSurveyId ? '(From the parent\'s questionnaire answers, no recording.)' : null,
         coaching.progress?.todaysOutcome ? `Outcome: ${coaching.progress.todaysOutcome}. ${coaching.progress.outcomeReason || ''}` : null,
         report.topMoment?.quote ? `Top moment: "${report.topMoment.quote}" — ${report.topMoment.explanation || ''}` : null,
         report.whatWeLearned?.description || null,
         report.nextGrowthFocus?.explanation || null,
         coaching.narrative || null,
       ].filter(Boolean).join(' ')
-    : 'none yet (no session recorded or check-in answered yet)';
+    : 'none yet (no session recorded yet)';
 
   return loadPromptWithVariables(config.chatPrompt, {
     CHILD_NAME:           childName,
     CHILD_AGE:            childAge != null ? `${childAge} years old` : 'age unknown',
+    CHILD_PRONOUNS:       CHILD_PRONOUNS[user?.childGender] || CHILD_PRONOUNS.UNKNOWN,
+    PARENT_NAME:          parentName || 'not given',
     DAY_NUMBER:           String(reports.length + 1),
+    ONBOARDING_SUMMARY:   summarizeScreenTimeIntake(user?.screenTimeIntake) || '  none provided',
     ONBOARDING_ANSWERS:   formatScreenTimeIntakeForPrompt(user?.screenTimeIntake) || '  none provided',
+    ONBOARDING_PLAN:      user?.screenTimeIntake ? onboardingPlanText(childName, hasDifferences) : '  none (did not go through the screen-time onboarding)',
     ACTIVE_STRATEGY:      plan.activeStrategy || 'none yet',
     PROTOCOL_STEPS:       list(plan.protocolSteps, (step, i) => `  ${i + 1}. ${step}`),
     FOCUS_AREAS:          list(plan.focusAreas, f => `  - ${f.title}: ${f.detail}`),
@@ -1069,7 +1073,7 @@ async function getModuleChatPrompt(userId, moduleKey) {
     RECENT_FEEDBACK:      feedback.length ? formatStrategyFeedback(feedback) : '  none yet',
     // The Play time card shows for parents who reported a learning and
     // thinking difference, or who agreed to add it here (add_special_play).
-    SPECIAL_PLAY:         user?.specialPlayAddedAt || reportedDifferences(user?.screenTimeIntake).length > 0
+    SPECIAL_PLAY:         user?.specialPlayAddedAt || hasDifferences
       ? 'already on their home page'
       : 'not added yet',
   });
@@ -1077,8 +1081,7 @@ async function getModuleChatPrompt(userId, moduleKey) {
 
 /**
  * Generate the Learn module report + "My Plan" (e.g. for a screen-time
- * ending) — from a recording's transcript, or from the parent's "Tell Nora"
- * survey answers when they chose not to record.
+ * ending) from a recording's transcript.
  *
  * Day 1 (no plan yet) uses the module's first prompt (with a formatPrompt:
  * a free-form write-up, then a format call for sections + plan); Day 2+ uses its
@@ -1086,7 +1089,7 @@ async function getModuleChatPrompt(userId, moduleKey) {
  * getModuleProgressState) and also returns today's outcome.
  *
  * @param {string} moduleKey      - Key in MODULE_COACHING_CONFIG (e.g. 'screenTime')
- * @param {string} transcriptText - Fills {{TRANSCRIPT}}: formatted utterances, or the survey block
+ * @param {string} transcriptText - Fills {{TRANSCRIPT}}: formatted utterances
  * @param {Object} childInfo      - { name, ageYears, traitsText, sessionNotes, screenTimeIntake }
  * @param {Object} [progressState] - getModuleProgressState() result (defaults to Day 1)
  * @param {string|null} [selfReport] - session.moduleSelfReport ('success' | 'struggle' | 'not_attempted')
@@ -1214,7 +1217,7 @@ async function generateModuleCoaching(moduleKey, transcriptText, childInfo, sess
  * Keeps the outburst graph honest: levels clamped to 0-5 (one decimal), points
  * in time order, and callouts only at a time a transcript line starts (snapped
  * to the nearest one within 5 s, else dropped), at most 2. No [mm:ss] lines in
- * the transcript (survey-based report) → no graph.
+ * the transcript → no graph.
  */
 function cleanEmotionChart(timeline, callouts, transcriptText) {
   const times = [...String(transcriptText).matchAll(/^\[(\d+):(\d{2})\]/gm)].map(m => Number(m[1]) * 60 + Number(m[2]));
@@ -1247,18 +1250,7 @@ async function analyzeModuleSession(session, user, childName, childAge, primaryL
 
   await validateModuleSessionQuality(session, transcriptText, childName, primaryLanguage);
 
-  // Background on how endings usually go — the Day 1 survey, not a Day 2+
-  // check-in about one day's practice.
-  const survey = await prisma.learnModuleSurvey.findFirst({
-    where: { userId: session.userId, moduleKey: session.moduleKey, variant: 'initial' },
-    orderBy: { submittedAt: 'desc' },
-    select: { answers: true, readableAnswers: true },
-  });
-  const surveyText = formatModuleSurveyForPrompt(survey);
-  const sessionNotes = [
-    surveyText ? `Parent's earlier answers to the "Tell Nora" questionnaire about how this usually goes:\n${surveyText}` : '',
-    await moduleStrategyFeedbackNotes(session),
-  ].filter(Boolean).join('\n\n');
+  const sessionNotes = await moduleStrategyFeedbackNotes(session);
 
   const moduleCoaching = await generateModuleCoaching(
     session.moduleKey,
@@ -1293,73 +1285,6 @@ async function storeModuleCoaching(sessionId, moduleCoaching) {
     },
   });
   console.log(`✅ [MODULE-COACHING] Stored module coaching for session ${sessionId.substring(0, 8)}`);
-}
-
-/**
- * Report + plan for a parent who answered the "Tell Nora" survey instead of
- * recording: same module prompt, with the survey's questions and answers in
- * place of the transcript. `session` was created for the survey
- * (session.moduleSurveyId) by POST /api/learn-module-survey. Sets
- * analysisStatus COMPLETED on success; throws on failure (caller marks FAILED).
- */
-async function generateSurveyModuleSession(sessionId) {
-  const session = await prisma.session.findUnique({
-    where: { id: sessionId },
-    include: { LearnModuleSurvey: true },
-  });
-  const survey = session?.LearnModuleSurvey;
-  if (!session?.moduleKey || !survey) throw new Error(`Session ${sessionId} has no module survey`);
-
-  const user = await prisma.user.findUnique({
-    where: { id: session.userId },
-    select: { childName: true, childBirthYear: true, childBirthday: true, issue: true, childConditions: true, screenTimeIntake: true },
-  });
-  let childName = 'the child';
-  try {
-    childName = user.childName ? decryptSensitiveData(user.childName) : 'the child';
-  } catch {
-    // keep the generic name
-  }
-  const childAge = user.childBirthYear ? calculateChildAge(user.childBirthYear, user.childBirthday) : null;
-
-  const intro = survey.variant === 'followup'
-    ? [
-        'No recording was made for this session. Instead, the parent answered a short "Tell Nora" check-in',
-        'about practicing their active strategy at a recent screen-time ending. Judge today\'s outcome and write',
-        'the coaching report and plan from these answers (if they say they did not try it yet, the outcome is',
-        '"Did Not Attempt").',
-      ]
-    : [
-        'No recording was made for this session. The parent chose to answer the "Tell Nora" questionnaire',
-        'about how screen-time endings usually go instead. Base the coaching report and plan on these answers.',
-      ];
-  const transcriptText = [
-    ...intro,
-    'There are no transcript quotes: for top_moment, highlight something positive the parent already does',
-    '(from their answers) and set "quote" to an empty string.',
-    '',
-    formatModuleSurveyForPrompt(survey),
-  ].join('\n');
-
-  const moduleCoaching = await generateModuleCoaching(
-    session.moduleKey,
-    transcriptText,
-    {
-      name: childName,
-      ageYears: childAge,
-      traitsText: moduleTraitsText(user),
-      sessionNotes: [
-        'Report based on the parent\'s questionnaire answers (no recording).',
-        await moduleStrategyFeedbackNotes(session),
-      ].filter(Boolean).join('\n\n'),
-      screenTimeIntake: user.screenTimeIntake,
-    },
-    sessionId,
-    survey.language,
-    await getModuleProgressState(session),
-  );
-  await storeModuleCoaching(sessionId, moduleCoaching);
-  await prisma.session.update({ where: { id: sessionId }, data: { analysisStatus: 'COMPLETED' } });
 }
 
 // ============================================================================
@@ -3427,7 +3352,6 @@ module.exports = {
   generateAboutChild,
   generateFirstSessionInsights,
   generateModuleCoaching,
-  generateSurveyModuleSession,
   getModuleChatPrompt,
   LEARN_MODULE_KEYS: new Set(Object.keys(MODULE_COACHING_CONFIG)),
   MODULE_SELF_REPORTS,

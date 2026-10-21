@@ -198,8 +198,9 @@ export const ModuleChatScreen: React.FC = () => {
 
   // Ideas: the strategies suggested in the parent's last module report
   // (subtitle = its description; tapping starts a check-in on it). Before any
-  // report, the coach chat's general ideas (tapping fills the input).
+  // report, screen-time starters (tapping sends them).
   const { suggestedStrategies } = useModulePlan(moduleKey);
+  const childLabel = childName || t('coachChat.yourChild');
   const SUGGESTION_IMAGES = [
     require('../../assets/images/green-energy.png'),
     require('../../assets/images/air-heater.png'),
@@ -212,14 +213,18 @@ export const ModuleChatScreen: React.FC = () => {
         title: strategy.name,
         subtitle: strategy.description,
         prompt: t('moduleChat.strategyPrompt', { strategy: strategy.name }),
-        sendNow: true,
+        isStrategy: true,
       }))
-    : [
-        { image: SUGGESTION_IMAGES[0], title: t('coachChat.suggestions.understandTitle'), prompt: t('coachChat.suggestions.understandPrompt') },
-        { image: SUGGESTION_IMAGES[1], title: t('coachChat.suggestions.whatToDoTitle'), prompt: t('coachChat.suggestions.whatToDoPrompt') },
-        { image: SUGGESTION_IMAGES[2], title: t('coachChat.suggestions.confidenceTitle'), prompt: t('coachChat.suggestions.confidencePrompt') },
-        { image: SUGGESTION_IMAGES[3], title: t('coachChat.suggestions.planTitle'), prompt: t('coachChat.suggestions.planPrompt') },
-      ].map(s => ({ ...s, subtitle: s.prompt, sendNow: false }));
+    : (['wontStop', 'planNext', 'whyHard', 'recording'] as const).map((key, i) => {
+        const prompt = t(`moduleChat.firstTime.suggestions.${key}.prompt`, { childName: childLabel });
+        return {
+          image: SUGGESTION_IMAGES[i],
+          title: t(`moduleChat.firstTime.suggestions.${key}.title`),
+          subtitle: prompt,
+          prompt,
+          isStrategy: false,
+        };
+      });
 
   const scrollToEnd = useCallback((animated = true) => {
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated }), 100);
@@ -341,10 +346,22 @@ export const ModuleChatScreen: React.FC = () => {
           latestServerTsRef.current = since;
           markAiAsRead(since);
         } else {
-          // No cache and no server messages — show the guide
-          setShowGuide(true);
-          pinToBottomRef.current = false;
-          setTimeout(() => flatListRef.current?.scrollToOffset({ offset: 0, animated: false }), 50);
+          // No cache and no server messages: a first-time parent (no report
+          // yet) gets Nora's opening message, written from their onboarding
+          // answers. The server skips it otherwise; then show the guide.
+          const opener = await fetchOpener();
+          if (cancelled) return;
+          if (opener) {
+            setMessages([opener]);
+            saveMessageCache([opener]);
+            since = opener.createdAt!;
+            latestServerTsRef.current = since;
+            markAiAsRead(since);
+          } else {
+            setShowGuide(true);
+            pinToBottomRef.current = false;
+            setTimeout(() => flatListRef.current?.scrollToOffset({ offset: 0, animated: false }), 50);
+          }
         }
       } catch {
         if (cached.length === 0) {
@@ -357,6 +374,26 @@ export const ModuleChatScreen: React.FC = () => {
       if (!cancelled) {
         setHistoryLoaded(true);
         startPolling();
+      }
+    }
+
+    async function fetchOpener(): Promise<Message | null> {
+      setLoading(true);
+      try {
+        const r = await authService.authenticatedRequest(`${API_URL}/api/coach/start`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ moduleKey, locale: i18n.language }),
+        });
+        if (!r.ok) return null;
+        const data: { message?: Message } = await r.json();
+        if (data.message) amplitudeService.trackEvent('Chat Opener Shown', { chat: 'module_coach', moduleKey });
+        return data.message ?? null;
+      } catch {
+        return null;
+      } finally {
+        setLoading(false);
+        setStatusText(null);
       }
     }
 
@@ -500,13 +537,15 @@ export const ModuleChatScreen: React.FC = () => {
     setInput('');
     if (GREETING_RE.test(text)) {
       amplitudeService.trackEvent('Chat Greeting Answered', { chat: 'module_coach', moduleKey });
-      const reply = t('moduleChat.greetingReply', { name: parentName, childName: childName || t('coachChat.yourChild') });
+      // Before any report there are no strategies to ask about yet.
+      const reply = t(suggestedStrategies.length > 0 ? 'moduleChat.greetingReply' : 'moduleChat.firstTime.greetingReply',
+        { name: parentName, childName: childLabel });
       // Without a name: "Hi !" → "Hi!" (en) / "你好" stays as is (zh).
       sendScripted([{ role: 'user', text }, { role: 'model', text: reply.replace(/^Hi !/, 'Hi!') }]);
       return;
     }
     sendText(input);
-  }, [input, loading, sendText, sendScripted, parentName, childName, moduleKey, t]);
+  }, [input, loading, sendText, sendScripted, parentName, childLabel, suggestedStrategies.length, moduleKey, t]);
 
   // Chips under the coach's latest message: its OPTIONS line, or the fixed
   // options of its offer (OFFER line — special play time).
@@ -704,7 +743,7 @@ export const ModuleChatScreen: React.FC = () => {
                     {parentName ? t('coachChat.greetingWithName', { name: parentName }) : t('coachChat.greetingDefault')}
                   </Text>
                   <Text style={styles.guideSubtitle}>
-                    {t('coachChat.guideSubtitle', { childName: childName || t('coachChat.yourChild') })}
+                    {t('moduleChat.firstTime.guideSubtitle', { childName: childLabel })}
                   </Text>
                 </>
               )}
@@ -714,12 +753,12 @@ export const ModuleChatScreen: React.FC = () => {
                     key={s.title}
                     style={styles.suggestionCard}
                     onPress={() => {
-                      if (s.sendNow) {
+                      if (s.isStrategy) {
                         sendStrategy(s.title, 'welcome');
                         return;
                       }
                       amplitudeService.trackEvent('Chat Suggestion Used', { chat: 'module_coach', moduleKey, suggestion: s.title });
-                      setInput(s.prompt);
+                      sendText(s.prompt);
                     }}
                     activeOpacity={0.75}
                   >

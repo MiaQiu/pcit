@@ -1,17 +1,15 @@
 /**
  * LearnModuleScreen_v2
  * Redesigned "Today" for a Learn module (e.g. Screen Time Management): goal
- * header, a daily check-in card (opens the coach chat), today's practice card
- * (cheat sheet from the last session + record in place), and, on Day 1, the
- * "Not ready to record?" card. Server-side day/report state, one report a day, a past day
- * via the `day` route param, in-place recording and survey-backed reports.
+ * header, a daily check-in card (opens the coach chat) and today's practice
+ * card (record in place) — always both, check-in first. Server-side day/report
+ * state, one report a day, a past day via the `day` route param.
  * Bottom bar:
  * Today / My plan / Learn / Profile.
  *
- * First time in the module (no recording or survey yet), Today is simpler:
- * the Day 1 intro and practice card (tags, art, Start recording), no goal pill
- * or check-in card. Everything else — header, My plan,
- * tabs — is shared.
+ * First time in the module (no recording yet), Today is simpler: the Day 1
+ * intro and a fuller practice card (tags, art, help links), no goal pill or
+ * cheat sheet. Everything else — header, My plan, tabs — is shared.
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
@@ -29,7 +27,7 @@ import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import { useModuleRecorder } from '../hooks/useModuleRecorder';
 import * as userStorage from '../lib/userStorage';
 import amplitudeService from '../services/amplitudeService';
-import { buildPlanDisplay, useModulePlan } from './LearnModulePlanView';
+import { useModulePlan } from './LearnModulePlanView';
 import { LearnModulePlanOverview } from './LearnModulePlanOverview';
 import type { CalendarRecording } from '../components/ReportsCalendar';
 import { ModuleLearnScreen } from './ModuleLearnScreen';
@@ -61,7 +59,7 @@ const PLAY_ART_SIZE = { width: 130, height: 130 * (966 / 1024) };
 const artRow = (height: number, gap: number) => ({ minHeight: height - ART_RISE - gap });
 const artBottom = (gap: number) => ({ bottom: -gap });
 
-// Per-user cache of "has a recording or survey in this module" (see isFirstTime).
+// Per-user cache of "has a recording in this module" (see isFirstTime).
 const startedKey = (moduleKey: string) => `@learn_module_started_${moduleKey}`;
 
 const H_PAD = 20;
@@ -128,8 +126,7 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   const { moduleKey, day: dayParam, initialTab = 'today', startRecordingAt, startPlayRecordingAt } = params;
   const module: LearnModuleConfig = LEARN_MODULES[moduleKey];
   // Day 1 has its own practice card + copy; Day 2+ shows the parent's
-  // current protocol. The "Not ready to record?" card uses Day 1's copy on
-  // every day.
+  // current protocol.
   const config = module.days[1];
   const base = `learnV2.modules.${moduleKey}.days.1`;
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab === 'plan' ? 'plan' : 'today');
@@ -152,7 +149,7 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   const uploadProcessing = useUploadProcessing();
   const [childName, setChildName] = useState('');
   const [childGender, setChildGender] = useState<string | null>(null);
-  const [latestSession, setLatestSession] = useState<{ id: string; createdAt: string; status: 'processing' | 'ready'; fromSurvey?: boolean } | null>(null);
+  const [latestSession, setLatestSession] = useState<{ id: string; createdAt: string; status: 'processing' | 'ready' } | null>(null);
   // Next day to complete (analyzed reports + 1), from the server.
   const [serverDay, setServerDay] = useState(1);
   // Day 2+ "Play time recording" card, for parents who reported a learning
@@ -171,9 +168,9 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   // A specific day to show (route param); null = today.
   const viewDayChoice = dayParam ?? null;
 
-  // One report a day: once today's report (recording or survey) is ready,
-  // today stays on that day with "Read report" — no second recording or
-  // check-in — and moves on to the next day tomorrow.
+  // One report a day: once today's report is ready, today stays on that day
+  // with "Read report" — no second recording — and moves on to the next day
+  // tomorrow.
   const todayReport = latestSession?.status === 'ready' &&
     new Date(latestSession.createdAt).toDateString() === new Date().toDateString()
     ? latestSession
@@ -187,22 +184,16 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   const canAct = dayMode === 'future' || (dayMode === 'today' && !todayReport);
   // The report to open for this day: a past day's, or today's once ready.
   const dayReport = dayMode === 'past'
-    ? (days[currentDay - 1] ? { id: days[currentDay - 1].reportId, fromSurvey: days[currentDay - 1].fromSurvey } : null)
+    ? (days[currentDay - 1] ? { id: days[currentDay - 1].reportId } : null)
     : dayMode === 'today' ? todayReport : null;
   const isFollowupDay = currentDay > 1;
-  const { generatedPlan, childName: planChildName, masteredStrategies } = useModulePlan(moduleKey, serverDay);
+  const { masteredStrategies } = useModulePlan(moduleKey, serverDay);
   // Current goal on the "My plan" roadmap (first not yet complete) — shown in the Today header.
   const currentGoal = getGoalProgress(moduleKey, masteredStrategies.map(m => m.strategyId))
     .find(g => g.status === 'current');
-  const planDisplay = generatedPlan === undefined ? undefined : buildPlanDisplay(t, moduleKey, generatedPlan, planChildName);
-  // Day N practices the plan from day N-1's report; days without one yet
-  // (today before any newer report, future days) use the latest plan.
-  const dayPlan = days[currentDay - 2]?.plan ?? null;
-  const dayStrategy = dayPlan?.activeStrategy ?? planDisplay?.strategy;
-  const dayStrategyId = dayPlan ? dayPlan.activeStrategyId : generatedPlan?.activeStrategyId;
 
-  // First-time parents (no recording or survey in this module yet) get a
-  // simpler Today: the Day 1 intro and practice card, no check-in card.
+  // First-time parents (no recording in this module yet) get a simpler
+  // Today: the Day 1 intro, check-in and a fuller practice card.
   // Decided by the server's latest-session; a per-user cached "started" flag
   // lets returning parents skip the wait on a cold start.
   const [progressLoaded, setProgressLoaded] = useState(false);
@@ -280,15 +271,8 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
       })
       .catch(() => {});
   }, [authService]);
-  // A recording's status shows on the practice card; a survey-based report's
-  // (parent tapped "Tell Nora" instead of recording) on the alternative card.
-  const recordingSession = latestSession && !latestSession.fromSurvey ? latestSession : null;
-  const surveySession = latestSession?.fromSurvey ? latestSession : null;
-
-  // Gap between the practice card's text and its first button (see artRow).
-
-  const openReport = (recordingId: string, source: 'recording' | 'survey') => {
-    amplitudeService.trackEvent('Learn Module Read Report Tapped', { moduleKey, day: currentDay, recordingId, source });
+  const openReport = (recordingId: string) => {
+    amplitudeService.trackEvent('Learn Module Read Report Tapped', { moduleKey, day: currentDay, recordingId });
     navigation.push('ModuleReport', { recordingId, moduleKey });
   };
 
@@ -367,18 +351,13 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
           navigation.push('ModuleRecordGuide', {
             moduleKey,
             guide,
-            canRecord: canAct && !recorder.isRecording && recordingSession?.status !== 'processing',
+            canRecord: canAct && !recorder.isRecording && latestSession?.status !== 'processing',
           });
         } else {
           navigation.push('ModuleGuide', { moduleKey, guide });
         }
         return;
       }
-      case 'tellNora':
-        navigation.push('LearnModuleSurvey', isFollowupDay && dayStrategy
-          ? { moduleKey, variant: 'followup', strategy: dayStrategy, strategyId: dayStrategyId ?? undefined }
-          : { moduleKey });
-        return;
       default:
         showToast(t('learnV2.moduleScreen.comingSoon'), 'info');
     }
@@ -421,6 +400,33 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
     recorder.start('play');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startPlayRecordingAt]);
+
+  // Daily check-in with the coach: first card on every Today.
+  const checkInCard = (
+    <View style={[styles.card, styles.v2Card]}>
+      <View style={[styles.v2CardRow, artRow(CHECK_IN_ART_SIZE.height, SOFT_BUTTON_GAP)]}>
+        {/* Behind the text (rendered first, absolutely positioned); text may overlap it */}
+        <Image source={CHECK_IN_ART} style={[styles.v2CardArt, CHECK_IN_ART_SIZE, artBottom(SOFT_BUTTON_GAP)]} resizeMode="contain" />
+        <View style={styles.v2CardText}>
+          <Text style={styles.eyebrow}>{t('learnV2.moduleScreenV2.checkInEyebrow')}</Text>
+          <Text style={styles.v2CardTitle}>{t('learnV2.moduleScreenV2.checkInTitle')}</Text>
+          <Text style={styles.v2CardBody}>{t('learnV2.moduleScreenV2.checkInBody')}</Text>
+        </View>
+      </View>
+      <TrackedTouchable analyticsId={`Learn Module ${moduleKey}: openCoachChat`}
+        style={styles.softButton}
+        onPress={() => {
+          amplitudeService.trackEvent('Learn Module Coach Chat Tapped', { moduleKey, day: currentDay });
+          navigation.push('ModuleChat', { moduleKey });
+        }}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="chatbubble-ellipses" size={20} color={COLORS.mainPurple} />
+        <Text style={styles.softButtonText}>{t('learnV2.moduleScreenV2.openChat')}</Text>
+        <Ionicons name="arrow-forward" size={18} color={COLORS.mainPurple} />
+      </TrackedTouchable>
+    </View>
+  );
 
   // "How to record" / "What to record" links, on the first-time practice card only.
   const helpLinks = (
@@ -535,6 +541,8 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
               <Text style={styles.firstTimeTitle}>{t(`${base}.title`)}</Text>
               <Text style={styles.firstTimeSubtitle}>{t(`${base}.subtitle`)}</Text>
 
+              {checkInCard}
+
               {/* First time: today's practice with what/where tags and art */}
               <View style={[styles.card, styles.v2Card]}>
                 <Text style={styles.eyebrow}>{t('learnV2.moduleScreen.todaysPractice')}</Text>
@@ -557,7 +565,7 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
                   <Image source={config.heroImage} style={styles.hero} resizeMode="cover" />
                 </View>
 
-                {/* Any recording/survey ends first time, so only record or recording here */}
+                {/* Any recording ends first time, so only record or recording here */}
                 {recorder.isRecording ? (moduleRecording ? recordingPanel : null) : (
                   <>
                     <TrackedTouchable analyticsId={`Learn Module ${moduleKey}: ${config.primaryAction.action} (first time)`}
@@ -598,30 +606,7 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
               <Ionicons name="arrow-forward" size={18} color={COLORS.mainPurple} />
             </TrackedTouchable>
 
-            {/* Daily check-in with the coach */}
-            <View style={[styles.card, styles.v2Card]}>
-              <View style={[styles.v2CardRow, artRow(CHECK_IN_ART_SIZE.height, SOFT_BUTTON_GAP)]}>
-                {/* Behind the text (rendered first, absolutely positioned); text may overlap it */}
-                <Image source={CHECK_IN_ART} style={[styles.v2CardArt, CHECK_IN_ART_SIZE, artBottom(SOFT_BUTTON_GAP)]} resizeMode="contain" />
-                <View style={styles.v2CardText}>
-                  <Text style={styles.eyebrow}>{t('learnV2.moduleScreenV2.checkInEyebrow')}</Text>
-                  <Text style={styles.v2CardTitle}>{t('learnV2.moduleScreenV2.checkInTitle')}</Text>
-                  <Text style={styles.v2CardBody}>{t('learnV2.moduleScreenV2.checkInBody')}</Text>
-                </View>
-              </View>
-              <TrackedTouchable analyticsId={`Learn Module ${moduleKey}: openCoachChat`}
-                style={styles.softButton}
-                onPress={() => {
-                  amplitudeService.trackEvent('Learn Module Coach Chat Tapped', { moduleKey, day: currentDay });
-                  navigation.push('ModuleChat', { moduleKey });
-                }}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="chatbubble-ellipses" size={20} color={COLORS.mainPurple} />
-                <Text style={styles.softButtonText}>{t('learnV2.moduleScreenV2.openChat')}</Text>
-                <Ionicons name="arrow-forward" size={18} color={COLORS.mainPurple} />
-              </TrackedTouchable>
-            </View>
+            {checkInCard}
 
             {/* Today's practice */}
             <View style={[styles.card, styles.v2Card]}>
@@ -637,7 +622,7 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
                 </View>
               </View>
 
-              {recorder.isRecording ? (moduleRecording ? recordingPanel : null) : canAct && recordingSession?.status === 'processing' ? (
+              {recorder.isRecording ? (moduleRecording ? recordingPanel : null) : canAct && latestSession?.status === 'processing' ? (
                 <View style={styles.processingBox}>
                   <ActivityIndicator color={COLORS.mainPurple} />
                   <Text style={styles.processingText}>
@@ -646,12 +631,10 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
                     {t('learnV2.moduleScreen.processingEnd')}
                   </Text>
                 </View>
-              ) : !isFollowupDay && dayMode === 'today' && todayReport?.fromSurvey ? (
-                <Text style={styles.doneForToday}>{t('learnV2.moduleScreen.doneForToday')}</Text>
-              ) : !canAct && dayReport && (isFollowupDay || !dayReport.fromSurvey) ? (
+              ) : !canAct && dayReport ? (
                 <TrackedTouchable analyticsId={`Learn Module ${moduleKey}: readReport (day ${currentDay})`}
                   style={styles.primaryButton}
-                  onPress={() => openReport(dayReport.id, dayReport.fromSurvey ? 'survey' : 'recording')}
+                  onPress={() => openReport(dayReport.id)}
                   activeOpacity={0.85}
                 >
                   <Ionicons name="document-text-outline" size={20} color="#FFFFFF" />
@@ -726,64 +709,6 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
               </View>
             )}
             </>
-          )}
-
-          {/* Day 1 only: the survey alternative, or a survey report's Read
-              report once done. Hidden after a recording (its report is on the
-              practice card). Day 2+ reads either report from the practice card.
-              Always on the first-time template (incl. the dev Day 1 preview). */}
-          {config.alternative && (isFirstTime || (isFirstTime === false && !isFollowupDay && (canAct || !!dayReport?.fromSurvey))) && (
-            <View style={styles.altCard}>
-              <View style={styles.altArt} pointerEvents="none">
-                <View style={[styles.altTile, styles.altTileBack]}>
-                  <Ionicons name="alarm-outline" size={26} color="#F472B6" />
-                </View>
-                <View style={[styles.altTile, styles.altTileFront]}>
-                  <Ionicons name="chatbubble-ellipses" size={26} color={COLORS.mainPurple} />
-                </View>
-              </View>
-              <Text style={styles.eyebrow}>{t(`${base}.alternative.eyebrow`)}</Text>
-              <Text style={styles.altTitle}>{t(`${base}.alternative.title`)}</Text>
-              {canAct && surveySession?.status === 'processing' ? (
-                <View style={styles.altProcessing}>
-                  <ActivityIndicator color={COLORS.mainPurple} />
-                  <Text style={styles.processingText}>{t('learnV2.moduleScreen.processingSurvey')}</Text>
-                </View>
-              ) : !canAct && dayReport?.fromSurvey ? (
-                <>
-                  <Text style={styles.altBody}>{t('learnV2.moduleScreen.surveyReportReady')}</Text>
-                  <TrackedTouchable analyticsId={`Learn Module ${moduleKey}: readSurveyReport (day ${currentDay})`}
-                    style={styles.altButton}
-                    onPress={() => openReport(dayReport.id, 'survey')}
-                    activeOpacity={0.75}
-                  >
-                    <Ionicons name="document-text-outline" size={20} color={COLORS.mainPurple} />
-                    <Text style={styles.altButtonText}>{t('learnV2.moduleScreen.readReport')}</Text>
-                    <Ionicons name="arrow-forward" size={18} color={COLORS.mainPurple} />
-                  </TrackedTouchable>
-                </>
-              ) : (
-                <>
-                  <Text style={styles.altBody}>
-                    {!isFirstTime && isFollowupDay && dayStrategy
-                      ? t('learnV2.moduleScreen.followup.altBody', { strategy: dayStrategy })
-                      : t(`${base}.alternative.body`)}
-                  </Text>
-                  <TrackedTouchable analyticsId={`Learn Module ${moduleKey}: ${config.alternative.action}`}
-                    style={styles.altButton}
-                    onPress={() => handleAction(config.alternative!.action)}
-                    activeOpacity={0.75}
-                  >
-                    <Ionicons name={config.alternative.icon} size={20} color={COLORS.mainPurple} />
-                    <View style={styles.altButtonTextWrap}>
-                      <Text style={styles.altButtonText}>{t(`${base}.alternative.cta`)}</Text>
-                      <Text style={styles.altButtonMeta}>{t(`${base}.alternative.ctaMeta`)}</Text>
-                    </View>
-                    <Ionicons name="arrow-forward" size={18} color={COLORS.mainPurple} />
-                  </TrackedTouchable>
-                </>
-              )}
-            </View>
           )}
 
         </ScrollView>
@@ -1045,13 +970,6 @@ const styles = StyleSheet.create({
   },
   processingText: { flex: 1, fontFamily: FONTS.regular, fontSize: 14, lineHeight: 20, color: COLORS.textDark },
   processingChildName: { fontFamily: FONTS.bold, color: COLORS.mainPurple },
-  doneForToday: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 14,
-    color: MUTED,
-    textAlign: 'center',
-    marginTop: 14,
-  },
   helpRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
   helpLink: {
     flex: 1,
@@ -1073,70 +991,4 @@ const styles = StyleSheet.create({
   },
   helpTitle: { fontFamily: FONTS.semiBold, fontSize: 13, color: COLORS.mainPurple },
   helpSubtitle: { fontFamily: FONTS.regular, fontSize: 11, color: MUTED, marginTop: 1 },
-
-  // ── Alternative card ──
-  altCard: {
-    backgroundColor: PURPLE_TINT,
-    borderRadius: 24,
-    padding: 16,
-    marginTop: 16,
-    overflow: 'hidden',
-  },
-  altArt: { position: 'absolute', top: 16, right: 14, width: 96, height: 72 },
-  altTile: {
-    position: 'absolute',
-    width: 52,
-    height: 52,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  altTileBack: { left: 0, top: 10, backgroundColor: '#FDE7F0', transform: [{ rotate: '-10deg' }] },
-  altTileFront: { right: 0, top: 4, backgroundColor: '#FFFFFF', transform: [{ rotate: '6deg' }] },
-  altTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: 19,
-    lineHeight: 24,
-    color: COLORS.textDark,
-    marginTop: 4,
-    marginRight: 100,
-  },
-  altBody: {
-    fontFamily: FONTS.regular,
-    fontSize: 13,
-    lineHeight: 19,
-    color: MUTED,
-    marginTop: 4,
-    marginRight: 100,
-  },
-  altButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    borderWidth: 1.5,
-    borderColor: '#C9B5EE',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 999,
-    paddingVertical: 8,
-    marginTop: 14,
-  },
-  altButtonTextWrap: { alignItems: 'center' },
-  altProcessing: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    marginTop: 14,
-  },
-  altButtonText: { fontFamily: FONTS.semiBold, fontSize: 15, color: COLORS.mainPurple },
-  altButtonMeta: { fontFamily: FONTS.regular, fontSize: 11, color: COLORS.mainPurple },
 });

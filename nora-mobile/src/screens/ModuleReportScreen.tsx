@@ -610,7 +610,7 @@ export const ModuleReportScreen: React.FC = () => {
   // pipeline. Day 1 is a free-form write-up split into sections by a format
   // call (format 'narrative': coaching-screentime_1st*.txt); Day 2+ and older
   // Day 1 reports are fixed cards (coachingReport: coaching-screentime*.txt).
-  const { moduleCoaching, fromSurvey } = reportData as unknown as { moduleCoaching?: ModuleCoachingData; fromSurvey?: boolean };
+  const { moduleCoaching } = reportData as unknown as { moduleCoaching?: ModuleCoachingData };
   if (moduleCoaching) {
     const narrativeReport = moduleCoaching.format === 'narrative' ? moduleCoaching.report : undefined;
     const coachingReport = moduleCoaching.coachingReport;
@@ -740,20 +740,16 @@ export const ModuleReportScreen: React.FC = () => {
             </>
           ) : coachingReport ? (
             <>
-            {/* Top Moment — recordings only; a survey-based report has no moment to quote */}
-            {!fromSurvey && (
-              <ReportCard icon="star" title={t('reportDetail.coachingReport.topMoment.title')} tip={coachingReport.topMoment.explanation || undefined}>
-                <Text style={styles.moduleSubheading}>{coachingReport.topMoment.title}</Text>
-                {!!coachingReport.topMoment.quote && <Text style={styles.moduleQuote}>{`\u201C${coachingReport.topMoment.quote}\u201D`}</Text>}
-              </ReportCard>
-            )}
+            {/* Top Moment */}
+            <ReportCard icon="star" title={t('reportDetail.coachingReport.topMoment.title')} tip={coachingReport.topMoment.explanation || undefined}>
+              <Text style={styles.moduleSubheading}>{coachingReport.topMoment.title}</Text>
+              {!!coachingReport.topMoment.quote && <Text style={styles.moduleQuote}>{`\u201C${coachingReport.topMoment.quote}\u201D`}</Text>}
+            </ReportCard>
 
-            {/* What we learned — recordings only; a survey-based report has no observed session */}
-            {!fromSurvey && (
-              <ReportCard icon="heart" title={coachingReport.whatWeLearned.title || t('reportDetail.childInsight.title', { childName })}>
-                <Text style={styles.moduleBody}>{coachingReport.whatWeLearned.description}</Text>
-              </ReportCard>
-            )}
+            {/* What we learned */}
+            <ReportCard icon="heart" title={coachingReport.whatWeLearned.title || t('reportDetail.childInsight.title', { childName })}>
+              <Text style={styles.moduleBody}>{coachingReport.whatWeLearned.description}</Text>
+            </ReportCard>
 
             {/* Next growth focus */}
             <ReportCard icon="trending-up" title={t('moduleReport.nextGrowthFocus')} tip={coachingReport.nextGrowthFocus.rationale || undefined}>
@@ -775,8 +771,8 @@ export const ModuleReportScreen: React.FC = () => {
             </>
           ) : null}
 
-          {/* Full Transcript — Day 2+ only; none for a survey-based report */}
-          {!fromSurvey && !narrativeReport && (
+          {/* Full Transcript — Day 2+ only */}
+          {!narrativeReport && (
             <ReportCard
               icon="document-text"
               title={t('reportDetail.transcript.title')}

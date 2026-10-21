@@ -4,7 +4,7 @@
  */
 const fetch = require('node-fetch');
 const prisma = require('./db.cjs');
-const { analyzePCITCoding, generateSurveyModuleSession, SessionQualityError, PermanentFailureError } = require('./pcitAnalysisService.cjs');
+const { analyzePCITCoding, SessionQualityError, PermanentFailureError } = require('./pcitAnalysisService.cjs');
 const { transcribeRecording } = require('./transcriptionService.cjs');
 const { sendReportReadyNotification, sendPushNotificationToUser, sendMilestonesUnlockedNotification } = require('./pushNotifications.cjs');
 const { decryptSensitiveData } = require('../utils/encryption.cjs');
@@ -204,14 +204,8 @@ async function processRecordingWithRetry(sessionId, userId, storagePath, duratio
     // Transcription — skip if already done (transcribedAt checkpoint)
     const sessionState = await prisma.session.findUnique({
       where: { id: sessionId },
-      select: { transcribedAt: true, moduleSurveyId: true }
+      select: { transcribedAt: true }
     });
-    // Learn module report generated from a "Tell Nora" survey (no audio) —
-    // reached here only via an admin retry.
-    if (sessionState.moduleSurveyId) {
-      await generateSurveyModuleSession(sessionId);
-      return;
-    }
     if (!sessionState.transcribedAt) {
       console.log(`🎤 [PROCESSING] Session ${sessionId.substring(0, 8)} - Starting transcription...`);
       await transcribeRecording(sessionId, userId, storagePath, durationSeconds);

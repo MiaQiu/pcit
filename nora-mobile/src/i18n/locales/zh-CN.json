@@ -1347,139 +1347,6 @@
                 "title": "为什么要录音？",
                 "subtitle": "Nora 能从中发现什么"
               }
-            },
-            "alternative": {
-              "eyebrow": "还没准备好录音？",
-              "title": "告诉 Nora 平时的情况",
-              "body": "花 2 分钟告诉我们屏幕时间结束时通常会发生什么。",
-              "cta": "告诉 Nora",
-              "ctaMeta": "2 分钟"
-            }
-          }
-        },
-        "survey": {
-          "sections": {
-            "predictability": "可预测性",
-            "transition": "过渡准备",
-            "childResponse": "孩子的反应",
-            "parentResponse": "家长的回应",
-            "consistency": "一致性"
-          },
-          "questions": {
-            "knowsRoutine": {
-              "title": "孩子通常知道什么时候可以看屏幕、什么时候结束吗？",
-              "options": {
-                "yes": "是的——我们有比较固定的习惯",
-                "somewhat": "有一点——要看当天情况",
-                "notReally": "不太知道——屏幕时间变化很大"
-              }
-            },
-            "stopPoint": {
-              "title": "屏幕时间结束时，你们通常在哪里停下？",
-              "options": {
-                "episode": "🎬 一集/一个视频结束时",
-                "level": "🎮 一关/一局游戏结束时",
-                "song": "🎵 一首歌/一个活动结束时",
-                "timer": "⏱️ 计时器响时",
-                "turnOff": "📴 时间到了就直接关掉",
-                "depends": "🔄 看情况"
-              }
-            },
-            "warning": {
-              "title": "你通常怎么让孩子知道屏幕时间快结束了？",
-              "options": {
-                "fiveMin": "提前 5 分钟提醒",
-                "twoMin": "提前 2 分钟提醒",
-                "lastOne": "“最后一个，然后就停”",
-                "timer": "计时器/闹钟",
-                "tellThem": "时间到了才告诉他们",
-                "noWarning": "通常不提前提醒",
-                "depends": "看情况"
-              }
-            },
-            "nextActivityPlanned": {
-              "title": "屏幕时间结束前，你通常知道孩子接下来要做什么吗？",
-              "options": {
-                "yes": "是的——通常已经准备好下一个活动",
-                "sometimes": "有时候",
-                "notUsually": "通常不知道"
-              }
-            },
-            "nextActivity": {
-              "title": "接下来通常做什么？",
-              "options": {
-                "play": "🧸 玩耍",
-                "crafts": "🎨 涂色 / 手工",
-                "puzzle": "🧩 拼图 / 积木",
-                "snack": "🍎 吃点心 / 吃饭",
-                "outside": "🌳 出门",
-                "bath": "🛁 洗澡 / 睡觉",
-                "homework": "📚 作业 / 阅读",
-                "other": "其他"
-              }
-            },
-            "childResponse": {
-              "title": "屏幕时间结束时，孩子通常会怎样？",
-              "options": {
-                "movesOn": "🙂 停下来去做别的",
-                "asksMore": "🙃 要求再多看一会儿",
-                "complains": "😣 抱怨或争辩",
-                "tantrum": "😭 哭闹或发脾气",
-                "refuses": "🚫 拒绝停下",
-                "runsAway": "🏃 跑开 / 继续玩",
-                "depends": "🔄 真的要看情况"
-              }
-            },
-            "recoveryTime": {
-              "title": "孩子通常需要多久才能平复并转去做别的？",
-              "options": {
-                "under2": "不到 2 分钟",
-                "twoToFive": "2–5 分钟",
-                "fiveToTen": "5–10 分钟",
-                "over10": "超过 10 分钟",
-                "needsIntervention": "通常需要再介入才能转移"
-              }
-            },
-            "parentResponse": {
-              "title": "孩子抗议或不高兴时，你通常怎么做？",
-              "options": {
-                "stayClose": "陪在身边帮他们平静下来",
-                "nameFeeling": "说出他们的感受",
-                "remind": "提醒他们屏幕时间结束了",
-                "explain": "解释为什么要停下",
-                "repeat": "重复指令",
-                "offerActivity": "提供另一个活动",
-                "offerMore": "再给一些屏幕时间",
-                "negotiate": "讨价还价 / 做交换",
-                "giveSpace": "给他们一些空间",
-                "takeDevice": "把设备拿走",
-                "notSure": "我不确定该怎么做"
-              }
-            },
-            "outcome": {
-              "title": "如果孩子抗议或要求更多屏幕时间，通常结果如何？",
-              "options": {
-                "staysFinished": "屏幕时间就此结束",
-                "littleMore": "有时会多给一点时间",
-                "usuallyMore": "通常会多给时间",
-                "depends": "看情况"
-              }
-            },
-            "hardest": {
-              "title": "对你来说，屏幕时间结束时最难的是什么？",
-              "options": {
-                "stop": "让孩子停下来",
-                "tantrum": "处理发脾气",
-                "calm": "让自己保持冷静",
-                "whatToSay": "不知道该说什么",
-                "moveOn": "让孩子转去做别的",
-                "consistent": "保持一致",
-                "prepare": "做好过渡准备",
-                "notSure": "我不确定"
-              }
-            },
-            "anythingElse": {
-              "title": "还有什么想分享的，能帮助我们了解情况吗？"
             }
           }
         },
@@ -1496,219 +1363,6 @@
             "items": {
               "1": "**安静陪伴：**坐在伸手可及的地方，不争辩。",
               "2": "**简短认可：**“我知道你非常生气。在这里哭是安全的。”"
-            }
-          }
-        },
-        "followupSurvey": {
-          "sections": {
-            "practice": "练习你的策略",
-            "strategy": "{{strategy}}",
-            "result": "结束得怎么样"
-          },
-          "questions": {
-            "tried": {
-              "title": "你在屏幕时间结束时试过“{{strategy}}”吗？",
-              "options": {
-                "fully": "试过，我按步骤做了",
-                "partly": "部分做了",
-                "notYet": "还没有"
-              }
-            },
-            "blocker": {
-              "title": "是什么让你没能尝试？",
-              "options": {
-                "forgot": "当时忘了",
-                "noScreenTime": "今天没有屏幕时间",
-                "tooTired": "我太累或太忙",
-                "childUpset": "{{name}}当时已经不开心了",
-                "unsure": "我不确定该怎么做"
-              }
-            },
-            "routineKnewEnding": {
-              "title": "不用提醒，{{name}}知道屏幕时间要结束了吗？",
-              "options": {
-                "knew": "知道",
-                "remembered": "提醒后想起来了",
-                "surprised": "很意外"
-              }
-            },
-            "routineUsualTime": {
-              "title": "今天的屏幕时间和平时的时间、时长一样吗？",
-              "options": {
-                "yes": "一样",
-                "differentTime": "时间不同",
-                "differentLength": "时长不同",
-                "both": "都不同"
-              }
-            },
-            "transitionToldWhen": {
-              "title": "你什么时候告诉{{name}}接下来做什么？",
-              "options": {
-                "beforeStart": "屏幕时间开始前",
-                "during": "屏幕时间中",
-                "atEnd": "关掉的时候才说",
-                "didnt": "没有说"
-              }
-            },
-            "transitionWent": {
-              "title": "结束后，{{name}}去做那个活动了吗？",
-              "options": {
-                "rightAway": "马上就去了",
-                "afterProtest": "抗议了一下才去",
-                "whenTaken": "我带过去才去",
-                "didnt": "没有去"
-              }
-            },
-            "stoppingWhere": {
-              "title": "你们在哪里停下的？",
-              "options": {
-                "naturalEnd": "一集 / 一关 / 一首歌结束时",
-                "partway": "中途"
-              }
-            },
-            "stoppingKnew": {
-              "title": "{{name}}事先知道会在哪里停下吗？",
-              "options": {
-                "beforeStart": "知道，开始前就说了",
-                "during": "知道，中途说的",
-                "no": "不知道"
-              }
-            },
-            "warningsGiven": {
-              "title": "你给了哪些提醒？",
-              "options": {
-                "fiveMin": "提前 5 分钟提醒",
-                "twoMin": "提前 2 分钟提醒",
-                "lastOne": "“最后一个，然后就停”",
-                "none": "没有提醒"
-              }
-            },
-            "warningsReaction": {
-              "title": "{{name}}对提醒有什么反应？",
-              "options": {
-                "acknowledged": "回应了",
-                "ignored": "没理会",
-                "protested": "一提醒就抗议"
-              }
-            },
-            "timerUsed": {
-              "title": "你用了什么？",
-              "options": {
-                "visual": "可视化计时器",
-                "phoneOven": "手机 / 厨房计时器",
-                "tvAutoOff": "电视自动关机",
-                "none": "没有用计时器"
-              }
-            },
-            "timerWhoCalled": {
-              "title": "时间到了，是谁宣布的？",
-              "options": {
-                "timer": "计时器（我指给他看）",
-                "me": "我说的",
-                "argued": "我们为计时器争执了"
-              }
-            },
-            "commandWording": {
-              "title": "哪一句最接近你说的话？",
-              "options": {
-                "direct": "“请把电视关掉。”",
-                "question": "“我们现在可以关掉吗？”",
-                "vague": "“好啦，时间到了，快点，你看够了……”",
-                "silent": "我直接关掉，什么都没说"
-              }
-            },
-            "commandTimes": {
-              "title": "你说了几次？",
-              "options": {
-                "once": "一次",
-                "twoThree": "2–3 次",
-                "moreThree": "3 次以上"
-              }
-            },
-            "followStopped": {
-              "title": "{{name}}在 5 秒左右内停下了吗？",
-              "options": {
-                "yes": "停下了",
-                "no": "没有"
-              }
-            },
-            "followPraise": {
-              "title": "你表扬{{name}}了吗？",
-              "options": {
-                "specific": "有，具体地表扬（“谢谢你把它关掉！”）",
-                "general": "有，笼统地表扬（“真棒”）",
-                "no": "没有"
-              }
-            },
-            "followNext": {
-              "title": "接下来你做了什么？",
-              "options": {
-                "choice": "给了选择（“你来关，还是我来关”）",
-                "turnedOff": "我关掉了，并简短说明原因",
-                "repeated": "重复说或解释",
-                "moreTime": "多给了时间"
-              }
-            },
-            "coregFirst": {
-              "title": "{{name}}不高兴时，你首先做了什么？",
-              "options": {
-                "stayedClose": "陪在身边 / 说出他的感受",
-                "explained": "解释原因",
-                "tookDevice": "拿走设备 / 提高声音",
-                "notUpset": "{{name}}没有不高兴"
-              }
-            },
-            "coregKeptLimit": {
-              "title": "你坚持了界限吗？",
-              "options": {
-                "yes": "坚持了",
-                "bitMore": "最后多给了一点时间",
-                "more": "多给了时间"
-              }
-            },
-            "bridgeStarted": {
-              "title": "关掉后，你自己先开始了下一个活动吗？",
-              "options": {
-                "describing": "是的，并说出我在做什么",
-                "quietly": "是的，安静地做",
-                "toldThem": "没有，我叫{{name}}去做"
-              }
-            },
-            "bridgeJoined": {
-              "title": "{{name}}加入你了吗？",
-              "options": {
-                "withinMinute": "一分钟内就加入了",
-                "fewMinutes": "几分钟后加入",
-                "didnt": "没有加入"
-              }
-            },
-            "consistentProtested": {
-              "title": "{{name}}抗议或要求更多时间了吗？",
-              "options": {
-                "yes": "有",
-                "no": "没有"
-              }
-            },
-            "consistentStayed": {
-              "title": "屏幕时间就此结束了吗？",
-              "options": {
-                "yes": "结束了",
-                "bitMore": "多给了一点",
-                "more": "多给了时间"
-              }
-            },
-            "moveOnTime": {
-              "title": "屏幕时间结束后，{{name}}多久才转去做别的？",
-              "options": {
-                "under1": "不到 1 分钟",
-                "oneToFive": "1–5 分钟",
-                "fiveToTen": "5–10 分钟",
-                "over10": "超过 10 分钟",
-                "needsHelp": "需要我再帮忙才行"
-              }
-            },
-            "anythingElse": {
-              "title": "还有什么想让 Nora 知道的吗？（选填）"
             }
           }
         },
@@ -1956,27 +1610,14 @@
       "processingStart": "做得好！我们正在分析你和",
       "processingEnd": "的录音，报告很快就会准备好。",
       "readReport": "查看报告",
-      "processingSurvey": "我们正在根据你的回答生成报告和计划，很快就会准备好。",
-      "surveyReportReady": "你的报告和计划已经准备好了。",
       "followup": {
         "title": "继续练习",
         "subtitle": "在下一次屏幕时间结束时使用今日步骤。",
-        "record": "录音",
-        "altBody": "花 2 分钟告诉我们，屏幕时间结束时“{{strategy}}”进行得怎么样。"
+        "record": "录音"
       },
-      "doneForToday": "今天的练习完成了，明天再继续。",
       "previousDay": "前一天",
       "nextDay": "后一天",
       "backToToday": "回到今天（第 {{day}} 天）"
-    },
-    "moduleSurvey": {
-      "headerTitle": "告诉 Nora",
-      "selectAll": "可多选",
-      "otherPlaceholder": "请说明...",
-      "textPlaceholder": "在这里输入（选填）",
-      "submit": "提交",
-      "thanks": "谢谢！Nora 正在根据你的回答撰写报告和计划。",
-      "submitError": "提交失败，请检查网络后重试。"
     },
     "moduleRecorder": {
       "recording": "录音中…",
@@ -3280,6 +2921,28 @@
       "triedReply": "太好了！跟我说说进行得怎么样——{{childName}}有什么反应？哪些部分容易，哪些比较难？",
       "clarifyReply": "当然可以！你想弄清楚哪一部分——该说什么、什么时候做，还是别的？"
     },
-    "suggestedLabel": "根据你上次记录建议的策略"
+    "suggestedLabel": "根据你上次记录建议的策略",
+    "firstTime": {
+      "guideSubtitle": "一起让{{childName}}的屏幕时间更轻松。\n想从哪里开始？",
+      "greetingReply": "{{name}}你好！我在这里帮你让{{childName}}的屏幕时间更轻松。你想先聊聊屏幕时间结束时通常会发生什么，还是先计划下一次怎么结束？",
+      "suggestions": {
+        "wontStop": {
+          "title": "到时间了也不肯停",
+          "prompt": "屏幕时间到了，{{childName}}还是不肯停下来。我该怎么办？"
+        },
+        "planNext": {
+          "title": "计划下一次怎么结束",
+          "prompt": "帮我计划下一次怎么结束屏幕时间。"
+        },
+        "whyHard": {
+          "title": "为什么停下来这么难？",
+          "prompt": "为什么让{{childName}}停下屏幕这么难？"
+        },
+        "recording": {
+          "title": "录音怎么用",
+          "prompt": "录下一次屏幕时间结束的过程是怎么操作的？我会得到什么？"
+        }
+      }
+    }
   }
 }
