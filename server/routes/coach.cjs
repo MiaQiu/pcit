@@ -412,6 +412,38 @@ async function buildAgent(userId, locale, moduleKey = null) {
   };
 }
 
+// ─── Time gaps in the history ─────────────────────────────────────────────────
+
+// A Learn module chat's history spans days. Where the parent comes back after
+// a break, an app note goes in front of their message (see "Time Between
+// Messages" in the module prompt), so earlier turns don't read as just said.
+const HISTORY_GAP_MS = 6 * 60 * 60 * 1000;
+
+function timeGapNote(ms) {
+  const hours = Math.round(ms / (60 * 60 * 1000));
+  const days = Math.floor(ms / (24 * 60 * 60 * 1000));
+  const since = days >= 1 ? `${days} day${days === 1 ? '' : 's'}` : `${hours} hours`;
+  return `[App note: ${since} since the previous message]`;
+}
+
+// Prefixes the note to the first parent message after each gap in `history`
+// (oldest first, with createdAt; edited in place) and returns the new
+// message's text, with a note if it comes after a gap.
+function markTimeGaps(history, newText, newAt) {
+  let prevAt = null;
+  let note = null;
+  for (const m of history) {
+    if (prevAt && m.createdAt - prevAt > HISTORY_GAP_MS) note = timeGapNote(m.createdAt - prevAt);
+    if (note && m.role === 'user') {
+      m.text = `${note}\n${m.text}`;
+      note = null;
+    }
+    prevAt = m.createdAt;
+  }
+  if (prevAt && newAt - prevAt > HISTORY_GAP_MS) note = timeGapNote(newAt - prevAt);
+  return note ? `${note}\n${newText}` : newText;
+}
+
 // ─── Gemini agent loop ────────────────────────────────────────────────────────
 
 async function runAgentLoop(userId, userText, dbHistory, signal, agent) {
@@ -973,14 +1005,16 @@ router.post('/chat', async (req, res, next) => {
     });
     publish(req.userId, [userMsg]);
 
-    // Load conversation history for LLM context
+    // Load conversation history for LLM context; the agent loops append the
+    // new message themselves, so leave it out here
     const dbHistory = await prisma.coachChatMessage.findMany({
-      where: { userId: req.userId },
+      where: { userId: req.userId, id: { not: userMsg.id } },
       orderBy: { createdAt: 'desc' },
       take: MAX_HISTORY_MESSAGES,
-      select: { role: true, text: true },
+      select: { role: true, text: true, createdAt: true },
     });
     dbHistory.reverse();
+    const llmUserText = moduleKey ? markTimeGaps(dbHistory, userText, userMsg.createdAt) : userText;
     if (dbHistory[0] && dbHistory[0].role !== 'user') dbHistory.unshift({ role: 'user', text: OPENING_TRIGGER });
 
     const agent = await buildAgent(req.userId, userLocale, moduleKey);
@@ -999,7 +1033,7 @@ router.post('/chat', async (req, res, next) => {
     const isUserAbort = () => abortController.signal.aborted;
 
     try {
-      result = await runAgentLoop(req.userId, userText, dbHistory, abortController.signal, agent);
+      result = await runAgentLoop(req.userId, llmUserText, dbHistory, abortController.signal, agent);
     } catch (firstErr) {
       if (firstErr.name === 'AbortError' && isUserAbort()) {
         agentBus.clear(req.userId);
@@ -1029,7 +1063,7 @@ router.post('/chat', async (req, res, next) => {
       });
 
       try {
-        result = await runAgentLoop(req.userId, userText, dbHistory, abortController.signal, agent);
+        result = await runAgentLoop(req.userId, llmUserText, dbHistory, abortController.signal, agent);
       } catch (retryErr) {
         if (retryErr.name === 'AbortError' && isUserAbort()) {
           agentBus.clear(req.userId);
@@ -1049,7 +1083,7 @@ router.post('/chat', async (req, res, next) => {
         });
 
         try {
-          result = await runClaudeAgentLoop(req.userId, userText, dbHistory, abortController.signal, agent);
+          result = await runClaudeAgentLoop(req.userId, llmUserText, dbHistory, abortController.signal, agent);
         } catch (claudeErr) {
           agentBus.clear(req.userId);
           logLLMCall({

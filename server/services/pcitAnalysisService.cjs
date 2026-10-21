@@ -1009,12 +1009,17 @@ async function getModuleChatPrompt(userId, moduleKey) {
   const config = MODULE_COACHING_CONFIG[moduleKey];
   if (!config?.chatPrompt) return null;
 
-  const [user, reports] = await Promise.all([
+  const [user, reports, lastDecline] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       select: { name: true, childName: true, childGender: true, childBirthYear: true, childBirthday: true, screenTimeIntake: true, specialPlayAddedAt: true },
     }),
     getModuleReports(userId, moduleKey),
+    prisma.specialPlayOffer.findFirst({
+      where: { userId, response: 'declined' },
+      orderBy: { respondedAt: 'desc' },
+      select: { respondedAt: true },
+    }),
   ]);
   let childName = 'the child';
   let parentName = '';
@@ -1076,8 +1081,21 @@ async function getModuleChatPrompt(userId, moduleKey) {
     // thinking difference, or who agreed to add it here (add_special_play).
     SPECIAL_PLAY:         user?.specialPlayAddedAt || hasDifferences
       ? 'already on their home page'
-      : 'not added yet',
+      : specialPlayNotAddedText(lastDecline?.respondedAt),
   });
+}
+
+// A "no" to the special play offer lives in SpecialPlayOffer, not just the
+// chat history (which only keeps the last messages), so the coach doesn't
+// offer again too soon.
+const SPECIAL_PLAY_REOFFER_DAYS = 7;
+function specialPlayNotAddedText(declinedAt) {
+  if (!declinedAt) return 'not added yet';
+  const days = Math.floor((Date.now() - declinedAt.getTime()) / 86400000);
+  const when = `${declinedAt.toISOString().slice(0, 10)} (${days === 0 ? 'today' : days === 1 ? '1 day ago' : `${days} days ago`})`;
+  return days < SPECIAL_PLAY_REOFFER_DAYS
+    ? `not added yet — the parent said no to it on ${when}. Don't offer it again yet; keep coaching the routine.`
+    : `not added yet — the parent said no to it on ${when}. You may offer it again only if the routine still isn't working, acknowledging they passed on it before.`;
 }
 
 /**
