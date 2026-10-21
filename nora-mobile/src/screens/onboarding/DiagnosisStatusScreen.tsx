@@ -8,7 +8,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
-import { PersonalizingProgressHeader } from '../../components/PersonalizingProgressHeader';
+import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
 import { useAuthService } from '../../contexts/AppContext';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { saveOnboardingFields } from '../../utils/onboardingDraft';
@@ -26,7 +26,9 @@ export const DiagnosisStatusScreen: React.FC = () => {
 
   return (
     <MultipleChoiceScreen
-      headerOverride={<PersonalizingProgressHeader step={1} totalSteps={4} />}
+      headerOverride={
+        <OnboardingProgressHeader phase={1} step={7} totalSteps={8} singlePhase />
+      }
       headerText=""
       title={t('onboarding.diagnosisStatus.title', { childName })}
       options={[

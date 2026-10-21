@@ -55,6 +55,7 @@ export const ChildIssueScreen: React.FC = () => {
       phase={1}
       stepInPhase={6}
       totalStepsInPhase={7}
+      singlePhaseHeader
       screenName="child_issue"
       screenStep={17}
       renderButtons={(buttonProps) => <OnboardingFooter {...buttonProps} />}

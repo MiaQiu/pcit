@@ -147,7 +147,7 @@ export function screenTimePath(answers: ScreenTimeAnswers): ScreenTimePath {
   return picked.some((v) => v !== 'none') ? 'differences' : 'none';
 }
 
-const isOnPath = (step: ScreenTimeStep, path: ScreenTimePath) =>
+export const isOnPath = (step: ScreenTimeStep, path: ScreenTimePath) =>
   step.kind === 'plan' || !step.paths || step.paths.includes(path);
 
 /**

@@ -2507,6 +2507,12 @@
         "free": "No payment required to start. The first three times are free!",
         "listSeparator": ", ",
         "cta": "Get started"
+      },
+      "sections": {
+        "habits": "Screen time habits",
+        "experience": "Your experience",
+        "signals": "Hidden signals",
+        "plan": "Your plan"
       }
     }
   },

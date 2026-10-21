@@ -8,6 +8,7 @@ import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
 import { useAuthService } from '../../contexts/AppContext';
 import { saveOnboardingFields } from '../../utils/onboardingDraft';
 import { OnboardingFooter } from '../../components/OnboardingFooter';
+import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
 
 export const ParentGoalScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -34,9 +35,9 @@ export const ParentGoalScreen: React.FC = () => {
       nextScreen="ParentGoalIntro"
       prevScreen="ChildIssue"
       multiSelect={true}
-      phase={1}
-      stepInPhase={7}
-      totalStepsInPhase={7}
+      headerOverride={
+        <OnboardingProgressHeader phase={1} step={7} totalSteps={7} singlePhase />
+      }
       screenName="parent_goal"
       screenStep={18}
       renderButtons={(buttonProps) => <OnboardingFooter {...buttonProps} />}

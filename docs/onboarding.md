@@ -139,6 +139,16 @@ when they picked anything else (a suspected difference counts).
   The differences path has 29 screens, the none path 31.
 - `screenTimeIntake.path` records the path; `cortex` is null on the differences path.
 
+**Progress bar.** Each section has its own title and counter (`OnboardingProgressHeader` with
+`singlePhase` and `label`):
+- Profile questions, all *Basic data*: `NameInput`–`ChildIssue` 1/7–6/7, then `ParentGoal` 7/7, or on the
+  ADHD/developmental/anxiety path `DiagnosisStatus` 7/8 and `ProfessionalSupport` 8/8.
+- Screen time, on every step including insights and the plan (`sectionProgress()` in
+  `ScreenTimeStepScreen.tsx`, counting only steps on the parent's path):
+  *Screen time habits* (intro and the 9 statements, 1/10–10/10), *Your experience* (dopamine through
+  `why`, 1/10–10/10), *Hidden signals* 1/6–6/6, *Your plan* (everything after the signals through the
+  plan: 1/4–4/4 differences path, 1/6–6/6 none path).
+
 Pronouns use i18next context: `_boy` and `_girl` variants, with a gender-neutral base key that uses the child's name.
 
 ### 5. Letter and method content

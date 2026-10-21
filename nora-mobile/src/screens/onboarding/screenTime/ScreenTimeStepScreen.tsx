@@ -10,6 +10,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { useTranslation, Trans } from 'react-i18next';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MultipleChoiceScreen } from '../../../components/MultipleChoiceScreen';
 import { OnboardingProgressHeader } from '../../../components/OnboardingProgressHeader';
 import { useOnboarding } from '../../../contexts/OnboardingContext';
@@ -30,12 +31,59 @@ import {
   genderContext,
   screenTimePath,
   adjacentStepIndex,
+  isOnPath,
+  SIGNAL_COUNT,
+  ScreenTimeAnswers,
 } from './screenTimeFlow';
 import { ScreenTimeScene } from './ScreenTimeScene';
 import { OnboardingFooter } from '../../../components/OnboardingFooter';
 import { goBackTo } from '../../../navigation/goBackTo';
 
 const NS = 'onboarding.screenTime';
+
+// Progress header sections: every step belongs to one, and each section counts its
+// own screens on the parent's path (e.g. Hidden signals 1/6–6/6). Titles under `${NS}.sections`.
+const LAST_SIGNAL_INDEX = SCREEN_TIME_STEPS.map((s) => s.id).lastIndexOf(`signal${SIGNAL_COUNT - 1}`);
+const stepSection = (index: number) => {
+  const { id } = SCREEN_TIME_STEPS[index];
+  if (id === 'intro' || id.startsWith('pmum')) return 'habits';
+  if (id.startsWith('signal')) return 'signals';
+  return index > LAST_SIGNAL_INDEX ? 'plan' : 'experience';
+};
+
+function sectionProgress(index: number, answers: ScreenTimeAnswers) {
+  const section = stepSection(index);
+  const path = screenTimePath(answers);
+  const indexes = SCREEN_TIME_STEPS.map((_, i) => i).filter(
+    (i) => stepSection(i) === section && isOnPath(SCREEN_TIME_STEPS[i], path),
+  );
+  return { section, step: indexes.indexOf(index) + 1, total: indexes.length };
+}
+
+const SectionProgressHeader: React.FC<{ index: number }> = ({ index }) => {
+  const { t } = useTranslation();
+  const { data } = useOnboarding();
+  const progress = sectionProgress(index, data.screenTime ?? {});
+  return (
+    <OnboardingProgressHeader
+      phase={2}
+      step={progress.step}
+      totalSteps={progress.total}
+      singlePhase
+      label={t(`${NS}.sections.${progress.section}`)}
+    />
+  );
+};
+
+// Same placement as MultipleChoiceScreen's header, for the insight and plan screens
+const ScreenTimeProgressHeader: React.FC<{ index: number }> = ({ index }) => {
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={[styles.progressHeader, { paddingTop: insets.top + 30 }]}>
+      <SectionProgressHeader index={index} />
+    </View>
+  );
+};
 // Horizontal padding of insight/plan content (styles.scrollContent)
 const CONTENT_PADDING = 32;
 // Advisor card width as a share of the content width
@@ -151,12 +199,15 @@ export const ScreenTimeStepScreen: React.FC = () => {
   }
 
   if (step.kind === 'plan') {
-    return <PlanStep values={values} context={context} screenName={screenName} analyticsStep={analyticsStep} onBack={goBack} />;
+    return (
+      <PlanStep index={index} values={values} context={context} screenName={screenName} analyticsStep={analyticsStep} onBack={goBack} />
+    );
   }
 
   return (
     <InsightStep
       step={step}
+      index={index}
       values={values}
       context={context}
       onNext={() => {
@@ -198,9 +249,7 @@ const QuestionStep: React.FC<{
       nextScreen="ScreenTimeStep"
       multiSelect={step.multi}
       exclusiveValues={step.exclusive}
-      headerOverride={
-        <OnboardingProgressHeader phase={2} step={index + 1} totalSteps={SCREEN_TIME_STEPS.length} singlePhase />
-      }
+      headerOverride={<SectionProgressHeader index={index} />}
       screenName={screenName}
       screenStep={analyticsStep}
       onBeforeNavigate={async () => {
@@ -219,6 +268,7 @@ const QuestionStep: React.FC<{
 
 type InsightProps = {
   step: ScreenTimeInsightStep;
+  index: number;
   values: Record<string, unknown>;
   context?: string;
   onNext: () => void;
@@ -238,7 +288,7 @@ const useInsightCopy = (step: ScreenTimeInsightStep, values: Record<string, unkn
   return { t, key, age, cta, blockKey, blocks };
 };
 
-const InsightStep: React.FC<InsightProps> = ({ step, values, context, onNext, onBack }) => {
+const InsightStep: React.FC<InsightProps> = ({ step, index, values, context, onNext, onBack }) => {
   const { t, key, age, cta, blockKey, blocks } = useInsightCopy(step, values);
   // Explicit size: a percentage width + aspectRatio didn't take effect on this Image
   const { width: windowWidth } = useWindowDimensions();
@@ -246,6 +296,7 @@ const InsightStep: React.FC<InsightProps> = ({ step, values, context, onNext, on
 
   return (
     <View style={styles.container}>
+      <ScreenTimeProgressHeader index={index} />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {step.media === 'advisor' ? (
           <>
@@ -296,12 +347,13 @@ const InsightStep: React.FC<InsightProps> = ({ step, values, context, onNext, on
 };
 
 const PlanStep: React.FC<{
+  index: number;
   values: Record<string, unknown>;
   context?: string;
   screenName: string;
   analyticsStep: number;
   onBack: () => void;
-}> = ({ values, context, screenName, analyticsStep, onBack }) => {
+}> = ({ index, values, context, screenName, analyticsStep, onBack }) => {
   const { t } = useTranslation();
   const rootNavigation = useNavigation<RootStackNavigationProp>();
   const authService = useAuthService();
@@ -362,6 +414,7 @@ const PlanStep: React.FC<{
 
   return (
     <View style={styles.container}>
+      <ScreenTimeProgressHeader index={index} />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Text style={[styles.title, styles.planTitle]}>{t(`${NS}.plan.title`, values)}</Text>
 
@@ -419,11 +472,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
+  progressHeader: {
+    paddingHorizontal: 20,
+  },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: CONTENT_PADDING,
-    paddingTop: 60,
+    paddingTop: 16,
     paddingBottom: 24,
   },
   advisor: {

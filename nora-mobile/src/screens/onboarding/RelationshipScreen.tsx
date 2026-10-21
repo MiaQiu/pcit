@@ -30,6 +30,7 @@ export const RelationshipScreen: React.FC = () => {
       phase={1}
       stepInPhase={2}
       totalStepsInPhase={7}
+      singlePhaseHeader
       screenName="relationship"
       screenStep={13}
       renderButtons={(buttonProps) => <OnboardingFooter {...buttonProps} />}

@@ -28,6 +28,7 @@ export const ChildGenderScreen: React.FC = () => {
       phase={1}
       stepInPhase={4}
       totalStepsInPhase={7}
+      singlePhaseHeader
       screenName="child_gender"
       screenStep={15}
       renderButtons={(buttonProps) => <OnboardingFooter {...buttonProps} />}

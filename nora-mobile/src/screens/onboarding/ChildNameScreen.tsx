@@ -44,7 +44,7 @@ export const ChildNameScreen: React.FC = () => {
 
   return (
     <OnboardingLayout useKeyboardAvoid>
-      <OnboardingProgressHeader phase={1} step={3} totalSteps={7} />
+      <OnboardingProgressHeader phase={1} step={3} totalSteps={7} singlePhase />
 
       <OnboardingTextInput
         title={t('onboarding.childName.title')}

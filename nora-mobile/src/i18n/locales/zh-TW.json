@@ -2546,6 +2546,12 @@
         "free": "開始無需付費，前三次免費！",
         "listSeparator": "、",
         "cta": "開始"
+      },
+      "sections": {
+        "habits": "螢幕時間習慣",
+        "experience": "您的經歷",
+        "signals": "隱藏訊號",
+        "plan": "您的計畫"
       }
     }
   },

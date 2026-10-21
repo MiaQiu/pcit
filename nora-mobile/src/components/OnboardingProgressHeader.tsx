@@ -16,6 +16,9 @@ interface OnboardingProgressHeaderProps {
   // flows that now run separately from onboarding (e.g. the WACB survey),
   // where the already-completed earlier phases shouldn't be shown.
   singlePhase?: boolean;
+  // Section title under the bar, in place of the phase name. With singlePhase,
+  // the bar and counter show progress through that section (e.g. 3/6)
+  label?: string;
 }
 
 const TOTAL_PHASES = 2;
@@ -25,9 +28,10 @@ export const OnboardingProgressHeader: React.FC<OnboardingProgressHeaderProps> =
   step,
   totalSteps,
   singlePhase = false,
+  label,
 }) => {
   const { t } = useTranslation();
-  const phaseName = t(`onboarding.progressHeader.phase${phase}`, '') as string;
+  const phaseName = label ?? (t(`onboarding.progressHeader.phase${phase}`, '') as string);
   const segmentCount = singlePhase ? 1 : TOTAL_PHASES;
 
   return (
