@@ -694,6 +694,15 @@ const SCREENTIME_NARRATIVE_FORMAT = {
   propertyOrdering: ['report', 'emotion_timeline', 'emotion_callouts', 'recommended_strategies', 'my_plan', 'suggested_strategies'],
 };
 
+// Day 2+: the same format call, plus a judgment of today against the strategy
+// the parent was practicing (rules in moduleProgressFormatSection).
+const SCREENTIME_NARRATIVE_FORMAT_FOLLOWUP = {
+  ...SCREENTIME_NARRATIVE_FORMAT,
+  properties: { ...SCREENTIME_NARRATIVE_FORMAT.properties, progress: SCREENTIME_FOLLOWUP_COACHING.properties.progress },
+  required: [...SCREENTIME_NARRATIVE_FORMAT.required, 'progress'],
+  propertyOrdering: [...SCREENTIME_NARRATIVE_FORMAT.propertyOrdering, 'progress'],
+};
+
 module.exports = {
   PCIT_CODING,
   REVIEW_FEEDBACK,
@@ -711,4 +720,5 @@ module.exports = {
   SCREENTIME_COACHING,
   SCREENTIME_FOLLOWUP_COACHING,
   SCREENTIME_NARRATIVE_FORMAT,
+  SCREENTIME_NARRATIVE_FORMAT_FOLLOWUP,
 };

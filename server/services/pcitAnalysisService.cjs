@@ -824,8 +824,9 @@ const MODULE_COACHING_CONFIG = {
     prompt:         'coaching-screentime_1st',
     formatPrompt:   'coaching-screentime_1st-format',
     formatSchema:   SCHEMAS.SCREENTIME_NARRATIVE_FORMAT,
-    followupPrompt: 'coaching-screentime-followup',
-    followupSchema: SCHEMAS.SCREENTIME_FOLLOWUP_COACHING,
+    // Day 2+ use the same prompt + format call; the format call also judges
+    // today's outcome and mastery (moduleProgressFormatSection).
+    followupFormatSchema: SCHEMAS.SCREENTIME_NARRATIVE_FORMAT_FOLLOWUP,
     knowledgeBasePrompt: 'coaching-screentime',
     // Module chat system prompt (routes/coach.cjs, see getModuleChatPrompt).
     chatPrompt:     'coach-screentime',
@@ -1113,11 +1114,25 @@ async function generateModuleCoaching(moduleKey, transcriptText, childInfo, sess
       + 'explain briefly why it helps a child like this, and suggest the parent start it right away, alongside the screen-time strategy.'
     : '';
   const isFollowup = !!progressState.currentStrategy;
+  // Narrative modules use the Day 1 prompt every day; on Day 2+ it learns the
+  // parent's progress through the session notes, and the format call judges
+  // today's outcome / mastery (PROGRESS_SECTION).
+  const isNarrative = !!config.formatPrompt;
+  const progressNotes = isFollowup
+    ? [
+        `This is Day ${progressState.dayNumber} of the screen-time module (not the first session).`,
+        `The parent has been practicing "${progressState.currentStrategy}" for ${progressState.daysOnStrategy} day(s), with these steps:`,
+        ...(progressState.currentSteps.length ? progressState.currentSteps.map((step, i) => `  ${i + 1}. ${step}`) : ['  (none recorded)']),
+        `Strategies already mastered: ${progressState.masteredStrategies.join(', ') || 'none yet'}.`,
+        `How the parent said today went: ${MODULE_SELF_REPORT_TEXT[selfReport] || 'not provided'}.`,
+        'Briefly connect today to their progress with this strategy.',
+      ].join('\n')
+    : '';
   const variables = {
     CHILD_NAME:    name || 'the child',
     CHILD_AGE:     ageYears != null ? `${ageYears} years` : 'unknown',
     CHILD_TRAITS:  traitsText || 'none reported',
-    SESSION_NOTES: sessionNotes || 'none',
+    SESSION_NOTES: [isNarrative ? progressNotes : '', sessionNotes].filter(Boolean).join('\n\n') || 'none',
     // Screen-time onboarding Q&A (User.screenTimeIntake).
     ONBOARDING_ANSWERS:    formatScreenTimeIntakeForPrompt(screenTimeIntake) || 'none provided',
     SPECIAL_PLAYTIME_RULE: specialPlaytimeRule,
@@ -1134,8 +1149,7 @@ async function generateModuleCoaching(moduleKey, transcriptText, childInfo, sess
       STRATEGY_KNOWLEDGE_BASE:  moduleKnowledgeBase(config.knowledgeBasePrompt),
     });
   }
-  const isNarrative = !isFollowup && !!config.formatPrompt;
-  const prompt = loadPromptWithVariables(isFollowup ? config.followupPrompt : config.prompt, variables);
+  const prompt = loadPromptWithVariables(isFollowup && !isNarrative ? config.followupPrompt : config.prompt, variables);
   const languageInstruction = getLanguageInstruction(language);
   const promptFinal = languageInstruction ? `${prompt}\n\n${languageInstruction}` : prompt;
 
@@ -1162,16 +1176,18 @@ async function generateModuleCoaching(moduleKey, transcriptText, childInfo, sess
       LANGUAGE_INSTRUCTION:    languageInstruction || '',
       // Timestamped lines: where the graph's added points and callouts go.
       TRANSCRIPT:              transcriptText,
+      PROGRESS_SECTION:        isFollowup ? moduleProgressFormatSection(progressState, selfReport) : '',
     });
     // Not best-effort like CDI's format pass: the plan comes from here, and
     // Day 2+, the Cheat Sheet and the module chat all need it.
     raw = await llmCall(withChildNameDirective(formatPrompt, name), {
       profile: 'coaching-format',
-      schema:  config.formatSchema,
+      schema:  isFollowup ? config.followupFormatSchema : config.formatSchema,
       label:   `module-coaching-${moduleKey}-format`,
       sessionId,
     });
     if (!raw?.report?.sections?.length || !raw?.my_plan) throw new Error('Module coaching format response missing report/my_plan');
+    if (isFollowup && !raw.progress) throw new Error('Module coaching format response missing progress');
   } else {
     raw = await llmCall(withChildNameDirective(promptFinal, name), {
       profile: 'module-coaching',
@@ -1211,6 +1227,38 @@ async function generateModuleCoaching(moduleKey, transcriptText, childInfo, sess
 
   console.log(`✅ [MODULE-COACHING] ${moduleKey} day ${progressState.dayNumber}: ${isFollowup ? `outcome ${result.progress.todaysOutcome}, mastered ${result.progress.strategyMastered}, ` : ''}next strategy #${result.myPlan.activeStrategyId} "${raw.my_plan.active_strategy}", ${raw.my_plan.protocol_steps?.length || 0} steps`);
   return result;
+}
+
+/**
+ * Day 2+ part of the narrative format prompt ({{PROGRESS_SECTION}}): judge
+ * today against the strategy the parent was practicing, and keep the plan on
+ * it unless mastered or stuck. Rules from coaching-screentime-followup.txt.
+ */
+function moduleProgressFormatSection(progressState, selfReport) {
+  const { dayNumber, currentStrategy, currentStrategyId, currentSteps, daysOnStrategy, masteredStrategies } = progressState;
+  return `================================================================
+**PART 6 — PROGRESS (Day ${dayNumber}: judge today, then adjust the plan)**
+================================================================
+
+The parent was practicing: "${currentStrategy}"${currentStrategyId ? ` (Knowledge Base #${currentStrategyId})` : ''}, for ${daysOnStrategy} day(s) including today.
+Its steps:
+${currentSteps.map((step, i) => `  ${i + 1}. ${step}`).join('\n') || '  (none recorded)'}
+Strategies already mastered: ${masteredStrategies.join(', ') || 'none yet'}
+How the parent said today went: ${MODULE_SELF_REPORT_TEXT[selfReport] || 'Not provided'}
+
+"progress": judge today against "${currentStrategy}" only, from the TRANSCRIPT and the write-up (use the parent's own view as context; when they differ, go with the transcript).
+- "todays_outcome": "Success" (the parent clearly used the strategy and it helped, even if the child still protested), "Struggle" (tried it but it didn't land, or used it only partly) or "Did Not Attempt" (didn't use it).
+- "outcome_reason": one sentence.
+- "strategy_mastered": true only when today is a Success AND the parent used the strategy confidently and naturally (e.g. a second success on it, or an unmistakably fluent first one). When unsure, false.
+
+This changes how PART 4 picks the plan's strategy:
+1. Mastered → pick a NEW strategy from the write-up's recommendations that builds on it.
+2. Stuck (Struggle or Did Not Attempt, and ${daysOnStrategy} day(s) on it is 3 or more) → the write-up's easier or smaller next step.
+3. Otherwise → keep "${currentStrategy}"${currentStrategyId ? ` (active_strategy_id ${currentStrategyId})` : ''} as the plan's strategy, with steps refined from today.
+Never pick a strategy already mastered.
+
+
+`;
 }
 
 /**

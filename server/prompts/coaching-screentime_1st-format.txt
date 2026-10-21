@@ -115,7 +115,7 @@ Match that strategy to ONE numbered strategy in this Knowledge Base:
 - "description": one sentence of actionable advice from the write-up
 
 
-================================================================
+{{PROGRESS_SECTION}}================================================================
 **TRANSCRIPT (for placing graph moments only — never quote it in the report)**
 ================================================================
 
