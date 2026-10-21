@@ -1974,6 +1974,8 @@
         "done": "Done",
         "locked": "Locked",
         "lockedToast": "Finish your current goal to unlock this one.",
+        "pastReports": "Past reports",
+        "dayReport": "Day {{day}} report",
         "detailTitle": "Current plan"
       },
       "playTime": {

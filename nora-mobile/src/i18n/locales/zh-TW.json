@@ -2015,6 +2015,8 @@
         "done": "已完成",
         "locked": "未解鎖",
         "lockedToast": "完成目前目標後即可解鎖。",
+        "pastReports": "過往報告",
+        "dayReport": "第 {{day}} 天報告",
         "detailTitle": "目前計畫"
       },
       "playTime": {

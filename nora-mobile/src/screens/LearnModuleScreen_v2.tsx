@@ -24,13 +24,14 @@ import { COLORS, FONTS } from '../constants/assets';
 import type { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { TrackedTouchable } from '../components/TrackedTouchable';
 import { useToast } from '../components/ToastManager';
-import { useAuthService } from '../contexts/AppContext';
+import { useAuthService, useRecordingService } from '../contexts/AppContext';
 import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import { useModuleRecorder } from '../hooks/useModuleRecorder';
 import * as userStorage from '../lib/userStorage';
 import amplitudeService from '../services/amplitudeService';
 import { buildPlanDisplay, useModulePlan } from './LearnModulePlanView';
 import { LearnModulePlanOverview } from './LearnModulePlanOverview';
+import type { CalendarRecording } from '../components/ReportsCalendar';
 import { ModuleLearnScreen } from './ModuleLearnScreen';
 import { ProfileScreen } from './ProfileScreen';
 import type { LearnModuleKey, ModuleDay } from '../constants/learnModules';
@@ -147,6 +148,7 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   // restarts): 'processing' swaps the record button for an analyzing notice,
   // 'ready' for "Read report". null = nothing in flight / no report.
   const authService = useAuthService();
+  const recordingService = useRecordingService();
   const uploadProcessing = useUploadProcessing();
   const [childName, setChildName] = useState('');
   const [childGender, setChildGender] = useState<string | null>(null);
@@ -160,6 +162,8 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   // Agreed in the module chat to add special play time.
   const [specialPlayAdded, setSpecialPlayAdded] = useState(false);
   const [playSession, setPlaySession] = useState<{ id: string; createdAt: string; status: 'processing' | 'ready' } | null>(null);
+  // Completed play time recordings, for My plan's past reports (special play only).
+  const [playRecordings, setPlayRecordings] = useState<CalendarRecording[]>([]);
   // Unsubscribed and out of free play recordings: Start goes to Subscription.
   const [playLimitReached, setPlayLimitReached] = useState(false);
   // Analyzed reports in day order (report N = day N) with the plan each produced.
@@ -233,6 +237,12 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
         setHasDifferences(!!data.hasDifferences);
         setSpecialPlayAdded(!!data.specialPlayAdded);
         setPlaySession(data.playSession ?? null);
+        if (data.hasDifferences || data.specialPlayAdded) {
+          recordingService.getRecordings()
+            .then(({ recordings }) => setPlayRecordings(
+              (recordings ?? []).filter(r => r.mode === 'CDI' && r.analysisStatus === 'COMPLETED')))
+            .catch(err => console.error('Failed to load play recordings:', err));
+        }
         setPlayLimitReached(!!data.playLimitReached);
         setProgressLoaded(true);
         const started = !!data.session || (data.dayNumber ?? 1) > 1;
@@ -249,7 +259,7 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
       .then(res => (res.ok ? res.json() : null))
       .then(data => { if (data?.days) setDays(data.days); })
       .catch(err => console.error('Failed to load module days:', err));
-  }, [authService, moduleKey]);
+  }, [authService, recordingService, moduleKey]);
 
   useFocusEffect(loadLatestSession);
   // A report just finished (push or polling in UploadProcessingContext).
@@ -487,6 +497,16 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
           onLockedGoal={goal => {
             amplitudeService.trackEvent('Learn Module Plan Goal Locked Tapped', { moduleKey, goal: goal.key });
             showToast(t('learnV2.moduleScreenV2.planOverview.lockedToast'), 'info');
+          }}
+          days={days}
+          playRecordings={showPlayCard ? playRecordings : []}
+          onOpenPlayReport={recordingId => {
+            amplitudeService.trackEvent('Learn Module Plan Past Play Report Tapped', { moduleKey, recordingId });
+            navigation.push('ReportV3', { recordingId });
+          }}
+          onOpenReport={day => {
+            amplitudeService.trackEvent('Learn Module Plan Past Report Tapped', { moduleKey, day: day.dayNumber, recordingId: day.reportId });
+            navigation.push('ModuleReport', { recordingId: day.reportId, moduleKey });
           }}
         />
       ) : (

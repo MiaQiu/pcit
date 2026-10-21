@@ -5,7 +5,9 @@
  * status (completed / current / next / later). Progress = the goal's
  * strategies the parent has mastered (getGoalProgress). Tapping the current
  * (or a completed, or an `unlocked`) goal opens the detailed plan
- * (ModulePlanDetail); other later goals are locked.
+ * (ModulePlanDetail); other later goals are locked. Below, "Past reports":
+ * the module's daily reports, plus play time recordings when the parent has
+ * special play, on a calendar (ReportsCalendar).
  */
 
 import React from 'react';
@@ -14,8 +16,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS } from '../constants/assets';
 import { TrackedTouchable } from '../components/TrackedTouchable';
+import { CalendarRecording, ReportsCalendar } from '../components/ReportsCalendar';
 import { useModulePlan } from './LearnModulePlanView';
-import { getGoalProgress, GoalProgress, LearnModuleKey } from '../constants/learnModules';
+import { getGoalProgress, GoalProgress, LearnModuleKey, ModuleDay } from '../constants/learnModules';
 
 const H_PAD = 20;
 const PURPLE_TINT = '#F1EBFB';
@@ -28,6 +31,12 @@ interface Props {
   moduleKey: LearnModuleKey;
   onOpenPlan: (goal: GoalProgress) => void;
   onLockedGoal: (goal: GoalProgress) => void;
+  // The module's analyzed reports, one per day (GET /api/learn-modules/:moduleKey/days).
+  days: ModuleDay[];
+  // Completed play time recordings (special play); empty when it's off.
+  playRecordings: CalendarRecording[];
+  onOpenReport: (day: ModuleDay) => void;
+  onOpenPlayReport: (recordingId: string) => void;
 }
 
 const GoalCard: React.FC<{
@@ -99,7 +108,7 @@ const GoalCard: React.FC<{
   );
 };
 
-export const LearnModulePlanOverview: React.FC<Props> = ({ moduleKey, onOpenPlan, onLockedGoal }) => {
+export const LearnModulePlanOverview: React.FC<Props> = ({ moduleKey, onOpenPlan, onLockedGoal, days, playRecordings, onOpenReport, onOpenPlayReport }) => {
   const { t } = useTranslation();
   const { masteredStrategies } = useModulePlan(moduleKey);
   const goals = getGoalProgress(moduleKey, masteredStrategies.map(m => m.strategyId));
@@ -126,6 +135,34 @@ export const LearnModulePlanOverview: React.FC<Props> = ({ moduleKey, onOpenPlan
           onPress={() => (goal.status === 'current' || goal.status === 'completed' || goal.unlocked ? onOpenPlan(goal) : onLockedGoal(goal))}
         />
       ))}
+
+      {/* Past reports */}
+      {days.length + playRecordings.length > 0 && (
+        <View style={styles.pastReports}>
+          <ReportsCalendar
+            title={t('learnV2.moduleScreenV2.planOverview.pastReports')}
+            recordingDates={[...days, ...playRecordings].map(r => new Date(r.createdAt))}
+            recordings={[
+              ...days.map(day => ({
+                id: day.reportId,
+                createdAt: day.createdAt,
+                analysisStatus: 'COMPLETED',
+                moduleKey,
+                label: t('learnV2.moduleScreenV2.planOverview.dayReport', { day: day.dayNumber }),
+              })),
+              ...playRecordings,
+            ]}
+            onReportPress={(recordingId, reportModuleKey) => {
+              if (!reportModuleKey) {
+                onOpenPlayReport(recordingId);
+                return;
+              }
+              const day = days.find(d => d.reportId === recordingId);
+              if (day) onOpenReport(day);
+            }}
+          />
+        </View>
+      )}
     </ScrollView>
   );
 };
@@ -211,4 +248,6 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
   metaText: { fontFamily: FONTS.semiBold, fontSize: 13, color: MUTED },
   goalArt: { width: 80, height: 80 },
+
+  pastReports: { marginTop: 28 },
 });
