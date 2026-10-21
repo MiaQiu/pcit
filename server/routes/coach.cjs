@@ -12,6 +12,8 @@ const { subscribe, publish } = require('../services/chatBus.cjs');
 const agentBus = require('../services/agentBus.cjs');
 const { getModuleChatPrompt, LEARN_MODULE_KEYS } = require('../services/pcitAnalysisService.cjs');
 const { prepareOfferReply, recordOffer, respondToOffer } = require('../services/specialPlayOffer.cjs');
+const { buildModuleChatOpener } = require('../services/moduleChatOpener.cjs');
+const { decryptSensitiveData } = require('../utils/encryption.cjs');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -22,10 +24,10 @@ const MODULE_CHAT_MODEL = process.env.GEMINI_MODULE_CHAT_MODEL || 'gemini-3.8-fl
 const MAX_AGENT_TURNS = 6;          // tool-call rounds before giving up
 const MAX_HISTORY_MESSAGES = 20;    // conversation turns sent to LLM
 
-// Hidden user turn that has a Learn module coach speak first (POST /start).
-// Also stands in front of a history that starts with the coach's opener, so
-// the LLM sees a user turn first (the Claude fallback drops leading replies).
-const OPENING_TRIGGER = '[App note: the parent just opened this chat for the first time and has not written anything yet. Write your opening message as described in "Before the First Recording".]';
+// Hidden user turn in front of a history that starts with the coach's opener
+// (POST /start), so the LLM sees a user turn first (the Claude fallback drops
+// leading replies).
+const OPENING_TRIGGER = '[App note: the parent just opened this chat for the first time and has not written anything yet. The app showed the opening message that follows (see "Before the First Recording").]';
 
 // ─── System prompt ────────────────────────────────────────────────────────────
 
@@ -906,11 +908,11 @@ router.get('/history', async (req, res, next) => {
  * POST /api/coach/start
  * Body: { moduleKey: string, locale?: string }
  * A Learn module chat opened for the first time — no chat messages at all and
- * no module report yet: the coach writes its opening message from the
- * onboarding answers ("Before the First Recording" in the module prompt),
- * saved and published like any reply. Otherwise does nothing.
+ * no module report yet: Nora's opening message, filled in from the onboarding
+ * answers without an LLM call (services/moduleChatOpener.cjs), saved and
+ * published as a scripted reply. Otherwise does nothing.
  * Returns: { reply: string | null, message? }: the saved message; reply null =
- * skipped or failed (the app shows its welcome screen instead).
+ * skipped (the app shows its welcome screen instead).
  */
 const openingInFlight = new Set();
 router.post('/start', async (req, res, next) => {
@@ -920,57 +922,34 @@ router.post('/start', async (req, res, next) => {
   openingInFlight.add(req.userId);
   try {
     const userLocale = (typeof locale === 'string' && LOCALE_NAMES[locale]) ? locale : 'en';
-    const [messageCount, reportCount] = await Promise.all([
+    const [messageCount, reportCount, user] = await Promise.all([
       prisma.coachChatMessage.count({ where: { userId: req.userId } }),
       prisma.session.count({ where: { userId: req.userId, moduleKey, analysisStatus: 'COMPLETED', moduleCoaching: { not: Prisma.DbNull } } }),
+      prisma.user.findUnique({
+        where: { id: req.userId },
+        select: { name: true, childName: true, screenTimeIntake: true },
+      }),
     ]);
     if (messageCount > 0 || reportCount > 0) return res.json({ reply: null });
 
-    const agent = await buildAgent(req.userId, userLocale, moduleKey);
-    const label = `coach-chat-${moduleKey}-opening`;
-    const start = Date.now();
-    const attempts = [
-      { provider: 'gemini', model: agent.model, run: () => runAgentLoop(req.userId, OPENING_TRIGGER, [], undefined, agent) },
-      { provider: 'gemini', model: agent.model, run: () => runAgentLoop(req.userId, OPENING_TRIGGER, [], undefined, agent) },
-      { provider: 'anthropic', model: CLAUDE_FALLBACK_MODEL, run: () => runClaudeAgentLoop(req.userId, OPENING_TRIGGER, [], undefined, agent) },
-    ];
-    let result = null;
-    for (const [i, attempt] of attempts.entries()) {
-      try {
-        result = await attempt.run();
-      } catch (err) {
-        logLLMCall({
-          label, model: attempt.model, provider: attempt.provider,
-          latencyMs: Date.now() - start,
-          inputTokens: null, outputTokens: null,
-          hasSchema: false, usedFallback: i === 2, usedRepair: false, usedRetry: i > 0,
-          ok: false, error: err.message,
-        });
-        continue;
-      }
-      logLLMCall({
-        label, model: attempt.model, provider: attempt.provider,
-        latencyMs: Date.now() - start,
-        inputTokens: result.usage.inputTokens,
-        outputTokens: result.usage.outputTokens,
-        hasSchema: false, usedFallback: i === 2, usedRepair: false, usedRetry: i > 0,
-        ok: true, error: null,
-      });
-      break;
-    }
-    if (!result?.text?.trim()) return res.json({ reply: null });
+    const decrypt = value => {
+      try { return value ? decryptSensitiveData(value) : ''; } catch { return ''; }
+    };
+    const reply = buildModuleChatOpener({
+      locale: userLocale,
+      parentName: decrypt(user?.name),
+      childName: decrypt(user?.childName),
+      intake: user?.screenTimeIntake,
+    });
 
-    // The parent may have written while the opener was being generated:
-    // don't drop an opener in after their message.
+    // The parent may have written meanwhile: don't drop an opener in after their message.
     if (await prisma.coachChatMessage.count({ where: { userId: req.userId } }) > 0) return res.json({ reply: null });
 
-    const { text: reply, offered } = await prepareOfferReply(req.userId, result.text.trim());
     const modelMsg = await prisma.coachChatMessage.create({
-      data: { userId: req.userId, role: 'model', text: reply },
+      data: { userId: req.userId, role: 'model', text: reply, scripted: true },
       select: { id: true, role: true, text: true, scripted: true, createdAt: true },
     });
     publish(req.userId, [modelMsg]);
-    if (offered) await recordOffer(req.userId, moduleKey, modelMsg.id);
     res.json({ reply, message: modelMsg });
   } catch (err) {
     next(err);
