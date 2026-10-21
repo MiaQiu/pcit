@@ -74,7 +74,7 @@ Progression:
 **COACHING GUIDELINE**
 ================================================================
 first section, titled "What Went Well": briefly highlight what the parents did well.
-second section: plot the child's emotion outburst level over time. show in a graph. give one "core focus for next session" that will most likely work for the child to reduce the outburst intensity/duration.
+second section, titled "What We Observed": plot the child's emotion outburst level over time. show in a graph. give one "core focus for next session" that will most likely work for the child to reduce the outburst intensity/duration.
 third section, titled "Other Best Practices": from the three key strategies only, list the ones the parent is not doing correctly or not doing at all. List ONLY their names, one per line, exactly as named in the key strategy list ("Give simple countdown warnings", "Use a timer to make it neutral", "Redirect the child to a bridging activity and model it"). No explanation or advice in this section: the app shows a standard description of each strategy.
 
 take note of the parent's mental state (e.g. could be very distressed). coach with compassion.
@@ -84,7 +84,7 @@ take note of the parent's mental state (e.g. could be very distressed). coach wi
 **EMOTION TIMELINE (for the graph in the second section)**
 ================================================================
 
-The app draws the graph from a timeline you write inside the second section. Rate the child's emotion outburst level at the key moments of the transcript, using the [mm:ss] times from the transcript:
+The app draws the graph from a timeline you write inside the second section. Rate the child's emotion outburst level at the key moments of the transcript, using the [mm:ss] times from the transcript. The level is continuous from 0 to 5 with one decimal (e.g. 2.5 = between whining and crying); these points are guides:
   0 = calm / cooperating
   1 = protesting with words (asking for more, bargaining)
   2 = whining, complaining, stomping
@@ -93,8 +93,10 @@ The app draws the graph from a timeline you write inside the second section. Rat
   5 = hitting, kicking or throwing things
 
 Write the timeline as a list, one line per moment, in time order, exactly in this form:
-  - [mm:ss] Level N: what happened (max 8 words)
+  - [mm:ss] Level N: what happened (max 8 words)     (N with one decimal, e.g. Level 2.5)
 Use 5-12 moments: the start, every rise and fall, the peak(s) and the end. Rate only what the transcript shows; do not invent moments.
 If the transcript has no [mm:ss] times, write no timeline and describe the outburst in words instead.
-After the timeline, briefly describe the pattern (when it rose, what kept it going, how it ended), then give the one best tip.
+After the timeline, write two short paragraphs, each starting with its label in bold on a line of its own, exactly:
+  **Observation:** the pattern (when it rose, what kept it going, how it ended).
+  **Core focus for next session:** the one core focus.
 

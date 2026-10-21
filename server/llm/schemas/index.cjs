@@ -649,11 +649,26 @@ const SCREENTIME_NARRATIVE_FORMAT = {
         type: 'object',
         properties: {
           seconds: { type: 'integer' },
-          level:   { type: 'integer' },
+          level:   { type: 'number' }, // 0-5, continuous
           label:   { type: 'string' },
+          added:   { type: 'boolean' }, // placed by the formatter for a moment the coaching names
         },
-        required: ['seconds', 'level', 'label'],
-        propertyOrdering: ['seconds', 'level', 'label'],
+        required: ['seconds', 'level', 'label', 'added'],
+        propertyOrdering: ['seconds', 'level', 'label', 'added'],
+      },
+    },
+    // 1-2 moments the coaching is about, marked on the graph.
+    emotion_callouts: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          seconds: { type: 'integer' },
+          label:   { type: 'string' },
+          kind:    { type: 'string', enum: ['trigger', 'fuel', 'calm'] },
+        },
+        required: ['seconds', 'label', 'kind'],
+        propertyOrdering: ['seconds', 'label', 'kind'],
       },
     },
     // Key strategies listed in the "strategies" section; the app shows its
@@ -675,8 +690,8 @@ const SCREENTIME_NARRATIVE_FORMAT = {
       },
     },
   },
-  required: ['report', 'emotion_timeline', 'recommended_strategies', 'my_plan', 'suggested_strategies'],
-  propertyOrdering: ['report', 'emotion_timeline', 'recommended_strategies', 'my_plan', 'suggested_strategies'],
+  required: ['report', 'emotion_timeline', 'emotion_callouts', 'recommended_strategies', 'my_plan', 'suggested_strategies'],
+  propertyOrdering: ['report', 'emotion_timeline', 'emotion_callouts', 'recommended_strategies', 'my_plan', 'suggested_strategies'],
 };
 
 module.exports = {

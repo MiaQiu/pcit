@@ -1086,6 +1086,8 @@ async function generateModuleCoaching(moduleKey, transcriptText, childInfo, sess
       CHILD_NAME:              variables.CHILD_NAME,
       STRATEGY_KNOWLEDGE_BASE: moduleKnowledgeBase(config.knowledgeBasePrompt),
       LANGUAGE_INSTRUCTION:    languageInstruction || '',
+      // Timestamped lines: where the graph's added points and callouts go.
+      TRANSCRIPT:              transcriptText,
     });
     // Not best-effort like CDI's format pass: the plan comes from here, and
     // Day 2+, the Cheat Sheet and the module chat all need it.
@@ -1113,6 +1115,7 @@ async function generateModuleCoaching(moduleKey, transcriptText, childInfo, sess
     // App renders result.report's sections instead of coachingReport's cards.
     result.format = 'narrative';
     result.narrative = narrative;
+    Object.assign(result, cleanEmotionChart(result.emotionTimeline, result.emotionCallouts, transcriptText));
   }
   // The prompt asks for exactly 3; keep the Cheat Sheet to 3 if it returns more.
   result.myPlan.focusAreas = (result.myPlan.focusAreas || []).slice(0, 3);
@@ -1134,6 +1137,29 @@ async function generateModuleCoaching(moduleKey, transcriptText, childInfo, sess
 
   console.log(`✅ [MODULE-COACHING] ${moduleKey} day ${progressState.dayNumber}: ${isFollowup ? `outcome ${result.progress.todaysOutcome}, mastered ${result.progress.strategyMastered}, ` : ''}next strategy #${result.myPlan.activeStrategyId} "${raw.my_plan.active_strategy}", ${raw.my_plan.protocol_steps?.length || 0} steps`);
   return result;
+}
+
+/**
+ * Keeps the outburst graph honest: levels clamped to 0-5 (one decimal), points
+ * in time order, and callouts only at a time a transcript line starts (snapped
+ * to the nearest one within 5 s, else dropped), at most 2. No [mm:ss] lines in
+ * the transcript (survey-based report) → no graph.
+ */
+function cleanEmotionChart(timeline, callouts, transcriptText) {
+  const times = [...String(transcriptText).matchAll(/^\[(\d+):(\d{2})\]/gm)].map(m => Number(m[1]) * 60 + Number(m[2]));
+  if (!times.length) return { emotionTimeline: [], emotionCallouts: [] };
+  const emotionTimeline = (timeline || [])
+    .filter(p => Number.isFinite(p.seconds) && Number.isFinite(p.level))
+    .map(p => ({ ...p, level: Math.round(Math.min(5, Math.max(0, p.level)) * 10) / 10, added: !!p.added }))
+    .sort((a, b) => a.seconds - b.seconds);
+  const emotionCallouts = (callouts || [])
+    .map(c => {
+      const nearest = times.reduce((best, t) => (Math.abs(t - c.seconds) < Math.abs(best - c.seconds) ? t : best), times[0]);
+      return Math.abs(nearest - c.seconds) <= 5 ? { ...c, seconds: nearest } : null;
+    })
+    .filter(Boolean)
+    .slice(0, 2);
+  return { emotionTimeline, emotionCallouts };
 }
 
 /**
