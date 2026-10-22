@@ -572,7 +572,6 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
 
               {/* First time: today's practice with what/where tags and art */}
               <View style={[styles.card, styles.v2Card]}>
-                <Text style={styles.eyebrow}>{t('learnV2.moduleScreen.todaysPractice')}</Text>
                 <Text style={styles.practiceTitle}>{t(`${base}.practiceTitle`)}</Text>
 
                 <View style={styles.tagRow}>
@@ -628,9 +627,7 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
               }}
               activeOpacity={0.8}
             >
-              <Ionicons name="document-text-outline" size={20} color={COLORS.mainPurple} />
-              <Text style={styles.softButtonText}>{t('learnV2.moduleScreenV2.cheatSheet')}</Text>
-              <Ionicons name="arrow-forward" size={18} color={COLORS.mainPurple} />
+              <Text style={[styles.softButtonText, styles.cheatSheetTopText]}>{t('learnV2.moduleScreenV2.cheatSheet')}</Text>
             </TrackedTouchable>
 
             {checkInCard}
@@ -641,11 +638,10 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
                 {/* Behind the text (rendered first, absolutely positioned); text may overlap it */}
                 <Image source={PRACTICE_ART} style={[styles.v2CardArt, PRACTICE_ART_SIZE, artBottom(PRIMARY_BUTTON_GAP)]} resizeMode="contain" />
                 <View style={styles.v2CardText}>
-                  <Text style={styles.eyebrow}>{t('learnV2.moduleScreen.todaysPractice')}</Text>
                   <Text style={styles.v2CardTitle}>
                     {isFollowupDay ? t('learnV2.moduleScreenV2.practiceNextTitle') : t(`${base}.practiceTitle`)}
                   </Text>
-                  <Text style={styles.v2CardBody}>{t('learnV2.moduleScreenV2.practiceBody')}</Text>
+                  <Text style={[styles.v2CardBody, styles.practiceBody]}>{t('learnV2.moduleScreenV2.practiceBody', { name: childName || t('learnV2.moduleScreen.yourChild') })}</Text>
                 </View>
               </View>
 
@@ -857,6 +853,7 @@ const styles = StyleSheet.create({
   v2Card: { marginTop: 16 },
   // Longer than the other cards' bodies: keep it clear of the art (right: -10).
   playBody: { width: undefined, marginRight: PLAY_ART_SIZE.width - 10 },
+  practiceBody: { width: undefined, marginRight: PRACTICE_ART_SIZE.width - 10 },
   checkInFirstTimeBody: { width: undefined, marginRight: CHECK_IN_ART_SIZE.width - 10 },
   firstTimeLoading: { marginTop: 48 },
   firstTimeTitle: {
@@ -931,8 +928,21 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     marginTop: 12,
   },
-  // On the page background (not a card): white so it doesn't blend into BG.
-  cheatSheetTop: { marginTop: 16, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E4D9F7' },
+  // On the page background (not a card): tinted with a purple outline so it stands out
+  // without competing with the filled primary CTA below.
+  cheatSheetTop: {
+    marginTop: 16,
+    paddingVertical: 16,
+    backgroundColor: PURPLE_TINT,
+    borderWidth: 1.5,
+    borderColor: COLORS.mainPurple,
+    shadowColor: '#5B3A9E',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  cheatSheetTopText: { fontFamily: FONTS.bold, fontSize: 16 },
   softButtonText: { fontFamily: FONTS.semiBold, fontSize: 15, color: COLORS.mainPurple },
 
   // ── Practice card ──

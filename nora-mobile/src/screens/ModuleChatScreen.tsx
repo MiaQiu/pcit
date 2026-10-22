@@ -1,6 +1,6 @@
 /**
  * Module Chat Screen
- * "Daily check in with your coach" for a Learn module, opened from
+ * "Check in with your coach" for a Learn module, opened from
  * LearnModuleScreen_v2. Starts as a copy of CoachChatScreen (AI parenting
  * coach — calls backend /api/coach/chat, Gemini via LLM gateway);
  * module-specific changes go here so the main coach chat is unaffected.

@@ -1442,7 +1442,7 @@
           "title": "速查小抄",
           "subtitle": "該說什麼、該做什麼",
           "focusTitle": "你的 {{count}} 個重點",
-          "focusSubtitle": "根據你上次的錄音",
+          "focusSubtitle": "最新報告裡的核心重點",
           "routineHeading": "螢幕時間流程中的其他步驟",
           "routine": {
             "1": {
@@ -1638,7 +1638,7 @@
       "goalLabel": "目標 {{number}}",
       "checkIn": {
         "eyebrow": "每日打卡",
-        "title": "和你的教練每日打卡",
+        "title": "和你的教練打卡",
         "body": "分享最近的情況、提問，或獲取快速建議。",
         "button": "和 Nora 聊天"
       },
@@ -1649,7 +1649,7 @@
         "button": "開始和 Nora 聊天"
       },
       "practiceNextTitle": "錄下下一次螢幕時間結束",
-      "practiceBody": "Nora 會陪著你。",
+      "practiceBody": "Nora 會告訴你哪些做法有效，以及下次和{{name}}可以怎麼做。",
       "cheatSheet": "上次的速查小抄",
       "planOverview": {
         "title": "我的計畫",

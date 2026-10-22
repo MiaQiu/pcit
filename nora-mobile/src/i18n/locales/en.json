@@ -1401,7 +1401,7 @@
           "subtitle": "What to Say & Do",
           "focusTitle_one": "Your Focus Area",
           "focusTitle": "Your {{count}} Focus Areas",
-          "focusSubtitle": "Based on your last recording",
+          "focusSubtitle": "Your core focus from the latest report",
           "routineHeading": "Other steps in your screen-time routine",
           "routine": {
             "1": {
@@ -1597,7 +1597,7 @@
       "goalLabel": "Goal {{number}}",
       "checkIn": {
         "eyebrow": "Daily check in",
-        "title": "Daily check in with your coach",
+        "title": "Check in with your coach",
         "body": "Share how things have been, ask questions, or get quick advice.",
         "button": "Open chat with Nora"
       },
@@ -1608,7 +1608,7 @@
         "button": "Start chatting with Nora"
       },
       "practiceNextTitle": "Record the next screen time ending",
-      "practiceBody": "Nora will be there for you.",
+      "practiceBody": "Nora will show you what helped and what to try next time with {{name}}.",
       "cheatSheet": "Cheat Sheet from Last Session",
       "planOverview": {
         "title": "My plan",

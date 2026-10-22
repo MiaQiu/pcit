@@ -2,10 +2,8 @@
  * ModuleCheatSheetScreen
  * "Quick Cheat Sheet — What to Say & Do", opened from "Cheat Sheet from Last
  * Session" on LearnModuleScreen_v2. Two parts:
- * - Your Focus Areas: the key strategies (countdown / timer / bridging) of the
- *   newest report that recommends any, with their standard copy
- *   (moduleReport.keyStrategies.<id>). Without any, the last plan's
- *   myPlan.focusAreas, or for plans from before that field its protocol steps.
+ * - Core focus: the latest report's myPlan.activeStrategy, with its
+ *   myPlan.focusAreas (or for plans from before that field its protocol steps).
  * - The module's fixed screen-time routine (i18n
  *   learnV2.modules.<moduleKey>.cheatSheet.routine.<n>), as an accordion.
  */
@@ -39,15 +37,11 @@ export const ModuleCheatSheetScreen: React.FC = () => {
   const { t } = useTranslation();
   const { moduleKey } = route.params;
   const base = `learnV2.modules.${moduleKey}.cheatSheet`;
-  const { generatedPlan, recommendedStrategies } = useModulePlan(moduleKey);
+  const { generatedPlan } = useModulePlan(moduleKey);
   const [openStep, setOpenStep] = useState<number | null>(1);
 
-  const focusAreas = recommendedStrategies.length
-    ? recommendedStrategies.map(id => ({
-        title: t(`moduleReport.keyStrategies.${id}.name`),
-        detail: t(`moduleReport.keyStrategies.${id}.summary`),
-      }))
-    : generatedPlan?.focusAreas?.length
+  const coreFocus = generatedPlan?.activeStrategy;
+  const focusAreas = generatedPlan?.focusAreas?.length
     ? generatedPlan.focusAreas
     : (generatedPlan?.protocolSteps ?? []).map(step => ({ title: step, detail: '' }));
 
@@ -74,13 +68,13 @@ export const ModuleCheatSheetScreen: React.FC = () => {
         <Text style={styles.title}>{t(`${base}.title`)}</Text>
         <Text style={styles.subtitle}>{t(`${base}.subtitle`)}</Text>
 
-        {/* Your 3 Focus Areas — from the last session */}
+        {/* Core focus — from the latest report */}
         {focusAreas.length > 0 && (
           <View style={styles.focusCard}>
             <View style={styles.focusHeader}>
               <Ionicons name="locate" size={34} color={COLORS.mainPurple} />
               <View style={styles.flex}>
-                <Text style={styles.focusTitle}>{t(`${base}.focusTitle`, { count: focusAreas.length })}</Text>
+                <Text style={styles.focusTitle}>{coreFocus || t(`${base}.focusTitle`, { count: focusAreas.length })}</Text>
                 <Text style={styles.focusSubtitle}>{t(`${base}.focusSubtitle`)}</Text>
               </View>
             </View>
