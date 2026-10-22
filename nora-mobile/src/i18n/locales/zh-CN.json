@@ -1665,7 +1665,7 @@
         "locked": "未解锁",
         "lockedToast": "完成当前目标后即可解锁。",
         "pastReports": "过往报告",
-        "sessionReport": "第 {{session}} 次报告",
+        "screenTimeReport": "屏幕时间报告",
         "pastReportsEmpty": "你过往录音的报告会显示在这里。",
         "detailTitle": "当前计划"
       },

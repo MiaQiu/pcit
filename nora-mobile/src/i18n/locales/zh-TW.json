@@ -1665,7 +1665,7 @@
         "locked": "未解鎖",
         "lockedToast": "完成目前目標後即可解鎖。",
         "pastReports": "過往報告",
-        "sessionReport": "第 {{session}} 次報告",
+        "screenTimeReport": "螢幕時間報告",
         "pastReportsEmpty": "你過往錄音的報告會顯示在這裡。",
         "detailTitle": "目前計畫"
       },
