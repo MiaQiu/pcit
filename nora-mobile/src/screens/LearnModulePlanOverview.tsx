@@ -148,7 +148,7 @@ export const LearnModulePlanOverview: React.FC<Props> = ({ moduleKey, onOpenPlan
               createdAt: day.createdAt,
               analysisStatus: 'COMPLETED',
               moduleKey,
-              label: t('learnV2.moduleScreenV2.planOverview.dayReport', { day: day.dayNumber }),
+              label: t('learnV2.moduleScreenV2.planOverview.sessionReport', { session: day.dayNumber }),
             })),
             ...playRecordings,
           ]}

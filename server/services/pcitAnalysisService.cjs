@@ -1066,7 +1066,7 @@ async function getModuleChatPrompt(userId, moduleKey) {
     CHILD_AGE:            childAge != null ? `${childAge} years old` : 'age unknown',
     CHILD_PRONOUNS:       CHILD_PRONOUNS[user?.childGender] || CHILD_PRONOUNS.UNKNOWN,
     PARENT_NAME:          parentName || 'not given',
-    DAY_NUMBER:           String(reports.length + 1),
+    SESSION_NUMBER:       String(reports.length + 1),
     ONBOARDING_SUMMARY:   summarizeScreenTimeIntake(user?.screenTimeIntake) || '  none provided',
     ONBOARDING_ANSWERS:   formatScreenTimeIntakeForPrompt(user?.screenTimeIntake) || '  none provided',
     ONBOARDING_PLAN:      user?.screenTimeIntake ? onboardingPlanText(childName, hasDifferences) : '  none (did not go through the screen-time onboarding)',
@@ -1138,8 +1138,8 @@ async function generateModuleCoaching(moduleKey, transcriptText, childInfo, sess
   const isNarrative = !!config.formatPrompt;
   const progressNotes = isFollowup
     ? [
-        `This is Day ${progressState.dayNumber} of the screen-time module (not the first session).`,
-        `The parent has been practicing "${progressState.currentStrategy}" for ${progressState.daysOnStrategy} day(s), with these steps:`,
+        `This is the parent's session ${progressState.dayNumber} in the screen-time module (not the first). A session is one recording, not a calendar day.`,
+        `The parent has been practicing "${progressState.currentStrategy}" for ${progressState.daysOnStrategy} session(s), with these steps:`,
         ...(progressState.currentSteps.length ? progressState.currentSteps.map((step, i) => `  ${i + 1}. ${step}`) : ['  (none recorded)']),
         `Strategies already mastered: ${progressState.masteredStrategies.join(', ') || 'none yet'}.`,
         `How the parent said today went: ${MODULE_SELF_REPORT_TEXT[selfReport] || 'not provided'}.`,
@@ -1158,13 +1158,13 @@ async function generateModuleCoaching(moduleKey, transcriptText, childInfo, sess
   };
   if (isFollowup) {
     Object.assign(variables, {
-      DAY_NUMBER:               String(progressState.dayNumber),
-      CURRENT_ACTIVE_STRATEGY:  progressState.currentStrategy,
-      CURRENT_PROTOCOL_STEPS:   progressState.currentSteps.map((step, i) => `  ${i + 1}. ${step}`).join('\n') || '  (none recorded)',
-      DAYS_ON_CURRENT_STRATEGY: String(progressState.daysOnStrategy),
-      MASTERED_STRATEGIES:      progressState.masteredStrategies.join(', ') || 'none yet',
-      PARENT_SELF_REPORT:       MODULE_SELF_REPORT_TEXT[selfReport] || 'Not provided',
-      STRATEGY_KNOWLEDGE_BASE:  moduleKnowledgeBase(config.knowledgeBasePrompt),
+      SESSION_NUMBER:               String(progressState.dayNumber),
+      CURRENT_ACTIVE_STRATEGY:      progressState.currentStrategy,
+      CURRENT_PROTOCOL_STEPS:       progressState.currentSteps.map((step, i) => `  ${i + 1}. ${step}`).join('\n') || '  (none recorded)',
+      SESSIONS_ON_CURRENT_STRATEGY: String(progressState.daysOnStrategy),
+      MASTERED_STRATEGIES:          progressState.masteredStrategies.join(', ') || 'none yet',
+      PARENT_SELF_REPORT:           MODULE_SELF_REPORT_TEXT[selfReport] || 'Not provided',
+      STRATEGY_KNOWLEDGE_BASE:      moduleKnowledgeBase(config.knowledgeBasePrompt),
     });
   }
   const prompt = loadPromptWithVariables(isFollowup && !isNarrative ? config.followupPrompt : config.prompt, variables);
@@ -1176,7 +1176,7 @@ async function generateModuleCoaching(moduleKey, transcriptText, childInfo, sess
   // Unset → falls back to the profile default.
   const coachingModel = process.env.GEMINI_STREAMING_MODEL || undefined;
 
-  console.log(`📊 [MODULE-COACHING] Generating ${moduleKey} day ${progressState.dayNumber} report + plan${isFollowup ? ` (on "${progressState.currentStrategy}" day ${progressState.daysOnStrategy})` : ''}${coachingModel ? ` (${coachingModel})` : ''}...`);
+  console.log(`📊 [MODULE-COACHING] Generating ${moduleKey} day ${progressState.dayNumber} report + plan${isFollowup ? ` (on "${progressState.currentStrategy}" session ${progressState.daysOnStrategy})` : ''}${coachingModel ? ` (${coachingModel})` : ''}...`);
   let raw;
   let narrative = null;
   if (isNarrative) {
@@ -1255,10 +1255,10 @@ async function generateModuleCoaching(moduleKey, transcriptText, childInfo, sess
 function moduleProgressFormatSection(progressState, selfReport) {
   const { dayNumber, currentStrategy, currentStrategyId, currentSteps, daysOnStrategy, masteredStrategies } = progressState;
   return `================================================================
-**PART 6 — PROGRESS (Day ${dayNumber}: judge today, then adjust the plan)**
+**PART 6 — PROGRESS (session ${dayNumber}: judge today, then adjust the plan)**
 ================================================================
 
-The parent was practicing: "${currentStrategy}"${currentStrategyId ? ` (Knowledge Base #${currentStrategyId})` : ''}, for ${daysOnStrategy} day(s) including today.
+The parent was practicing: "${currentStrategy}"${currentStrategyId ? ` (Knowledge Base #${currentStrategyId})` : ''}, for ${daysOnStrategy} session(s) including this one (sessions are recordings, not calendar days).
 Its steps:
 ${currentSteps.map((step, i) => `  ${i + 1}. ${step}`).join('\n') || '  (none recorded)'}
 Strategies already mastered: ${masteredStrategies.join(', ') || 'none yet'}
@@ -1271,7 +1271,7 @@ How the parent said today went: ${MODULE_SELF_REPORT_TEXT[selfReport] || 'Not pr
 
 This changes how PART 4 picks the plan's strategy:
 1. Mastered → pick a NEW strategy from the write-up's recommendations that builds on it.
-2. Stuck (Struggle or Did Not Attempt, and ${daysOnStrategy} day(s) on it is 3 or more) → the write-up's easier or smaller next step.
+2. Stuck (Struggle or Did Not Attempt, and ${daysOnStrategy} session(s) on it is 3 or more) → the write-up's easier or smaller next step.
 3. Otherwise → keep "${currentStrategy}"${currentStrategyId ? ` (active_strategy_id ${currentStrategyId})` : ''} as the plan's strategy, with steps refined from today.
 Never pick a strategy already mastered.
 

@@ -3,7 +3,8 @@
  * Redesigned "Today" for a Learn module (e.g. Screen Time Management): goal
  * header, a daily check-in card (opens the coach chat) and today's practice
  * card (record in place) — always both, check-in first. Server-side day/report
- * state, one report a day, a past day via the `day` route param.
+ * state; a new recording once today's report has been read; a past day via
+ * the `day` route param.
  * Bottom bar:
  * Today / My plan / Learn / Profile.
  *
@@ -61,6 +62,9 @@ const artBottom = (gap: number) => ({ bottom: -gap });
 
 // Per-user cache of "has a recording in this module" (see isFirstTime).
 const startedKey = (moduleKey: string) => `@learn_module_started_${moduleKey}`;
+// Per-user list of report ids opened from Today (module and play), newest last.
+const readReportsKey = (moduleKey: string) => `@learn_module_read_reports_${moduleKey}`;
+const READ_REPORTS_KEPT = 20;
 
 const H_PAD = 20;
 const BG = '#F7F5FC';
@@ -143,7 +147,7 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
 
   // Latest recording in this module (server-side, so it survives app
   // restarts): 'processing' swaps the record button for an analyzing notice,
-  // 'ready' for "Read report". null = nothing in flight / no report.
+  // 'ready' for "Read report" (until read). null = nothing in flight / no report.
   const authService = useAuthService();
   const recordingService = useRecordingService();
   const uploadProcessing = useUploadProcessing();
@@ -168,11 +172,29 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   // A specific day to show (route param); null = today.
   const viewDayChoice = dayParam ?? null;
 
-  // One report a day: once today's report is ready, today stays on that day
-  // with "Read report" — no second recording — and moves on to the next day
-  // tomorrow.
+  // Reports opened from Today (module and play), so a read report's card goes
+  // back to its record button.
+  const [readReportIds, setReadReportIds] = useState<string[]>([]);
+  useEffect(() => {
+    userStorage.getItem(readReportsKey(moduleKey))
+      .then(value => setReadReportIds(value ? JSON.parse(value) : []))
+      .catch(() => setReadReportIds([]));
+  }, [moduleKey]);
+  const markReportRead = (recordingId: string) => {
+    setReadReportIds(prev => {
+      if (prev.includes(recordingId)) return prev;
+      const next = [...prev, recordingId].slice(-READ_REPORTS_KEPT);
+      userStorage.setItem(readReportsKey(moduleKey), JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  };
+
+  // Once today's report is ready, today stays on that day with "Read report"
+  // until the parent opens it; then Today moves on to the next day and its
+  // record button (another recording the same day is fine).
   const todayReport = latestSession?.status === 'ready' &&
-    new Date(latestSession.createdAt).toDateString() === new Date().toDateString()
+    new Date(latestSession.createdAt).toDateString() === new Date().toDateString() &&
+    !readReportIds.includes(latestSession.id)
     ? latestSession
     : null;
   const realDay = todayReport ? Math.max(1, serverDay - 1) : serverDay;
@@ -273,6 +295,7 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   }, [authService]);
   const openReport = (recordingId: string) => {
     amplitudeService.trackEvent('Learn Module Read Report Tapped', { moduleKey, day: currentDay, recordingId });
+    markReportRead(recordingId);
     navigation.push('ModuleReport', { recordingId, moduleKey });
   };
 
@@ -298,8 +321,10 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   // recording panel only for its own kind, and no action while the other records.
   const moduleRecording = recorder.isRecording && recorder.kind === 'module';
   const playRecording = recorder.isRecording && recorder.kind === 'play';
+  // Same as todayReport: "Read report" until opened, then "Start play recording".
   const playReportToday = playSession?.status === 'ready' &&
-    new Date(playSession.createdAt).toDateString() === new Date().toDateString()
+    new Date(playSession.createdAt).toDateString() === new Date().toDateString() &&
+    !readReportIds.includes(playSession.id)
     ? playSession
     : null;
   // On the following-day Today (rendered only there) — incl. Day 1 once
@@ -682,6 +707,7 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
                     style={styles.primaryButton}
                     onPress={() => {
                       amplitudeService.trackEvent('Learn Module Read Play Report Tapped', { moduleKey, day: currentDay, recordingId: playReportToday.id });
+                      markReportRead(playReportToday.id);
                       navigation.push('ReportV3', { recordingId: playReportToday.id });
                     }}
                     activeOpacity={0.85}
@@ -831,6 +857,7 @@ const styles = StyleSheet.create({
   v2Card: { marginTop: 16 },
   // Longer than the other cards' bodies: keep it clear of the art (right: -10).
   playBody: { width: undefined, marginRight: PLAY_ART_SIZE.width - 10 },
+  checkInFirstTimeBody: { width: undefined, marginRight: CHECK_IN_ART_SIZE.width - 10 },
   firstTimeLoading: { marginTop: 48 },
   firstTimeTitle: {
     fontFamily: FONTS.bold,
@@ -857,7 +884,6 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     letterSpacing: -0.4,
     color: COLORS.textDark,
-  checkInFirstTimeBody: { width: undefined, marginRight: CHECK_IN_ART_SIZE.width - 10 },
     marginTop: 6,
   },
   // One row: chips shrink (text scales down) rather than wrap on narrow screens.

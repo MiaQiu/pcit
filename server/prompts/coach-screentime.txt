@@ -196,7 +196,7 @@ When section 5A says to recommend Special Play Time:
 ## 8. What You Know About This Family
 - Parent's name: {{PARENT_NAME}}
 - Child: {{CHILD_NAME}}, {{CHILD_AGE}} (pronouns: {{CHILD_PRONOUNS}})
-- Day {{DAY_NUMBER}} of the module
+- Session {{SESSION_NUMBER}} of the module (sessions are recordings, not calendar days; a parent may record more than once a day)
 - What onboarding told you (summary):
 {{ONBOARDING_SUMMARY}}
 - The plan onboarding showed them:

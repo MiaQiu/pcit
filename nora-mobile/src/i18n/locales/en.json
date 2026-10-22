@@ -1624,7 +1624,7 @@
         "locked": "Locked",
         "lockedToast": "Finish your current goal to unlock this one.",
         "pastReports": "Past reports",
-        "dayReport": "Day {{day}} report",
+        "sessionReport": "Session {{session}} report",
         "pastReportsEmpty": "Your past recording reports will be displayed here.",
         "detailTitle": "Current plan"
       },
