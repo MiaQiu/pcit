@@ -3,8 +3,8 @@
  * Redesigned "Today" for a Learn module (e.g. Screen Time Management): goal
  * header, a daily check-in card (opens the coach chat) and today's practice
  * card (record in place) — always both, check-in first. Server-side day/report
- * state; a new recording once today's report has been read; a past day via
- * the `day` route param.
+ * state; "Read report" until the latest report is opened, then a new
+ * recording; a past day via the `day` route param.
  * Bottom bar:
  * Today / My plan / Learn / Profile.
  *
@@ -13,7 +13,7 @@
  * cheat sheet. Everything else — header, My plan, tabs — is shared.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
@@ -27,6 +27,7 @@ import { useAuthService, useRecordingService } from '../contexts/AppContext';
 import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import { useModuleRecorder } from '../hooks/useModuleRecorder';
 import * as userStorage from '../lib/userStorage';
+import { getReadReportIds, markModuleReportRead } from '../lib/moduleReportReads';
 import amplitudeService from '../services/amplitudeService';
 import { useModulePlan } from './LearnModulePlanView';
 import { LearnModulePlanOverview } from './LearnModulePlanOverview';
@@ -62,9 +63,6 @@ const artBottom = (gap: number) => ({ bottom: -gap });
 
 // Per-user cache of "has a recording in this module" (see isFirstTime).
 const startedKey = (moduleKey: string) => `@learn_module_started_${moduleKey}`;
-// Per-user list of report ids opened from Today (module and play), newest last.
-const readReportsKey = (moduleKey: string) => `@learn_module_read_reports_${moduleKey}`;
-const READ_REPORTS_KEPT = 20;
 
 const H_PAD = 20;
 const BG = '#F7F5FC';
@@ -153,7 +151,7 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   const uploadProcessing = useUploadProcessing();
   const [childName, setChildName] = useState('');
   const [childGender, setChildGender] = useState<string | null>(null);
-  const [latestSession, setLatestSession] = useState<{ id: string; createdAt: string; status: 'processing' | 'ready' } | null>(null);
+  const [latestSession, setLatestSession] = useState<{ id: string; createdAt: string; status: 'processing' | 'ready'; isMoment?: boolean } | null>(null);
   // Next day to complete (analyzed reports + 1), from the server.
   const [serverDay, setServerDay] = useState(1);
   // Day 2+ "Play time recording" card, for parents who reported a learning
@@ -172,47 +170,44 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   // A specific day to show (route param); null = today.
   const viewDayChoice = dayParam ?? null;
 
-  // Reports opened from Today (module and play), so a read report's card goes
-  // back to its record button.
+  // Reports the parent has opened (module and play; ModuleReportScreen marks
+  // them from anywhere), so a read report's card goes back to its record
+  // button. Re-read on focus: the report may have been opened elsewhere.
   const [readReportIds, setReadReportIds] = useState<string[]>([]);
-  useEffect(() => {
-    userStorage.getItem(readReportsKey(moduleKey))
-      .then(value => setReadReportIds(value ? JSON.parse(value) : []))
-      .catch(() => setReadReportIds([]));
+  const loadReadReports = useCallback(() => {
+    getReadReportIds(moduleKey).then(setReadReportIds);
   }, [moduleKey]);
+  useFocusEffect(loadReadReports);
   const markReportRead = (recordingId: string) => {
-    setReadReportIds(prev => {
-      if (prev.includes(recordingId)) return prev;
-      const next = [...prev, recordingId].slice(-READ_REPORTS_KEPT);
-      userStorage.setItem(readReportsKey(moduleKey), JSON.stringify(next)).catch(() => {});
-      return next;
-    });
+    setReadReportIds(prev => (prev.includes(recordingId) ? prev : [...prev, recordingId]));
+    markModuleReportRead(moduleKey, recordingId);
   };
 
-  // Once today's report is ready, today stays on that day with "Read report"
-  // until the parent opens it; then Today moves on to the next day and its
-  // record button (another recording the same day is fine).
-  const todayReport = latestSession?.status === 'ready' &&
-    new Date(latestSession.createdAt).toDateString() === new Date().toDateString() &&
-    !readReportIds.includes(latestSession.id)
+  // Once the latest report is ready, Today stays on its day with "Read
+  // report" until the parent opens it — however many days later; then Today
+  // moves on to the next day and its record button (another recording the
+  // same day is fine).
+  const unreadReport = latestSession?.status === 'ready' && !readReportIds.includes(latestSession.id)
     ? latestSession
     : null;
-  const realDay = todayReport ? Math.max(1, serverDay - 1) : serverDay;
+  // A moment report (screen-time moment, not an ending) doesn't complete a day.
+  const realDay = unreadReport && !unreadReport.isMoment ? Math.max(1, serverDay - 1) : serverDay;
   const currentDay = viewDayChoice ?? realDay;
   // past: browse that day's protocol + report. today: the live flow.
   // future (testers only): record / check in as if it were that day.
   const dayMode: 'past' | 'today' | 'future' =
     currentDay < realDay ? 'past' : currentDay > realDay ? 'future' : 'today';
-  const canAct = dayMode === 'future' || (dayMode === 'today' && !todayReport);
-  // The report to open for this day: a past day's, or today's once ready.
+  const canAct = dayMode === 'future' || (dayMode === 'today' && !unreadReport);
+  // The report to open for this day: a past day's, or today's unread one.
   const dayReport = dayMode === 'past'
     ? (days[currentDay - 1] ? { id: days[currentDay - 1].reportId } : null)
-    : dayMode === 'today' ? todayReport : null;
+    : dayMode === 'today' ? unreadReport : null;
   const isFollowupDay = currentDay > 1;
   const { masteredStrategies } = useModulePlan(moduleKey, serverDay);
-  // Current goal on the "My plan" roadmap (first not yet complete) — shown in the Today header.
-  const currentGoal = getGoalProgress(moduleKey, masteredStrategies.map(m => m.strategyId))
-    .find(g => g.status === 'current');
+  // Current goal on the "My plan" roadmap (first not yet complete; the last
+  // one once all are) — shown in the Today header.
+  const goalProgress = getGoalProgress(moduleKey, masteredStrategies.map(m => m.strategyId));
+  const currentGoal = goalProgress.find(g => g.status === 'current') ?? goalProgress[goalProgress.length - 1];
 
   // First-time parents (no recording in this module yet) get a simpler
   // Today: the Day 1 intro, check-in and a fuller practice card.
@@ -237,7 +232,18 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   const isFirstTime = __DEV__ && devFirstTime !== null ? devFirstTime
     : hasStarted === null ? null : !hasStarted && currentDay === 1;
 
-  const loadLatestSession = useCallback(() => {
+  // Last seen statuses, to notice a report finishing between polls.
+  const lastStatusesRef = useRef<{ module?: string; play?: string }>({});
+  const loadDays = useCallback(() => {
+    authService.authenticatedRequest(`${API_URL}/api/learn-modules/${moduleKey}/days`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => { if (data?.days) setDays(data.days); })
+      .catch(err => console.error('Failed to load module days:', err));
+  }, [authService, moduleKey]);
+  // full: also the past reports (days, play recordings) — not on every
+  // processing poll, only when a report has just finished.
+  const loadLatestSession = useCallback((full = true) => {
+    if (full) loadDays();
     authService.authenticatedRequest(`${API_URL}/api/learn-modules/${moduleKey}/latest-session`)
       .then(res => (res.ok ? res.json() : null))
       .then(data => {
@@ -245,12 +251,17 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
           setProgressFailed(true);
           return;
         }
+        const prev = lastStatusesRef.current;
+        const moduleFinished = prev.module === 'processing' && data.session?.status === 'ready';
+        const playFinished = prev.play === 'processing' && data.playSession?.status === 'ready';
+        lastStatusesRef.current = { module: data.session?.status, play: data.playSession?.status };
+        if (!full && moduleFinished) loadDays();
         setLatestSession(data.session);
         setServerDay(data.dayNumber ?? 1);
         setHasDifferences(!!data.hasDifferences);
         setSpecialPlayAdded(!!data.specialPlayAdded);
         setPlaySession(data.playSession ?? null);
-        if (data.hasDifferences || data.specialPlayAdded) {
+        if ((full || playFinished) && (data.hasDifferences || data.specialPlayAdded)) {
           recordingService.getRecordings()
             .then(({ recordings }) => setPlayRecordings(
               (recordings ?? []).filter(r => r.mode === 'CDI' && r.analysisStatus === 'COMPLETED')))
@@ -268,13 +279,9 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
         console.error('Failed to load latest module session:', err);
         setProgressFailed(true);
       });
-    authService.authenticatedRequest(`${API_URL}/api/learn-modules/${moduleKey}/days`)
-      .then(res => (res.ok ? res.json() : null))
-      .then(data => { if (data?.days) setDays(data.days); })
-      .catch(err => console.error('Failed to load module days:', err));
-  }, [authService, recordingService, moduleKey]);
+  }, [authService, recordingService, moduleKey, loadDays]);
 
-  useFocusEffect(loadLatestSession);
+  useFocusEffect(useCallback(() => loadLatestSession(), [loadLatestSession]));
   // A report just finished (push or polling in UploadProcessingContext).
   useEffect(() => {
     if (uploadProcessing.reportCompletedTimestamp) loadLatestSession();
@@ -282,7 +289,7 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   const anyProcessing = latestSession?.status === 'processing' || playSession?.status === 'processing';
   useEffect(() => {
     if (!anyProcessing) return;
-    const timer = setInterval(loadLatestSession, PROCESSING_POLL_MS);
+    const timer = setInterval(() => loadLatestSession(false), PROCESSING_POLL_MS);
     return () => clearInterval(timer);
   }, [anyProcessing, loadLatestSession]);
   useEffect(() => {
@@ -303,7 +310,7 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   // session framing doesn't fit a screen-time ending).
   const recorder = useModuleRecorder({
     moduleKey,
-    onUploaded: loadLatestSession,
+    onUploaded: () => loadLatestSession(),
   });
 
   // Leaving mid-recording would orphan the native recording — confirm first.
@@ -321,10 +328,8 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   // recording panel only for its own kind, and no action while the other records.
   const moduleRecording = recorder.isRecording && recorder.kind === 'module';
   const playRecording = recorder.isRecording && recorder.kind === 'play';
-  // Same as todayReport: "Read report" until opened, then "Start play recording".
-  const playReportToday = playSession?.status === 'ready' &&
-    new Date(playSession.createdAt).toDateString() === new Date().toDateString() &&
-    !readReportIds.includes(playSession.id)
+  // Same as unreadReport: "Read report" until opened, then "Start play recording".
+  const unreadPlayReport = playSession?.status === 'ready' && !readReportIds.includes(playSession.id)
     ? playSession
     : null;
   // On the following-day Today (rendered only there) — incl. Day 1 once
@@ -402,12 +407,20 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   // "Start 5-Min Special Playtime" (ModuleSpecialPlay) brings the parent back
   // here with startPlayRecordingAt set: add special play (so the play card
   // shows from now on, as when accepted in the module chat) and start a play
-  // recording on Today, once per tap. The play card isn't on the first-time
+  // recording on Today, once per tap — after the server state has loaded
+  // (first time or not, play limit). The play card isn't on the first-time
   // Today, so there it only adds special play.
+  const [pendingPlayStart, setPendingPlayStart] = useState(false);
   useEffect(() => {
     if (!startPlayRecordingAt) return;
     navigation.setParams({ startPlayRecordingAt: undefined });
     setActiveTab('today');
+    setPendingPlayStart(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startPlayRecordingAt]);
+  useEffect(() => {
+    if (!pendingPlayStart || !progressLoaded) return;
+    setPendingPlayStart(false);
     if (!specialPlayAdded) {
       setSpecialPlayAdded(true);
       authService.authenticatedRequest(`${API_URL}/api/learn-modules/${moduleKey}/special-play`, {
@@ -424,7 +437,7 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
     }
     recorder.start('play');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startPlayRecordingAt]);
+  }, [pendingPlayStart, progressLoaded]);
 
   // Daily check-in with the coach: first card on every Today. First time, it's
   // a "start here" invitation instead (the user doesn't know what to say yet).
@@ -535,6 +548,7 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
           playRecordings={showPlayCard ? playRecordings : []}
           onOpenPlayReport={recordingId => {
             amplitudeService.trackEvent('Learn Module Plan Past Play Report Tapped', { moduleKey, recordingId });
+            markReportRead(recordingId);
             navigation.push('ReportV3', { recordingId });
           }}
           onOpenReport={day => {
@@ -698,13 +712,13 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
                     <ActivityIndicator color={COLORS.mainPurple} />
                     <Text style={styles.processingText}>{t('learnV2.moduleScreenV2.playTime.processing')}</Text>
                   </View>
-                ) : playReportToday ? (
+                ) : unreadPlayReport ? (
                   <TrackedTouchable analyticsId={`Learn Module ${moduleKey}: readPlayReport`}
                     style={styles.primaryButton}
                     onPress={() => {
-                      amplitudeService.trackEvent('Learn Module Read Play Report Tapped', { moduleKey, day: currentDay, recordingId: playReportToday.id });
-                      markReportRead(playReportToday.id);
-                      navigation.push('ReportV3', { recordingId: playReportToday.id });
+                      amplitudeService.trackEvent('Learn Module Read Play Report Tapped', { moduleKey, day: currentDay, recordingId: unreadPlayReport.id });
+                      markReportRead(unreadPlayReport.id);
+                      navigation.push('ReportV3', { recordingId: unreadPlayReport.id });
                     }}
                     activeOpacity={0.85}
                   >
