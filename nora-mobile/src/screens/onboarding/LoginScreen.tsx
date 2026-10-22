@@ -80,14 +80,24 @@ export const LoginScreen: React.FC = () => {
     }
     // Logged into an existing account: a half-finished account-last draft no longer applies
     await clearDraft();
-    const { step, user } = await checkOnboardingStep(authService);
+    const { step, user, draft } = await checkOnboardingStep(authService);
     reinitializeUnread(user.id);
     await reinitializeUpload();
     if (step) {
       navigation.dispatch(
         CommonActions.reset({
           index: 0,
-          routes: [{ name: 'Onboarding' as any, params: { initialStep: step, resumeUserData: user } }],
+          routes: [
+            {
+              name: 'Onboarding' as any,
+              params: {
+                initialStep: step,
+                resumeUserData: user,
+                // Mid-onboarding on this device: back to the screen they left, with their answers
+                ...(draft ? { initialStepParams: draft.lastStep.params, draftData: draft.data } : {}),
+              },
+            },
+          ],
         })
       );
     } else {

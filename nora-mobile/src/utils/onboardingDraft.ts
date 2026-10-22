@@ -11,8 +11,13 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { OnboardingData } from '../contexts/OnboardingContext';
+import * as userStorage from '../lib/userStorage';
 
 const DRAFT_KEY = '@nora_onboarding_draft';
+// Logged-in parents (account-first) keep the same draft per user. The server only
+// knows a few required fields, so without it a parent who closes the app after
+// ChildIssue would reopen on MainTabs mid-onboarding. Cleared when onboarding completes.
+const USER_DRAFT_KEY = '@nora_onboarding_resume';
 
 export type DraftStep = { name: string; params?: Record<string, unknown> };
 export type OnboardingDraft = { data: Partial<OnboardingData>; lastStep: DraftStep };
@@ -50,6 +55,34 @@ export async function clearDraft(): Promise<void> {
     await AsyncStorage.removeItem(DRAFT_KEY);
   } catch (error) {
     console.warn('[OnboardingDraft] clear failed:', error);
+  }
+}
+
+export async function saveUserDraft(draft: OnboardingDraft): Promise<void> {
+  try {
+    await userStorage.setItem(USER_DRAFT_KEY, JSON.stringify(draft));
+  } catch (error) {
+    console.warn('[OnboardingDraft] user save failed:', error);
+  }
+}
+
+export async function loadUserDraft(): Promise<OnboardingDraft | null> {
+  try {
+    const raw = await userStorage.getItem(USER_DRAFT_KEY);
+    if (!raw) return null;
+    const draft = JSON.parse(raw) as OnboardingDraft;
+    return draft?.lastStep?.name ? draft : null;
+  } catch (error) {
+    console.warn('[OnboardingDraft] user load failed:', error);
+    return null;
+  }
+}
+
+export async function clearUserDraft(): Promise<void> {
+  try {
+    await userStorage.removeItem(USER_DRAFT_KEY);
+  } catch (error) {
+    console.warn('[OnboardingDraft] user clear failed:', error);
   }
 }
 

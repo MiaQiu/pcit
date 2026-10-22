@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 import { Picker } from '@react-native-picker/picker';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
-import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
 import { OnboardingFooter } from '../../components/OnboardingFooter';
 import amplitudeService from '../../services/amplitudeService';
 import { useAuthService } from '../../contexts/AppContext';
@@ -142,8 +141,6 @@ export const ChildBirthdayScreen: React.FC = () => {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.content}>
-        <OnboardingProgressHeader phase={1} step={5} totalSteps={7} singlePhase />
-
         <View style={styles.header}>
           <Text style={styles.title}>{t('onboarding.childBirthday.title', { name: data.childName })}</Text>
         </View>

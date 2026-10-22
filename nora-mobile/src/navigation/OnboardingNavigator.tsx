@@ -9,7 +9,7 @@ import { OnboardingStackParamList, RootStackParamList } from './types';
 import { CommonActions, RouteProp } from '@react-navigation/native';
 import { useOnboarding, type OnboardingData } from '../contexts/OnboardingContext';
 import { useAuthService } from '../contexts/AppContext';
-import { DraftStep, isResumableStep, saveDraft } from '../utils/onboardingDraft';
+import { DraftStep, isResumableStep, saveDraft, saveUserDraft } from '../utils/onboardingDraft';
 import { previousOnboardingStep } from './onboardingPreviousStep';
 
 // Flow (account-first signup): Welcome → Start → (Login | CreateAccount) →
@@ -145,7 +145,7 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
     if (wacbReturnRecordingId) {
       updateData({ wacbReturnRecordingId });
     }
-    // Logged-out parent resuming account-last onboarding: restore their answers
+    // Resuming from a draft: restore the answers (over the server's, which can lag)
     if (draftData) {
       updateData({
         ...draftData,
@@ -154,12 +154,13 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
     }
   }, []);
 
-  // Account-last signup: until an account exists, mirror the answers and the current
-  // screen to the device so closing the app resumes here (see utils/onboardingDraft.ts)
+  // Mirror the answers and the current screen so closing the app resumes here (see
+  // utils/onboardingDraft.ts): per user once the account exists, on the device before
   const persistDraft = () => {
     const lastStep = lastStepRef.current;
-    if (!lastStep || !isResumableStep(lastStep.name) || authService.isAuthenticated()) return;
-    saveDraft({ data, lastStep });
+    if (!lastStep || !isResumableStep(lastStep.name) || data.hasCompletedOnboarding) return;
+    if (authService.isAuthenticated()) saveUserDraft({ data, lastStep });
+    else saveDraft({ data, lastStep });
   };
   useEffect(persistDraft, [data]);
 

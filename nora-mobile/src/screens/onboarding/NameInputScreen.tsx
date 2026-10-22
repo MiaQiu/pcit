@@ -10,7 +10,6 @@ import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { OnboardingLayout } from '../../components/OnboardingLayout';
-import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
 import { OnboardingTextInput } from '../../components/OnboardingTextInput';
 import { OnboardingFooter } from '../../components/OnboardingFooter';
 import amplitudeService from '../../services/amplitudeService';
@@ -40,8 +39,6 @@ export const NameInputScreen: React.FC = () => {
 
   return (
     <OnboardingLayout useKeyboardAvoid>
-      <OnboardingProgressHeader phase={1} step={1} totalSteps={7} singlePhase />
-
       <OnboardingTextInput
         title={t('onboarding.nameInput.title')}
         value={name}

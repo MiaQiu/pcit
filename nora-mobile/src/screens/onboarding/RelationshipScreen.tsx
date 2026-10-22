@@ -27,10 +27,8 @@ export const RelationshipScreen: React.FC = () => {
       dataField="relationshipToChild"
       nextScreen="ChildName"
       prevScreen="NameInput"
-      phase={1}
-      stepInPhase={2}
-      totalStepsInPhase={7}
-      singlePhaseHeader
+      // Profile questions show no progress bar
+      headerOverride={null}
       screenName="relationship"
       screenStep={13}
       renderButtons={(buttonProps) => <OnboardingFooter {...buttonProps} />}

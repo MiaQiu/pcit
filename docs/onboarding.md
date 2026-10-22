@@ -139,15 +139,16 @@ when they picked anything else (a suspected difference counts).
   The differences path has 29 screens, the none path 31.
 - `screenTimeIntake.path` records the path; `cortex` is null on the differences path.
 
-**Progress bar.** Each section has its own title and counter (`OnboardingProgressHeader` with
-`singlePhase` and `label`):
-- Profile questions, all *Basic data*: `NameInput`–`ChildIssue` 1/7–6/7, then `ParentGoal` 7/7, or on the
-  ADHD/developmental/anxiety path `DiagnosisStatus` 7/8 and `ProfessionalSupport` 8/8.
-- Screen time, on every step including insights and the plan (`sectionProgress()` in
-  `ScreenTimeStepScreen.tsx`, counting only steps on the parent's path):
-  *Screen time habits* (intro and the 9 statements, 1/10–10/10), *Your experience* (dopamine through
-  `why`, 1/10–10/10), *Hidden signals* 1/6–6/6, *Your plan* (everything after the signals through the
-  plan: 1/4–4/4 differences path, 1/6–6/6 none path).
+**Progress bar.** Only question screens show it; information screens neither show nor count toward it.
+Each section has its own title (`OnboardingProgressHeader` with `label`); no screen count is shown,
+but the bar fills through the section's screens:
+- The profile questions (`NameInput`–`ChildIssue`) show no bar. *Basic data* is `ParentGoal` (1/1), or on
+  the ADHD/developmental/anxiety path `DiagnosisStatus` 1/2 and `ProfessionalSupport` 2/2.
+- Screen time (`stepSection()` / `sectionProgress()` in `ScreenTimeStepScreen.tsx`): *Screen time habits*
+  (the 9 statements, 1/9–9/9), *Your experience* (dopamine through teen, 1/8–8/8), *Hidden signals* 1/6–6/6.
+  Nothing after the signals shows a bar, including the none path's `cortex` question.
+- The bar has one equal segment per section on the parent's path: 3 on the screen-time path (the three
+  above), 1 on the others. The title is the current section's.
 
 Pronouns use i18next context: `_boy` and `_girl` variants, with a gender-neutral base key that uses the child's name.
 
@@ -191,6 +192,11 @@ On launch, `RootNavigator` resumes a logged-out parent at that screen with their
 
 **Logged in.** `RootNavigator` (on app start) and `Login` (after sign-in) both call `checkOnboardingStep()`
 in `nora-mobile/src/utils/onboardingCheck.ts`.
+
+- Mid-onboarding on this device, the parent resumes at the last screen reached, with their answers.
+  `OnboardingNavigator` saves it per user (`@nora_onboarding_resume`, `saveUserDraft`) on every screen;
+  `completeOnboarding()` clears it. The server fields below can't tell this: they're all set once
+  `ChildIssue` is answered.
 
 - If `@nora_onboarding_completed` is set on this device, the user goes to `MainTabs`.
 - Otherwise the user resumes at the first missing required field on the server:

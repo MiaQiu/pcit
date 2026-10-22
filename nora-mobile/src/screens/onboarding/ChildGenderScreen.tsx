@@ -25,10 +25,8 @@ export const ChildGenderScreen: React.FC = () => {
       dataField="childGender"
       nextScreen="ChildBirthday"
       prevScreen="ChildName"
-      phase={1}
-      stepInPhase={4}
-      totalStepsInPhase={7}
-      singlePhaseHeader
+      // Profile questions show no progress bar
+      headerOverride={null}
       screenName="child_gender"
       screenStep={15}
       renderButtons={(buttonProps) => <OnboardingFooter {...buttonProps} />}

@@ -36,7 +36,7 @@ export const ParentGoalScreen: React.FC = () => {
       prevScreen="ChildIssue"
       multiSelect={true}
       headerOverride={
-        <OnboardingProgressHeader phase={1} step={7} totalSteps={7} singlePhase />
+        <OnboardingProgressHeader phase={1} step={1} totalSteps={1} singlePhase />
       }
       screenName="parent_goal"
       screenStep={18}

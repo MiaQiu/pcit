@@ -5,6 +5,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import * as userStorage from '../lib/userStorage';
+import { clearUserDraft } from '../utils/onboardingDraft';
 
 export interface OnboardingData {
   // User data
@@ -100,6 +101,7 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
   const completeOnboarding = async () => {
     try {
       await userStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
+      await clearUserDraft();
       updateData({ hasCompletedOnboarding: true });
     } catch (error) {
       console.error('Error saving onboarding completion:', error);

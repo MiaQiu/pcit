@@ -27,7 +27,7 @@ export const DiagnosisStatusScreen: React.FC = () => {
   return (
     <MultipleChoiceScreen
       headerOverride={
-        <OnboardingProgressHeader phase={1} step={7} totalSteps={8} singlePhase />
+        <OnboardingProgressHeader phase={1} step={1} totalSteps={2} singlePhase />
       }
       headerText=""
       title={t('onboarding.diagnosisStatus.title', { childName })}

@@ -202,9 +202,11 @@ export const RootNavigator: React.FC = () => {
       if (authenticated) {
         console.log('[Auth] Checking onboarding and subscription status...');
         try {
-          const { step: incompleteStep, user } = await checkOnboardingCompletion();
+          const { step: incompleteStep, user, draft } = await checkOnboardingCompletion();
           console.log('[Auth] Onboarding step:', incompleteStep);
           setOnboardingStep(incompleteStep);
+          // Resuming this device's draft: its screen params and answers come along
+          setOnboardingDraft(draft ?? null);
           // A dev-forced screen also gets the user's profile, so name/gender/age render
           if (incompleteStep || (__DEV__ && DEV_FORCE_ONBOARDING_SCREEN)) {
             setResumeUserData(user);
@@ -256,7 +258,7 @@ export const RootNavigator: React.FC = () => {
     }
   };
 
-  const checkOnboardingCompletion = async (): Promise<{ step: string | null; user: User }> => {
+  const checkOnboardingCompletion = async (): Promise<{ step: string | null; user: User; draft?: OnboardingDraft | null }> => {
     const result = await checkOnboardingStep(authService);
     reinitializeUnread(result.user.id);
     await reinitializeUpload();
@@ -303,7 +305,16 @@ export const RootNavigator: React.FC = () => {
               devForceOnboardingScreen
                 ? { initialStep: devForceOnboardingScreen, initialStepParams: DEV_FORCE_ONBOARDING_PARAMS, resumeUserData: resumeUserData ?? undefined }
                 : onboardingStep
-                  ? { initialStep: onboardingStep, resumeUserData: resumeUserData ?? undefined }
+                  ? {
+                      initialStep: onboardingStep,
+                      resumeUserData: resumeUserData ?? undefined,
+                      ...(onboardingDraft
+                        ? {
+                            initialStepParams: onboardingDraft.lastStep.params,
+                            draftData: onboardingDraft.data as Record<string, unknown>,
+                          }
+                        : {}),
+                    }
                   : !isAuthenticated && onboardingDraft
                     ? {
                         initialStep: onboardingDraft.lastStep.name,

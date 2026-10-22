@@ -26,7 +26,7 @@ export const ProfessionalSupportScreen: React.FC = () => {
   return (
     <MultipleChoiceScreen
       headerOverride={
-        <OnboardingProgressHeader phase={1} step={8} totalSteps={8} singlePhase />
+        <OnboardingProgressHeader phase={1} step={2} totalSteps={2} singlePhase />
       }
       headerText=""
       title={t('onboarding.professionalSupport.title', { childName })}

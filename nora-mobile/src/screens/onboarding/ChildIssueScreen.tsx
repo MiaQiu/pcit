@@ -52,10 +52,8 @@ export const ChildIssueScreen: React.FC = () => {
       allowOtherOption={true}
       otherOptionValue="other"
       otherOptionPlaceholder={t('onboarding.childIssue.otherPlaceholder')}
-      phase={1}
-      stepInPhase={6}
-      totalStepsInPhase={7}
-      singlePhaseHeader
+      // Profile questions show no progress bar
+      headerOverride={null}
       screenName="child_issue"
       screenStep={17}
       renderButtons={(buttonProps) => <OnboardingFooter {...buttonProps} />}

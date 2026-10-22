@@ -64,7 +64,7 @@ export interface MultipleChoiceScreenProps {
   otherOptionPlaceholder?: string; // Placeholder text for the "Others" input
   screenName?: string; // For amplitude tracking
   screenStep?: number; // Onboarding step number for amplitude funnel
-  headerOverride?: React.ReactNode; // Replaces the default OnboardingProgressHeader when provided
+  headerOverride?: React.ReactNode; // Replaces the default OnboardingProgressHeader when provided; null hides it
   subtitle?: string; // Shown under the title
   exclusiveValues?: (string | number)[]; // Multi-select: picking one of these clears the rest (e.g. "None")
   // Text style overrides (e.g. the screen-time branch's prototype fonts)
@@ -276,7 +276,7 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
       >
         <View style={styles.content}>
           {/* Progress Header */}
-          {headerOverride ?? <OnboardingProgressHeader phase={phase} step={stepInPhase} totalSteps={totalStepsInPhase} singlePhase={singlePhaseHeader} />}
+          {headerOverride !== undefined ? headerOverride : <OnboardingProgressHeader phase={phase} step={stepInPhase} totalSteps={totalStepsInPhase} singlePhase={singlePhaseHeader} />}
 
           {/* Title */}
           <View style={styles.header}>
