@@ -1625,6 +1625,7 @@
         "lockedToast": "Finish your current goal to unlock this one.",
         "pastReports": "Past reports",
         "sessionReport": "Session {{session}} report",
+        "momentReport": "Screen-time moment report",
         "pastReportsEmpty": "Your past recording reports will be displayed here.",
         "detailTitle": "Current plan"
       },
@@ -2777,6 +2778,10 @@
   },
   "moduleReport": {
     "nextGrowthFocus": "Next Growth Focus",
+    "moment": {
+      "hero": "Not a screen-time ending this time, but a real screen-time moment with {{childName}}. Here's what stood out.",
+      "title": "Coaching on this moment"
+    },
     "trySaying": "Try saying",
     "reflectWithNora": "Talk it through with Nora",
     "reflectDraft": "About “{{title}}” in my report: ",

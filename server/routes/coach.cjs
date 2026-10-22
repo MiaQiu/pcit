@@ -10,7 +10,7 @@ const { Prisma }         = require('@prisma/client');
 const prisma             = require('../services/db.cjs');
 const { subscribe, publish } = require('../services/chatBus.cjs');
 const agentBus = require('../services/agentBus.cjs');
-const { getModuleChatPrompt, LEARN_MODULE_KEYS } = require('../services/pcitAnalysisService.cjs');
+const { getModuleChatPrompt, LEARN_MODULE_KEYS, isModulePlanReport } = require('../services/pcitAnalysisService.cjs');
 const { prepareOfferReply, recordOffer, respondToOffer } = require('../services/specialPlayOffer.cjs');
 const { buildModuleChatOpener } = require('../services/moduleChatOpener.cjs');
 const { decryptSensitiveData } = require('../utils/encryption.cjs');
@@ -321,11 +321,11 @@ async function toolSaveStrategyFeedback(userId, moduleKey, args) {
     notes:    optionalText(args.notes),
   };
 
-  const latestReport = await prisma.session.findFirst({
+  const latestReport = (await prisma.session.findMany({
     where: { userId, moduleKey, analysisStatus: 'COMPLETED', moduleCoaching: { not: Prisma.DbNull } },
     orderBy: { createdAt: 'desc' },
-    select: { createdAt: true },
-  });
+    select: { createdAt: true, moduleCoaching: true },
+  })).find(s => isModulePlanReport(s.moduleCoaching));
   const existing = await prisma.moduleStrategyFeedback.findFirst({
     where: {
       userId,

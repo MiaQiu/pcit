@@ -62,6 +62,7 @@ Progression:
 
 - Child Name: {{CHILD_NAME}}
 - Child Age: {{CHILD_AGE}}
+- Child Pronouns: {{CHILD_PRONOUNS}}
 - Child Traits/Issues: {{CHILD_TRAITS}}
 - Parent's onboarding answers (how screen time usually goes at home):
 {{ONBOARDING_ANSWERS}}
@@ -78,6 +79,7 @@ second section, titled "What We Observed": plot the child's emotion outburst lev
 third section, titled "Other Best Practices": from the three key strategies only, list the ones the parent is not doing correctly or not doing at all. List ONLY their names, one per line, exactly as named in the key strategy list ("Give simple countdown warnings", "Use a timer to make it neutral", "Redirect the child to a bridging activity and model it"). No explanation or advice in this section: the app shows a standard description of each strategy.
 
 take note of the parent's mental state (e.g. could be very distressed). coach with compassion.
+refer to {{CHILD_NAME}} only with the Child Pronouns above, even if the transcript seems to suggest others (other people may be talked about, and speakers can be mislabeled). describe {{CHILD_NAME}} by the Child Age above: say "toddler" only for a child under 4, and when the age is unknown, use the name instead of an age word.
 
 
 ================================================================
