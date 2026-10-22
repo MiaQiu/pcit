@@ -4,7 +4,7 @@ const { Prisma } = require('@prisma/client');
 const { requireAuth } = require('../middleware/auth.cjs');
 const prisma = require('../services/db.cjs');
 const { logError } = require('../utils/errorLogger.cjs');
-const { LEARN_MODULE_KEYS, isModulePlanReport } = require('../services/pcitAnalysisService.cjs');
+const { LEARN_MODULE_KEYS } = require('../services/pcitAnalysisService.cjs');
 const { reportedDifferences } = require('../utils/screenTimeIntake.cjs');
 const { respondToOffer } = require('../services/specialPlayOffer.cjs');
 
@@ -43,7 +43,7 @@ router.get('/:moduleKey/plan', async (req, res) => {
       },
       orderBy: { createdAt: 'asc' },
       select: { id: true, createdAt: true, moduleCoaching: true },
-    }).then(rows => rows.filter(s => isModulePlanReport(s.moduleCoaching)));
+    });
     const session = sessions[sessions.length - 1];
 
     // Same identity rule as getModuleProgressState: Knowledge Base number
@@ -116,7 +116,7 @@ const FREE_PLAY_RECORDINGS = 3;
  * GET /api/learn-modules/:moduleKey/latest-session
  * State of the parent's most recent recording in this module, for the module
  * screen's practice card: status is 'processing' (uploaded, being analyzed),
- * 'ready' (report available; isMoment for a moment report) or null (nothing in flight / no report yet —
+ * 'ready' (report available) or null (nothing in flight / no report yet —
  * failed and abandoned uploads are skipped). activeStrategy is the strategy
  * from the newest plan, or null before the first report; dayNumber is the
  * day the parent is on (analyzed reports + 1).
@@ -179,13 +179,11 @@ router.get('/:moduleKey/latest-session', async (req, res) => {
     const activeStrategy = sessions.find(s => s.moduleCoaching?.myPlan?.activeStrategy)?.moduleCoaching.myPlan.activeStrategy || null;
 
     // The day the parent is on: each analyzed report completes a day (same
-    // count as getModuleProgressState's dayNumber for the next report;
-    // moment reports don't count).
-    const completedReports = await prisma.session.findMany({
+    // count as getModuleProgressState's dayNumber for the next report).
+    const completedReports = await prisma.session.count({
       where: { userId, moduleKey, analysisStatus: 'COMPLETED', moduleCoaching: { not: Prisma.DbNull } },
-      select: { moduleCoaching: true },
     });
-    const dayNumber = completedReports.filter(s => isModulePlanReport(s.moduleCoaching)).length + 1;
+    const dayNumber = completedReports + 1;
 
     if (!latest) return res.json({ session: null, activeStrategy, dayNumber, hasDifferences, specialPlayAdded, playSession, playLimitReached });
 
@@ -194,8 +192,7 @@ router.get('/:moduleKey/latest-session', async (req, res) => {
     const status = ready ? 'ready' : latest.analysisStatus === 'COMPLETED' ? null : 'processing';
 
     res.json({
-      // isMoment: a moment report, which doesn't complete a day.
-      session: status ? { id: latest.id, createdAt: latest.createdAt, status, isMoment: ready && !isModulePlanReport(latest.moduleCoaching) } : null,
+      session: status ? { id: latest.id, createdAt: latest.createdAt, status } : null,
       activeStrategy,
       dayNumber,
       hasDifferences,
@@ -212,11 +209,9 @@ router.get('/:moduleKey/latest-session', async (req, res) => {
 /**
  * GET /api/learn-modules/:moduleKey/days
  * The parent's analyzed reports in this module, one per day (report N is
- * day N, same counting as getModuleProgressState; moment reports aren't
- * days), with the plan each one
+ * day N, same counting as getModuleProgressState), with the plan each one
  * produced — so the app can show a past day's protocol (from the previous
- * day's plan) and open that day's report. moments: the moment reports
- * (screen-time moments that weren't endings), for the past reports list.
+ * day's plan) and open that day's report.
  */
 router.get('/:moduleKey/days', async (req, res) => {
   try {
@@ -227,12 +222,11 @@ router.get('/:moduleKey/days', async (req, res) => {
       return res.status(404).json({ error: 'Unknown module' });
     }
 
-    const reports = await prisma.session.findMany({
+    const sessions = await prisma.session.findMany({
       where: { userId, moduleKey, analysisStatus: 'COMPLETED', moduleCoaching: { not: Prisma.DbNull } },
       orderBy: { createdAt: 'asc' },
       select: { id: true, createdAt: true, moduleCoaching: true },
     });
-    const sessions = reports.filter(s => isModulePlanReport(s.moduleCoaching));
 
     res.json({
       days: sessions.map((s, i) => ({
@@ -247,9 +241,6 @@ router.get('/:moduleKey/days', async (req, res) => {
             }
           : null,
       })),
-      moments: reports
-        .filter(s => !isModulePlanReport(s.moduleCoaching))
-        .map(s => ({ reportId: s.id, createdAt: s.createdAt })),
     });
   } catch (error) {
     logError(error, { route: 'learn-modules#Get module days error', userId: req.userId });

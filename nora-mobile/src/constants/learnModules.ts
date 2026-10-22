@@ -169,10 +169,8 @@ export interface ModuleReportSection {
 
 export interface ModuleCoachingData {
   // 'narrative': free-form Day 1 write-up (`narrative`) shown as `report`'s
-  // sections. 'moment': a screen-time moment that isn't an ending — only
-  // `narrative` (short free-style coaching), no plan or progress. Absent: the
-  // fixed `coachingReport` cards (Day 2+, older Day 1).
-  format?: 'narrative' | 'moment';
+  // sections. Absent: the fixed `coachingReport` cards (Day 2+, older Day 1).
+  format?: 'narrative';
   narrative?: string;
   report?: { headline: string; sections: ModuleReportSection[] };
   emotionTimeline?: EmotionTimelinePoint[]; // drawn in the 'emotion' section
@@ -191,7 +189,7 @@ export interface ModuleCoachingData {
     };
     whatWeLearned: { title: string; description: string };
   };
-  myPlan?: ModulePlanData; // absent on 'moment' reports
+  myPlan: ModulePlanData;
   // dayNumber always; the rest on Day 2+ (judged against the strategy assigned the day before).
   progress?: {
     dayNumber: number;
@@ -212,13 +210,6 @@ export interface ModuleDay {
   reportId: string;
   createdAt: string;
   plan: { activeStrategy: string; activeStrategyId: number | null; protocolSteps: string[] } | null;
-}
-
-// A moment report (GET /api/learn-modules/:moduleKey/days `moments`): a
-// screen-time moment that wasn't an ending — listed in past reports, not a day.
-export interface ModuleMomentReport {
-  reportId: string;
-  createdAt: string;
 }
 
 // A strategy the parent has mastered (GET /api/learn-modules/:moduleKey/plan

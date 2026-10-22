@@ -189,16 +189,16 @@ async function validateSessionQuality(utterances, durationSeconds, roleIdentific
  * a silent toddler handing over the tablet is a real, good ending). One LLM
  * call classifies the recording; a parent practicing the routine alone
  * ("rehearsal") or anything with no screen time in it ("off_topic") is
- * rejected. Fails open: an unusable answer lets the recording through.
- * Returns 'screen_moment' for a screen-time moment that isn't an ending (the
- * child asking for a screen, a negotiation, a screen taken away), which gets
- * the short free-style report; else 'real_ending'.
+ * rejected. A screen-time moment that isn't an ending ("screen_moment": the
+ * child asking for a screen, a negotiation, a screen taken away) gets the
+ * same report as a real ending. Fails open: an unusable answer lets the
+ * recording through.
  * Throws SessionQualityError if the recording should not get a report.
  */
 async function validateModuleSessionQuality(session, transcriptText, childName, language = null) {
   const sessionId = session.id;
   const promptName = MODULE_COACHING_CONFIG[session.moduleKey]?.qualityCheckPrompt;
-  if (!promptName) return 'real_ending';
+  if (!promptName) return;
 
   if (!transcriptText.trim()) {
     throw new SessionQualityError(qualityMessage('moduleNoSpeech', language));
@@ -223,7 +223,7 @@ async function validateModuleSessionQuality(session, transcriptText, childName, 
     });
   } catch (error) {
     console.warn(`⚠️ [MODULE-QUALITY-GATE] Check failed, letting session ${sessionId.substring(0, 8)} through: ${error.message}`);
-    return 'real_ending';
+    return;
   }
 
   const { classification, child_audible: childAudible, reason, user_message: userMessage } = result || {};
@@ -236,7 +236,6 @@ async function validateModuleSessionQuality(session, transcriptText, childName, 
   if (classification === 'off_topic') {
     throw new SessionQualityError(message('moduleOffTopic'));
   }
-  return classification === 'screen_moment' && MODULE_COACHING_CONFIG[session.moduleKey].momentPrompt ? 'screen_moment' : 'real_ending';
 }
 
 // ============================================================================
@@ -836,9 +835,6 @@ const MODULE_COACHING_CONFIG = {
     chatPrompt:     'coach-screentime',
     // Quality gate: is this a real screen-time ending (validateModuleSessionQuality).
     qualityCheckPrompt: 'moduleQualityCheck-screentime',
-    // Screen-time moment that isn't an ending: short free-style report
-    // (generateModuleMomentReport), with `prompt`'s guideline section.
-    momentPrompt:   'coaching-screentime-moment',
     // Strategies in the Knowledge Base — valid active_strategy_id range.
     strategyCount:  10,
   },
@@ -855,24 +851,6 @@ function moduleKnowledgeBase(promptName) {
   }
   return text.slice(start, end).trim();
 }
-
-// The SCREENTIME GUIDELINE section of the Day 1 prompt, for the moment report.
-const GUIDELINE_START = '**SCREENTIME GUIDELINE**';
-const GUIDELINE_END = '**INTERACTION SCRIPT**';
-
-function moduleGuideline(promptName) {
-  const text = loadPrompt(promptName);
-  const start = text.indexOf(GUIDELINE_START);
-  const end = text.indexOf(GUIDELINE_END, start);
-  if (start < 0 || end < 0) {
-    throw new Error(`[MODULE-COACHING] Guideline markers not found in prompts/${promptName}.txt`);
-  }
-  return text.slice(start, end).replace(/=+\s*$/, '').trim();
-}
-
-// Moment reports (format 'moment') have no plan or progress: they don't count
-// as a session, advance the day or change My plan.
-const isModulePlanReport = (moduleCoaching) => !!moduleCoaching && moduleCoaching.format !== 'moment';
 
 // How the parent said a module recording went (session.moduleSelfReport),
 // as the prompt's PARENT_SELF_REPORT.
@@ -913,7 +891,7 @@ async function getModuleProgressState(session) {
     },
     orderBy: { createdAt: 'asc' },
     select: { moduleCoaching: true },
-  }).then(rows => rows.filter(r => isModulePlanReport(r.moduleCoaching)));
+  });
   const plans = prior.map(p => p.moduleCoaching).filter(c => c?.myPlan?.activeStrategy);
   if (plans.length === 0) return { dayNumber: prior.length + 1 };
 
@@ -970,7 +948,7 @@ function formatStrategyFeedback(rows) {
   }).join('\n');
 }
 
-// Module reports for this parent, oldest first (moment reports excluded).
+// Module reports for this parent, oldest first.
 function getModuleReports(userId, moduleKey, before = undefined) {
   return prisma.session.findMany({
     where: {
@@ -982,7 +960,7 @@ function getModuleReports(userId, moduleKey, before = undefined) {
     },
     orderBy: { createdAt: 'asc' },
     select: { id: true, createdAt: true, moduleCoaching: true },
-  }).then(rows => rows.filter(r => isModulePlanReport(r.moduleCoaching)));
+  });
 }
 
 // Strategy feedback given in the module chat after the report before
@@ -1141,59 +1119,21 @@ function specialPlayNotAddedText(declinedAt) {
  *   narrative Day 1 { format: 'narrative', narrative, report, myPlan, suggestedStrategies, progress }; progress
  *   carries dayNumber and, on Day 2+, practicedStrategy/daysOnStrategy/todaysOutcome/strategyMastered
  */
-// A learning/thinking difference reported in onboarding (anything but
-// "None that I know of") → special play time right away, not only once the
-// screen-time steps have failed.
-function moduleSpecialPlaytimeRule(name, screenTimeIntake) {
-  const differences = reportedDifferences(screenTimeIntake);
-  return differences.length
-    ? `  IMPORTANT for this family: in onboarding the parent reported this about ${name || 'the child'}: ${differences.join('; ')}. `
-      + 'Do NOT wait for the steps above to fail. In this report, introduce special play time (a few minutes every day of '
-      + 'child-led play where the parent follows the child\'s lead and praises, describes and reflects what the child does), '
-      + 'explain briefly why it helps a child like this, and suggest the parent start it right away, alongside the screen-time strategy.'
-    : '';
-}
-
-/**
- * Short free-style report for a screen-time moment that isn't an ending
- * (validateModuleSessionQuality → 'screen_moment'): one coaching call, under
- * 300 words, no sections, plan or progress.
- * @returns {Promise<{format: 'moment', narrative: string}>}
- */
-async function generateModuleMomentReport(moduleKey, transcriptText, childInfo, sessionId = null, language = null) {
-  const config = MODULE_COACHING_CONFIG[moduleKey];
-  const { name, ageYears, gender, traitsText, screenTimeIntake } = childInfo;
-  const prompt = loadPromptWithVariables(config.momentPrompt, {
-    SCREENTIME_GUIDELINE: moduleGuideline(config.prompt)
-      .split('{{SPECIAL_PLAYTIME_RULE}}').join(moduleSpecialPlaytimeRule(name, screenTimeIntake)),
-    CHILD_NAME:         name || 'the child',
-    CHILD_AGE:          ageYears != null ? `${ageYears} years` : 'unknown',
-    CHILD_PRONOUNS:     CHILD_PRONOUNS[gender] || CHILD_PRONOUNS.UNKNOWN,
-    CHILD_TRAITS:       traitsText || 'none reported',
-    ONBOARDING_ANSWERS: formatScreenTimeIntakeForPrompt(screenTimeIntake) || 'none provided',
-    TRANSCRIPT:         transcriptText,
-  });
-  const languageInstruction = getLanguageInstruction(language);
-  const promptFinal = languageInstruction ? `${prompt}\n\n${languageInstruction}` : prompt;
-  const coachingModel = process.env.GEMINI_STREAMING_MODEL || undefined;
-
-  console.log(`📊 [MODULE-COACHING] Generating ${moduleKey} moment report${coachingModel ? ` (${coachingModel})` : ''}...`);
-  const narrative = (await llmCall(withChildNameDirective(promptFinal, name), {
-    profile: 'coaching-narrative',
-    ...(coachingModel ? { model: coachingModel } : {}),
-    label:   `module-coaching-${moduleKey}-moment`,
-    sessionId,
-  })).trim();
-  if (!narrative) throw new Error('Module moment report is empty');
-  return { format: 'moment', narrative };
-}
-
 async function generateModuleCoaching(moduleKey, transcriptText, childInfo, sessionId = null, language = null, progressState = { dayNumber: 1 }, selfReport = null) {
   const config = MODULE_COACHING_CONFIG[moduleKey];
   if (!config) throw new PermanentFailureError(`Unknown module: ${moduleKey}`, 'An error occurred while analyzing your recording. Please try again.');
 
   const { name, ageYears, gender, traitsText, sessionNotes, screenTimeIntake } = childInfo;
-  const specialPlaytimeRule = moduleSpecialPlaytimeRule(name, screenTimeIntake);
+  // A learning/thinking difference reported in onboarding (anything but
+  // "None that I know of") → special play time right away, not only once the
+  // screen-time steps have failed.
+  const differences = reportedDifferences(screenTimeIntake);
+  const specialPlaytimeRule = differences.length
+    ? `  IMPORTANT for this family: in onboarding the parent reported this about ${name || 'the child'}: ${differences.join('; ')}. `
+      + 'Do NOT wait for the steps above to fail. In this report, introduce special play time (a few minutes every day of '
+      + 'child-led play where the parent follows the child\'s lead and praises, describes and reflects what the child does), '
+      + 'explain briefly why it helps a child like this, and suggest the parent start it right away, alongside the screen-time strategy.'
+    : '';
   const isFollowup = !!progressState.currentStrategy;
   // Narrative modules use the Day 1 prompt every day; on Day 2+ it learns the
   // parent's progress through the session notes, and the format call judges
@@ -1371,27 +1311,14 @@ function cleanEmotionChart(timeline, callouts, transcriptText) {
  * speaker roles are identified. Skips the PCIT quality gate, DPICS coding and
  * CDI coaching (none of which fit a screen-time ending) and stores the module
  * report + plan on session.moduleCoaching — unless the module's own quality
- * gate rejects the recording (validateModuleSessionQuality). A screen-time
- * moment that isn't an ending gets the short moment report instead.
+ * gate rejects the recording (validateModuleSessionQuality).
  */
 async function analyzeModuleSession(session, user, childName, childAge, primaryLanguage) {
   const sessionId = session.id;
   const utterances = await getUtterances(sessionId); // re-read: roles were just assigned
   const transcriptText = formatUtterancesWithTimestamps(utterances);
 
-  const classification = await validateModuleSessionQuality(session, transcriptText, childName, primaryLanguage);
-
-  if (classification === 'screen_moment') {
-    const momentReport = await generateModuleMomentReport(
-      session.moduleKey,
-      transcriptText,
-      { name: childName, ageYears: childAge, gender: user.childGender, traitsText: moduleTraitsText(user), screenTimeIntake: user.screenTimeIntake },
-      sessionId,
-      primaryLanguage,
-    );
-    await storeModuleCoaching(sessionId, momentReport);
-    return;
-  }
+  await validateModuleSessionQuality(session, transcriptText, childName, primaryLanguage);
 
   const sessionNotes = await moduleStrategyFeedbackNotes(session);
 
@@ -3497,7 +3424,6 @@ module.exports = {
   generateModuleCoaching,
   getModuleChatPrompt,
   LEARN_MODULE_KEYS: new Set(Object.keys(MODULE_COACHING_CONFIG)),
-  isModulePlanReport,
   MODULE_SELF_REPORTS,
   getParentSkillProgress,
   dpicsCacheKey,

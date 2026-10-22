@@ -1666,7 +1666,6 @@
         "lockedToast": "完成目前目標後即可解鎖。",
         "pastReports": "過往報告",
         "sessionReport": "第 {{session}} 次報告",
-        "momentReport": "螢幕時間時刻報告",
         "pastReportsEmpty": "你過往錄音的報告會顯示在這裡。",
         "detailTitle": "目前計畫"
       },
@@ -2768,10 +2767,6 @@
   },
   "moduleReport": {
     "nextGrowthFocus": "下一步成長重點",
-    "moment": {
-      "hero": "這次錄到的不是螢幕時間結束的時刻，但也是和{{childName}}之間真實的螢幕時間時刻。以下是值得關注的地方。",
-      "title": "關於這一刻的指導"
-    },
     "trySaying": "試著這樣說",
     "reflectWithNora": "和 Nora 聊聊",
     "reflectDraft": "關於報告裡的「{{title}}」：",

@@ -612,16 +612,12 @@ export const ModuleReportScreen: React.FC = () => {
   // Learn module report — from the module coaching call, not the PCIT
   // pipeline. Day 1 is a free-form write-up split into sections by a format
   // call (format 'narrative': coaching-screentime_1st*.txt); Day 2+ and older
-  // Day 1 reports are fixed cards (coachingReport: coaching-screentime*.txt);
-  // a screen-time moment that isn't an ending is one free-style card
-  // (format 'moment': coaching-screentime-moment.txt).
+  // Day 1 reports are fixed cards (coachingReport: coaching-screentime*.txt).
   const { moduleCoaching } = reportData as unknown as { moduleCoaching?: ModuleCoachingData };
   if (moduleCoaching) {
     const narrativeReport = moduleCoaching.format === 'narrative' ? moduleCoaching.report : undefined;
-    const momentReport = moduleCoaching.format === 'moment' ? moduleCoaching.narrative : undefined;
     const coachingReport = moduleCoaching.coachingReport;
-    const heroText = momentReport !== undefined ? t('moduleReport.moment.hero', { childName })
-      : narrativeReport ? narrativeReport.headline : coachingReport?.introduction;
+    const heroText = narrativeReport ? narrativeReport.headline : coachingReport?.introduction;
     // Outburst graph goes in the 'emotion' section; the first section if the formatter tagged none.
     const emotionTimeline = moduleCoaching.emotionTimeline ?? [];
     const emotionSectionIndex = Math.max(0, narrativeReport?.sections.findIndex(s => s.kind === 'emotion') ?? 0);
@@ -648,12 +644,7 @@ export const ModuleReportScreen: React.FC = () => {
             <Image source={REPORT_DETAIL_DRAGON} style={styles.moduleHeroDragon} resizeMode="contain" />
           </View>
 
-          {momentReport !== undefined ? (
-            // Screen-time moment that isn't an ending: one free-style card
-            <ReportCard icon="chatbubble-ellipses" title={t('moduleReport.moment.title')}>
-              <MarkdownText style={styles.moduleBody}>{momentReport}</MarkdownText>
-            </ReportCard>
-          ) : narrativeReport ? (
+          {narrativeReport ? (
             <>
             {/* One card per section of the write-up, in the coach's order */}
             {narrativeReport.sections.map((section, i) => {

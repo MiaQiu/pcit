@@ -34,7 +34,7 @@ import { LearnModulePlanOverview } from './LearnModulePlanOverview';
 import type { CalendarRecording } from '../components/ReportsCalendar';
 import { ModuleLearnScreen } from './ModuleLearnScreen';
 import { ProfileScreen } from './ProfileScreen';
-import type { LearnModuleKey, ModuleDay, ModuleMomentReport } from '../constants/learnModules';
+import type { LearnModuleKey, ModuleDay } from '../constants/learnModules';
 import { LEARN_MODULES, LEARN_MODULE_TABS, LearnModuleAction, LearnModuleConfig, LearnModuleTabKey, getGoalProgress } from '../constants/learnModules';
 import { genderContext } from './onboarding/screenTime/screenTimeFlow';
 
@@ -151,7 +151,7 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   const uploadProcessing = useUploadProcessing();
   const [childName, setChildName] = useState('');
   const [childGender, setChildGender] = useState<string | null>(null);
-  const [latestSession, setLatestSession] = useState<{ id: string; createdAt: string; status: 'processing' | 'ready'; isMoment?: boolean } | null>(null);
+  const [latestSession, setLatestSession] = useState<{ id: string; createdAt: string; status: 'processing' | 'ready' } | null>(null);
   // Next day to complete (analyzed reports + 1), from the server.
   const [serverDay, setServerDay] = useState(1);
   // Day 2+ "Play time recording" card, for parents who reported a learning
@@ -167,8 +167,6 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   const [playLimitReached, setPlayLimitReached] = useState(false);
   // Analyzed reports in day order (report N = day N) with the plan each produced.
   const [days, setDays] = useState<ModuleDay[]>([]);
-  // Moment reports (not days), for My plan's past reports.
-  const [moments, setMoments] = useState<ModuleMomentReport[]>([]);
   // A specific day to show (route param); null = today.
   const viewDayChoice = dayParam ?? null;
 
@@ -192,8 +190,7 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   const unreadReport = latestSession?.status === 'ready' && !readReportIds.includes(latestSession.id)
     ? latestSession
     : null;
-  // A moment report (screen-time moment, not an ending) doesn't complete a day.
-  const realDay = unreadReport && !unreadReport.isMoment ? Math.max(1, serverDay - 1) : serverDay;
+  const realDay = unreadReport ? Math.max(1, serverDay - 1) : serverDay;
   const currentDay = viewDayChoice ?? realDay;
   // past: browse that day's protocol + report. today: the live flow.
   // future (testers only): record / check in as if it were that day.
@@ -239,10 +236,7 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
   const loadDays = useCallback(() => {
     authService.authenticatedRequest(`${API_URL}/api/learn-modules/${moduleKey}/days`)
       .then(res => (res.ok ? res.json() : null))
-      .then(data => {
-        if (data?.days) setDays(data.days);
-        if (data?.moments) setMoments(data.moments);
-      })
+      .then(data => { if (data?.days) setDays(data.days); })
       .catch(err => console.error('Failed to load module days:', err));
   }, [authService, moduleKey]);
   // full: also the past reports (days, play recordings) — not on every
@@ -550,7 +544,6 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
             showToast(t('learnV2.moduleScreenV2.planOverview.lockedToast'), 'info');
           }}
           days={days}
-          moments={moments}
           playRecordings={showPlayCard ? playRecordings : []}
           onOpenPlayReport={recordingId => {
             amplitudeService.trackEvent('Learn Module Plan Past Play Report Tapped', { moduleKey, recordingId });
@@ -560,11 +553,6 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
           onOpenReport={day => {
             amplitudeService.trackEvent('Learn Module Plan Past Report Tapped', { moduleKey, day: day.dayNumber, recordingId: day.reportId });
             navigation.push('ModuleReport', { recordingId: day.reportId, moduleKey });
-          }}
-          onOpenMoment={recordingId => {
-            amplitudeService.trackEvent('Learn Module Plan Past Moment Report Tapped', { moduleKey, recordingId });
-            markReportRead(recordingId);
-            navigation.push('ModuleReport', { recordingId, moduleKey });
           }}
         />
       ) : (

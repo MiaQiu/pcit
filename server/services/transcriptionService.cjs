@@ -344,10 +344,16 @@ async function transcribeRecording(sessionId, userId, storagePath, durationSecon
   console.log(`🎤 [TRANSCRIBE-START] Storage: ${storagePath}, User: ${userId.substring(0, 8)}`);
 
   // Fetch child's name from user for keyterms (decrypt since it's stored encrypted)
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { childName: true }
-  });
+  const [user, session] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { childName: true }
+    }),
+    prisma.session.findUnique({
+      where: { id: sessionId },
+      select: { moduleKey: true }
+    }),
+  ]);
   const childName = user?.childName ? decryptSensitiveData(user.childName) : null;
 
   // Get audio file from S3
@@ -414,8 +420,14 @@ async function transcribeRecording(sessionId, userId, storagePath, durationSecon
       throw new Error('No utterances parsed from ElevenLabs response');
     }
 
-    // Re-segment utterances according to DPICS Complete Thought rules
-    utterances = await reSegmentUtterances(utterances, transcriptWords);
+    // Re-segment utterances according to DPICS Complete Thought rules.
+    // Learn module recordings (e.g. screen-time endings) skip it: their report
+    // reads the transcript as prose, with no DPICS coding.
+    if (session?.moduleKey) {
+      console.log(`⏭️ [DPICS-SEGMENTER] Skipped for ${session.moduleKey} module session ${sessionId.substring(0, 8)}`);
+    } else {
+      utterances = await reSegmentUtterances(utterances, transcriptWords);
+    }
 
     // Format transcript for storage
     transcriptFormatted = formatUtterancesAsText(utterances);

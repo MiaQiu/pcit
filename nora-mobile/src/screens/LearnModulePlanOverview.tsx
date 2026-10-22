@@ -18,7 +18,7 @@ import { COLORS, FONTS } from '../constants/assets';
 import { TrackedTouchable } from '../components/TrackedTouchable';
 import { CalendarRecording, ReportsCalendar } from '../components/ReportsCalendar';
 import { useModulePlan } from './LearnModulePlanView';
-import { getGoalProgress, GoalProgress, LearnModuleKey, ModuleDay, ModuleMomentReport } from '../constants/learnModules';
+import { getGoalProgress, GoalProgress, LearnModuleKey, ModuleDay } from '../constants/learnModules';
 
 const H_PAD = 20;
 const PURPLE_TINT = '#F1EBFB';
@@ -33,13 +33,10 @@ interface Props {
   onLockedGoal: (goal: GoalProgress) => void;
   // The module's analyzed reports, one per day (GET /api/learn-modules/:moduleKey/days).
   days: ModuleDay[];
-  // Moment reports (screen-time moments that weren't endings), not days.
-  moments: ModuleMomentReport[];
   // Completed play time recordings (special play); empty when it's off.
   playRecordings: CalendarRecording[];
   onOpenReport: (day: ModuleDay) => void;
   onOpenPlayReport: (recordingId: string) => void;
-  onOpenMoment: (recordingId: string) => void;
 }
 
 const GoalCard: React.FC<{
@@ -111,7 +108,7 @@ const GoalCard: React.FC<{
   );
 };
 
-export const LearnModulePlanOverview: React.FC<Props> = ({ moduleKey, onOpenPlan, onLockedGoal, days, moments, playRecordings, onOpenReport, onOpenPlayReport, onOpenMoment }) => {
+export const LearnModulePlanOverview: React.FC<Props> = ({ moduleKey, onOpenPlan, onLockedGoal, days, playRecordings, onOpenReport, onOpenPlayReport }) => {
   const { t } = useTranslation();
   const { masteredStrategies } = useModulePlan(moduleKey);
   const goals = getGoalProgress(moduleKey, masteredStrategies.map(m => m.strategyId));
@@ -143,8 +140,8 @@ export const LearnModulePlanOverview: React.FC<Props> = ({ moduleKey, onOpenPlan
       <View style={styles.pastReports}>
         <ReportsCalendar
           title={t('learnV2.moduleScreenV2.planOverview.pastReports')}
-          subtitle={days.length + moments.length + playRecordings.length === 0 ? t('learnV2.moduleScreenV2.planOverview.pastReportsEmpty') : undefined}
-          recordingDates={[...days, ...moments, ...playRecordings].map(r => new Date(r.createdAt))}
+          subtitle={days.length + playRecordings.length === 0 ? t('learnV2.moduleScreenV2.planOverview.pastReportsEmpty') : undefined}
+          recordingDates={[...days, ...playRecordings].map(r => new Date(r.createdAt))}
           recordings={[
             ...days.map(day => ({
               id: day.reportId,
@@ -152,13 +149,6 @@ export const LearnModulePlanOverview: React.FC<Props> = ({ moduleKey, onOpenPlan
               analysisStatus: 'COMPLETED',
               moduleKey,
               label: t('learnV2.moduleScreenV2.planOverview.sessionReport', { session: day.dayNumber }),
-            })),
-            ...moments.map(moment => ({
-              id: moment.reportId,
-              createdAt: moment.createdAt,
-              analysisStatus: 'COMPLETED',
-              moduleKey,
-              label: t('learnV2.moduleScreenV2.planOverview.momentReport'),
             })),
             ...playRecordings,
           ]}
@@ -169,7 +159,6 @@ export const LearnModulePlanOverview: React.FC<Props> = ({ moduleKey, onOpenPlan
             }
             const day = days.find(d => d.reportId === recordingId);
             if (day) onOpenReport(day);
-            else if (moments.some(m => m.reportId === recordingId)) onOpenMoment(recordingId);
           }}
         />
       </View>

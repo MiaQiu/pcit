@@ -169,13 +169,14 @@ const PROFILES = {
     output:      'json',
   },
 
-  // Learn module gate: also writes the parent-facing reason, and thinking
-  // alone can take ~500 tokens.
+  // Learn module gate: also writes the parent-facing reason. Thinking counts
+  // against maxTokens and took 1,965 of 2,048 on a 2-min screen-time clip
+  // (dev session 956f34aa); recordings run up to 30 min.
   'module-quality-check': {
     model:       'gemini',
     temperature: 0,
-    maxTokens:   2048,
-    timeout:     30_000,
+    maxTokens:   8192,
+    timeout:     60_000,
     output:      'json',
   },
 
