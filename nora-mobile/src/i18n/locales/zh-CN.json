@@ -1636,10 +1636,18 @@
     },
     "moduleScreenV2": {
       "goalLabel": "目标 {{number}}",
-      "checkInEyebrow": "每日打卡",
-      "checkInTitle": "和你的教练每日打卡",
-      "checkInBody": "分享最近的情况、提问，或获取快速建议。",
-      "openChat": "和 Nora 聊天",
+      "checkIn": {
+        "eyebrow": "每日打卡",
+        "title": "和你的教练每日打卡",
+        "body": "分享最近的情况、提问，或获取快速建议。",
+        "button": "和 Nora 聊天"
+      },
+      "checkInFirstTime": {
+        "eyebrow": "从这里开始",
+        "title": "和 Nora 打个招呼",
+        "body": "不知道从哪里开始？跟 Nora 说说家里最近的情况就好。",
+        "button": "开始和 Nora 聊天"
+      },
       "practiceNextTitle": "录下下一次屏幕时间结束",
       "practiceBody": "Nora 会陪着你。",
       "cheatSheet": "上次的速查小抄",
@@ -1658,6 +1666,7 @@
         "lockedToast": "完成当前目标后即可解锁。",
         "pastReports": "过往报告",
         "dayReport": "第 {{day}} 天报告",
+        "pastReportsEmpty": "你过往录音的报告会显示在这里。",
         "detailTitle": "当前计划"
       },
       "playTime": {

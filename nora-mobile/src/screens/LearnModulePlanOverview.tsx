@@ -136,33 +136,32 @@ export const LearnModulePlanOverview: React.FC<Props> = ({ moduleKey, onOpenPlan
         />
       ))}
 
-      {/* Past reports */}
-      {days.length + playRecordings.length > 0 && (
-        <View style={styles.pastReports}>
-          <ReportsCalendar
-            title={t('learnV2.moduleScreenV2.planOverview.pastReports')}
-            recordingDates={[...days, ...playRecordings].map(r => new Date(r.createdAt))}
-            recordings={[
-              ...days.map(day => ({
-                id: day.reportId,
-                createdAt: day.createdAt,
-                analysisStatus: 'COMPLETED',
-                moduleKey,
-                label: t('learnV2.moduleScreenV2.planOverview.dayReport', { day: day.dayNumber }),
-              })),
-              ...playRecordings,
-            ]}
-            onReportPress={(recordingId, reportModuleKey) => {
-              if (!reportModuleKey) {
-                onOpenPlayReport(recordingId);
-                return;
-              }
-              const day = days.find(d => d.reportId === recordingId);
-              if (day) onOpenReport(day);
-            }}
-          />
-        </View>
-      )}
+      {/* Past reports — shown before the first report too, with a note that they'll appear here */}
+      <View style={styles.pastReports}>
+        <ReportsCalendar
+          title={t('learnV2.moduleScreenV2.planOverview.pastReports')}
+          subtitle={days.length + playRecordings.length === 0 ? t('learnV2.moduleScreenV2.planOverview.pastReportsEmpty') : undefined}
+          recordingDates={[...days, ...playRecordings].map(r => new Date(r.createdAt))}
+          recordings={[
+            ...days.map(day => ({
+              id: day.reportId,
+              createdAt: day.createdAt,
+              analysisStatus: 'COMPLETED',
+              moduleKey,
+              label: t('learnV2.moduleScreenV2.planOverview.dayReport', { day: day.dayNumber }),
+            })),
+            ...playRecordings,
+          ]}
+          onReportPress={(recordingId, reportModuleKey) => {
+            if (!reportModuleKey) {
+              onOpenPlayReport(recordingId);
+              return;
+            }
+            const day = days.find(d => d.reportId === recordingId);
+            if (day) onOpenReport(day);
+          }}
+        />
+      </View>
     </ScrollView>
   );
 };

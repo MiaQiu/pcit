@@ -1595,10 +1595,18 @@
     },
     "moduleScreenV2": {
       "goalLabel": "Goal {{number}}",
-      "checkInEyebrow": "Daily check in",
-      "checkInTitle": "Daily check in with your coach",
-      "checkInBody": "Share how things have been, ask questions, or get quick advice.",
-      "openChat": "Open chat with Nora",
+      "checkIn": {
+        "eyebrow": "Daily check in",
+        "title": "Daily check in with your coach",
+        "body": "Share how things have been, ask questions, or get quick advice.",
+        "button": "Open chat with Nora"
+      },
+      "checkInFirstTime": {
+        "eyebrow": "Start here",
+        "title": "Say hi to Nora",
+        "body": "Not sure where to begin? Just tell Nora how things are going at home.",
+        "button": "Start chatting with Nora"
+      },
       "practiceNextTitle": "Record the next screen time ending",
       "practiceBody": "Nora will be there for you.",
       "cheatSheet": "Cheat Sheet from Last Session",
@@ -1617,6 +1625,7 @@
         "lockedToast": "Finish your current goal to unlock this one.",
         "pastReports": "Past reports",
         "dayReport": "Day {{day}} report",
+        "pastReportsEmpty": "Your past recording reports will be displayed here.",
         "detailTitle": "Current plan"
       },
       "playTime": {

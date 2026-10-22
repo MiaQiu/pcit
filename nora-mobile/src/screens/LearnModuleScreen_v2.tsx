@@ -401,16 +401,18 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startPlayRecordingAt]);
 
-  // Daily check-in with the coach: first card on every Today.
+  // Daily check-in with the coach: first card on every Today. First time, it's
+  // a "start here" invitation instead (the user doesn't know what to say yet).
+  const checkInKey = isFirstTime ? 'learnV2.moduleScreenV2.checkInFirstTime' : 'learnV2.moduleScreenV2.checkIn';
   const checkInCard = (
     <View style={[styles.card, styles.v2Card]}>
       <View style={[styles.v2CardRow, artRow(CHECK_IN_ART_SIZE.height, SOFT_BUTTON_GAP)]}>
         {/* Behind the text (rendered first, absolutely positioned); text may overlap it */}
         <Image source={CHECK_IN_ART} style={[styles.v2CardArt, CHECK_IN_ART_SIZE, artBottom(SOFT_BUTTON_GAP)]} resizeMode="contain" />
         <View style={styles.v2CardText}>
-          <Text style={styles.eyebrow}>{t('learnV2.moduleScreenV2.checkInEyebrow')}</Text>
-          <Text style={styles.v2CardTitle}>{t('learnV2.moduleScreenV2.checkInTitle')}</Text>
-          <Text style={styles.v2CardBody}>{t('learnV2.moduleScreenV2.checkInBody')}</Text>
+          <Text style={styles.eyebrow}>{t(`${checkInKey}.eyebrow`)}</Text>
+          <Text style={styles.v2CardTitle}>{t(`${checkInKey}.title`)}</Text>
+          <Text style={[styles.v2CardBody, isFirstTime && styles.checkInFirstTimeBody]}>{t(`${checkInKey}.body`)}</Text>
         </View>
       </View>
       <TrackedTouchable analyticsId={`Learn Module ${moduleKey}: openCoachChat`}
@@ -422,7 +424,7 @@ export const LearnModuleScreen_v2: React.FC<Props> = ({ homeModuleKey }) => {
         activeOpacity={0.8}
       >
         <Ionicons name="chatbubble-ellipses" size={20} color={COLORS.mainPurple} />
-        <Text style={styles.softButtonText}>{t('learnV2.moduleScreenV2.openChat')}</Text>
+        <Text style={styles.softButtonText}>{t(`${checkInKey}.button`)}</Text>
         <Ionicons name="arrow-forward" size={18} color={COLORS.mainPurple} />
       </TrackedTouchable>
     </View>
@@ -855,6 +857,7 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     letterSpacing: -0.4,
     color: COLORS.textDark,
+  checkInFirstTimeBody: { width: undefined, marginRight: CHECK_IN_ART_SIZE.width - 10 },
     marginTop: 6,
   },
   // One row: chips shrink (text scales down) rather than wrap on narrow screens.
