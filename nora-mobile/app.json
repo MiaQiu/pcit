@@ -2,7 +2,7 @@
   "expo": {
     "name": "Nora",
     "slug": "nora-mobile",
-    "version": "1.0.11",
+    "version": "1.0.13",
     "main": "index.ts",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -28,7 +28,7 @@
           "fb"
         ]
       },
-      "buildNumber": "106"
+      "buildNumber": "114"
     },
     "android": {
       "adaptiveIcon": {
@@ -46,7 +46,7 @@
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
         "android.permission.POST_NOTIFICATIONS"
       ],
-      "versionCode": 111
+      "versionCode": 114
     },
     "web": {
       "favicon": "./assets/favicon.png"

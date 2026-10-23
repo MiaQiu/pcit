@@ -1,0 +1,142 @@
+{
+  "report": {
+    "headline": "Hello. I know how exhausting it can be when screen time ends in a loud meltdown, especially when you are trying your best to manage it while juggling other things. It is incredibly stressful to hear your child cry, but you are doing a great job trying to set boundaries. Let's look at how we can make these transitions smoother for both of you.",
+    "sections": [
+      {
+        "kind": "win",
+        "title": "What Went Well",
+        "body": "You did a wonderful job giving a direct, specific command initially (\"Hand it over, please\").\n\nMost importantly, even though Jd protested loudly, you held the boundary and did not give the phone back. Staying consistent when your child is upset is incredibly hard, but you stayed firm and didn't cave in!"
+      },
+      {
+        "kind": "emotion",
+        "title": "Emotion Timeline",
+        "body": "*Pattern:* Jd started with mild verbal protests, which quickly escalated into stomping and loud crying once the phone was physically removed. The meltdown was sustained and prolonged because of the ongoing verbal back-and-forth, sibling interference, and lengthy explanations/negotiations. \n\n*Core focus for next session:* **Co-regulate first, then teach (and avoid nagging).** When Jd is highly emotional, his \"thinking brain\" (prefrontal cortex) is offline. Explaining rules, negotiating (\"You have to be a good boy\"), or using threats overstimulates him and actually fuels the meltdown. Next time, once the boundary is set and the phone is away, stop explaining. Offer calm, quiet support by naming his feeling (\"You are mad screen time is over\"), staying close, and holding the limit without extra words."
+      },
+      {
+        "kind": "strategies",
+        "title": "Other Best Practices",
+        "body": "- Give simple countdown warnings\n- Use a timer to make it neutral\n- Redirect the child to a bridging activity and model it"
+      }
+    ]
+  },
+  "emotionTimeline": [
+    {
+      "seconds": 3,
+      "level": 1,
+      "label": "Protesting with words about video",
+      "added": false
+    },
+    {
+      "seconds": 9,
+      "level": 1,
+      "label": "Bargaining for one more minute",
+      "added": false
+    },
+    {
+      "seconds": 12,
+      "level": 1.5,
+      "label": "Phone physically removed",
+      "added": true
+    },
+    {
+      "seconds": 21,
+      "level": 2,
+      "label": "Whining and stomping feet",
+      "added": false
+    },
+    {
+      "seconds": 27,
+      "level": 3,
+      "label": "Loud crying starts",
+      "added": false
+    },
+    {
+      "seconds": 51,
+      "level": 3,
+      "label": "Repeatedly yelling for the phone",
+      "added": false
+    },
+    {
+      "seconds": 87,
+      "level": 2.5,
+      "label": "Brief pause then yelling resumes",
+      "added": false
+    },
+    {
+      "seconds": 135,
+      "level": 3.5,
+      "label": "Continuous yelling for the phone",
+      "added": false
+    }
+  ],
+  "emotionCallouts": [
+    {
+      "seconds": 12,
+      "label": "Phone physically removed",
+      "kind": "trigger"
+    },
+    {
+      "seconds": 84,
+      "label": "Ongoing verbal back-and-forth",
+      "kind": "fuel"
+    }
+  ],
+  "recommendedStrategies": [
+    "countdown",
+    "timer",
+    "bridging"
+  ],
+  "myPlan": {
+    "activeStrategyId": 8,
+    "activeStrategy": "Co-regulate first, then teach",
+    "whyItWorks": "When Jd is highly emotional, his prefrontal cortex is offline. Explaining, negotiating, or lecturing overstimulates him and fuels the meltdown.",
+    "protocolSteps": [
+      "Set the boundary and put the screen away firmly without continuing to negotiate.",
+      "Name Jd's feeling with calm, quiet support (\"You are mad screen time is over\").",
+      "Stay physically close and hold the limit completely silent without extra words or explanations."
+    ],
+    "focusAreas": [
+      {
+        "title": "Stop explaining and lecturing",
+        "detail": "Once phone is away, stop explaining rules, negotiating, or making threats."
+      },
+      {
+        "title": "Name the feeling quietly",
+        "detail": "\"You are mad screen time is over.\""
+      },
+      {
+        "title": "Stay close in silence",
+        "detail": "Offer calm, quiet presence and hold the limit without extra words."
+      }
+    ],
+    "crisisTool": {
+      "isNeeded": true,
+      "title": "Meltdown Co-Regulation",
+      "action": "Stay close, stop talking or explaining, and hold the boundary silently.",
+      "script": "You are mad screen time is over."
+    }
+  },
+  "suggestedStrategies": [
+    {
+      "name": "Co-regulate first, then teach",
+      "description": "Offer calm, quiet support by naming his feeling and staying close without extra words."
+    },
+    {
+      "name": "Give simple countdown warnings",
+      "description": "Give short advance warnings to help prepare Jd before screen time ends."
+    },
+    {
+      "name": "Use a timer to make it neutral",
+      "description": "Let a visual or audible timer signal the ending so the limit feels fair and neutral."
+    },
+    {
+      "name": "Redirect to bridging activity",
+      "description": "Start playing a fun hands-on activity and model it to help shift his focus."
+    }
+  ],
+  "format": "narrative",
+  "narrative": "Hello. I know how exhausting it can be when screen time ends in a loud meltdown, especially when you are trying your best to manage it while juggling other things. It is incredibly stressful to hear your child cry, but you are doing a great job trying to set boundaries. Let's look at how we can make these transitions smoother for both of you.\n\n**What Went Well**\nYou did a wonderful job giving a direct, specific command initially (\"Hand it over, please\"). Most importantly, even though Jd protested loudly, you held the boundary and did not give the phone back. Staying consistent when your child is upset is incredibly hard, but you stayed firm and didn't cave in!\n\n**Emotion Timeline**\n- [00:03] Level 1.0: Protesting with words about video\n- [00:09] Level 1.0: Bargaining for one more minute\n- [00:21] Level 2.0: Whining and stomping feet\n- [00:27] Level 3.0: Loud crying starts\n- [00:51] Level 3.0: Repeatedly yelling for the phone\n- [01:27] Level 2.5: Brief pause then yelling resumes\n- [02:15] Level 3.5: Continuous yelling for the phone\n\n*Pattern:* Jd started with mild verbal protests, which quickly escalated into stomping and loud crying once the phone was physically removed. The meltdown was sustained and prolonged because of the ongoing verbal back-and-forth, sibling interference, and lengthy explanations/negotiations. \n\n*Core focus for next session:* **Co-regulate first, then teach (and avoid nagging).** When Jd is highly emotional, his \"thinking brain\" (prefrontal cortex) is offline. Explaining rules, negotiating (\"You have to be a good boy\"), or using threats overstimulates him and actually fuels the meltdown. Next time, once the boundary is set and the phone is away, stop explaining. Offer calm, quiet support by naming his feeling (\"You are mad screen time is over\"), staying close, and holding the limit without extra words. \n\n**Other Best Practices**\nGive simple countdown warnings\nUse a timer to make it neutral\nRedirect the child to a bridging activity and model it",
+  "progress": {
+    "dayNumber": 1
+  }
+}

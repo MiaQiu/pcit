@@ -8,9 +8,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
-import { PersonalizingProgressHeader } from '../../components/PersonalizingProgressHeader';
+import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
 import { useAuthService } from '../../contexts/AppContext';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { saveOnboardingFields } from '../../utils/onboardingDraft';
+import { OnboardingFooter } from '../../components/OnboardingFooter';
 
 export const DiagnosisStatusScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -19,12 +21,14 @@ export const DiagnosisStatusScreen: React.FC = () => {
   const childName = data.childName || 'your child';
 
   const handleBeforeNavigate = async (selectedValue: any) => {
-    authService.completeOnboarding({ diagnosisStatus: selectedValue }).catch(() => {});
+    saveOnboardingFields(authService, { diagnosisStatus: selectedValue });
   };
 
   return (
     <MultipleChoiceScreen
-      headerOverride={<PersonalizingProgressHeader step={1} totalSteps={4} />}
+      headerOverride={
+        <OnboardingProgressHeader phase={1} step={1} totalSteps={2} singlePhase />
+      }
       headerText=""
       title={t('onboarding.diagnosisStatus.title', { childName })}
       options={[
@@ -39,6 +43,7 @@ export const DiagnosisStatusScreen: React.FC = () => {
       multiSelect={false}
       screenName="diagnosis_status"
       screenStep={46}
+      renderButtons={(buttonProps) => <OnboardingFooter {...buttonProps} />}
       onBeforeNavigate={handleBeforeNavigate}
     />
   );

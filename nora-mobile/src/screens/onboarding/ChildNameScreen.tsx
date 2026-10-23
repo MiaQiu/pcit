@@ -10,11 +10,12 @@ import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { OnboardingLayout } from '../../components/OnboardingLayout';
-import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
 import { OnboardingTextInput } from '../../components/OnboardingTextInput';
-import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
+import { OnboardingFooter } from '../../components/OnboardingFooter';
 import amplitudeService from '../../services/amplitudeService';
 import { useAuthService } from '../../contexts/AppContext';
+import { saveOnboardingFields } from '../../utils/onboardingDraft';
+import { goBackTo } from '../../navigation/goBackTo';
 
 export const ChildNameScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -29,25 +30,19 @@ export const ChildNameScreen: React.FC = () => {
     if (childName.trim()) {
       updateData({ childName: childName.trim() });
       amplitudeService.trackOnboardingStepCompleted('child_name', 14);
-      authService.completeOnboarding({ childName: childName.trim() }).catch(() => {});
+      saveOnboardingFields(authService, { childName: childName.trim() });
       navigation.navigate('ChildGender');
     }
   };
 
   const handleBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigation.replace('Relationship');
-    }
+    goBackTo(navigation, 'Relationship');
   };
 
   const isValid = childName.trim().length > 0;
 
   return (
     <OnboardingLayout useKeyboardAvoid>
-      <OnboardingProgressHeader phase={1} step={3} totalSteps={7} />
-
       <OnboardingTextInput
         title={t('onboarding.childName.title')}
         value={childName}
@@ -57,7 +52,8 @@ export const ChildNameScreen: React.FC = () => {
 
       <View style={styles.spacer} />
 
-      <OnboardingButtonRow
+      <OnboardingFooter
+        parentPadding={20}
         onBack={handleBack}
         onContinue={handleContinue}
         continueDisabled={!isValid}

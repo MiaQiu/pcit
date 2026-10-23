@@ -7,6 +7,7 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { NavigatorScreenParams } from '@react-navigation/native';
 import { Quiz, User, DemoVideo, ParentSkillLevel, SkillImproveResult } from '@nora/core';
+import type { LearnModuleKey, LearnModuleTabKey } from '../constants/learnModules';
 
 export type RootTabParamList = {
   Home: { showModulePicker?: boolean; refreshAt?: number } | undefined;
@@ -20,10 +21,22 @@ export type RootTabParamList = {
 export type OnboardingStackParamList = {
   Welcome: undefined;
   Start: undefined;
-  Login: { referralCode?: string } | undefined;
+  Login:
+    | {
+        referralCode?: string;
+        // Account-last signup: the parent's email is already registered and they chose to
+        // log in and overwrite that account's child profile with their onboarding answers,
+        // then continue to `next`
+        overrideWithOnboarding?: boolean;
+        email?: string;
+        next?: keyof OnboardingStackParamList;
+        nextParams?: Record<string, unknown>;
+      }
+    | undefined;
   ForgotPassword: undefined;
   ResetPassword: { token?: string };
-  CreateAccount: undefined;
+  // Account-last signup: shown at the end of onboarding, then continues to `next`
+  CreateAccount: { next?: keyof OnboardingStackParamList; nextParams?: Record<string, unknown> } | undefined;
   OB1: undefined;
   OB2: undefined;
   OB3: undefined;
@@ -41,6 +54,9 @@ export type OnboardingStackParamList = {
   ChildIssue: undefined;
   DiagnosisStatus: undefined;
   ProfessionalSupport: undefined;
+  // Screen-time branch: one route, `step` indexes SCREEN_TIME_STEPS; `stepId`
+  // (dev force-landing) names a step instead and only applies when `step` is absent
+  ScreenTimeStep: { step?: number; stepId?: string; devSample?: boolean } | undefined;
   ParentGoal: undefined;
   ParentGoalIntro: undefined;
   OBLetter: undefined;
@@ -87,7 +103,8 @@ export type OnboardingStackParamList = {
 };
 
 export type RootStackParamList = {
-  Onboarding: { initialStep?: string; resumeUserData?: User; wacbReturnRecordingId?: string } | undefined;
+  // draftData: answers from a saved onboarding draft (logged-out parent resuming)
+  Onboarding: { initialStep?: string; initialStepParams?: Record<string, unknown>; resumeUserData?: User; draftData?: Record<string, unknown>; wacbReturnRecordingId?: string } | undefined;
   MainTabs: NavigatorScreenParams<RootTabParamList> | undefined;
   Profile: undefined;
   // recordingId is optional — the Child Snapshot + learning-journey view is
@@ -102,6 +119,9 @@ export type RootStackParamList = {
     moduleKey: string;
   };
   LearnV3: undefined;
+  // Per-module rows of horizontally-scrolling lesson cards; opened from a
+  // Learn module's "Learn" tab.
+  ModuleLearn: undefined;
   DemoVideoDetail: {
     video: DemoVideo;
   };
@@ -196,6 +216,70 @@ export type RootStackParamList = {
   };
   QuickGuide: {
     guide: 'why5mins' | 'whyRecord';
+  };
+  LearnModule: {
+    moduleKey: LearnModuleKey;
+    // Defaults to 1.
+    day?: number;
+    // Bottom-bar tab to open on (defaults to 'today').
+    initialTab?: LearnModuleTabKey;
+    // Set by ModuleRecordGuide's "Start recording": start recording on arrival
+    // (a timestamp, so each tap is a new request).
+    startRecordingAt?: number;
+    // Set by ModuleSpecialPlay's "Start 5-Min Special Playtime": add special
+    // play and start a play recording on arrival (a timestamp, like above).
+    startPlayRecordingAt?: number;
+  };
+  // A Learn module's coach chat ("Daily check in"), copy of CoachChat.
+  ModuleChat: {
+    moduleKey: LearnModuleKey;
+    // Prefills the input (e.g. a report's reflective question to answer).
+    draft?: string;
+  };
+  // Illustrated how-to for a key screen-time strategy (from a report's Recommended Strategies).
+  KeyStrategy: {
+    strategy: import('../constants/learnModules').KeyStrategyId;
+    childName?: string;
+  };
+  // Coach replies bookmarked in a Learn module's chat.
+  ModuleChatBookmarks: {
+    moduleKey: LearnModuleKey;
+  };
+  // "Quick Cheat Sheet" (focus areas from the last session + fixed routine).
+  ModuleCheatSheet: {
+    moduleKey: LearnModuleKey;
+  };
+  // Why a routine works + the fixed 8-step routine, opened from the "My plan" roadmap.
+  ModuleRoutine: {
+    moduleKey: LearnModuleKey;
+  };
+  // Special Playtime intro, opened from the "My plan" roadmap.
+  ModuleSpecialPlay: {
+    moduleKey: LearnModuleKey;
+  };
+  // A Learn module's detailed current plan, opened from the "My plan" roadmap.
+  ModulePlanDetail: {
+    moduleKey: LearnModuleKey;
+  };
+  // A Learn module help guide (copy: learnV2.modules.<moduleKey>.guides.<guide>).
+  ModuleGuide: {
+    moduleKey: LearnModuleKey;
+    guide: 'howToRecord' | 'whyRecord';
+  };
+  // Screen Time's illustrated "How to record?" / "Why record?" guides
+  // (copy: learnV2.modules.<moduleKey>.recordGuides.<guide>).
+  ModuleRecordGuide: {
+    moduleKey: LearnModuleKey;
+    guide: 'howToRecord' | 'whyRecord';
+    // Show "Start recording" (false when today's recording is done or in progress).
+    canRecord?: boolean;
+  };
+  ModuleReport: {
+    recordingId: string;
+    moduleKey: LearnModuleKey;
+    leveledUp?: boolean;
+    fromLevel?: ParentSkillLevel;
+    toLevel?: ParentSkillLevel;
   };
 };
 

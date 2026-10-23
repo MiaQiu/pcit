@@ -1,0 +1,138 @@
+{
+  "report": {
+    "headline": "I can hear how stressful and exhausting this situation was for you. Managing a toddler's meltdown, especially with a sibling chiming in, is incredibly difficult.",
+    "sections": [
+      {
+        "kind": "win",
+        "title": "Wins",
+        "body": "You did a great job initially trying to use a timer to set a boundary. Most importantly, you held firm and did not give the phone back despite Jd’s intense protests. That takes immense patience and strength!"
+      },
+      {
+        "kind": "emotion",
+        "title": "Jd’s emotional escalation during this transition",
+        "body": "Here is a look at Jd’s emotional escalation during this transition:"
+      },
+      {
+        "kind": "learned",
+        "title": "Pattern",
+        "body": "**Pattern:** Jd started with mild protests and bargaining. The emotion quickly escalated to loud crying when the phone was physically removed. The meltdown was prolonged by the ongoing back-and-forth arguing, sibling interference, and long explanations (nagging)."
+      },
+      {
+        "kind": "grow",
+        "title": "Best Tip",
+        "body": "**Best Tip:** **Co-regulate first, then teach.** When Jd is at a Level 3, his prefrontal cortex is offline, meaning he cannot process logic, threats, or lectures. Instead of explaining, arguing, or asking him to be a \"good boy,\" stay close, calmly name his feeling, and hold the limit quietly. Less talking will help him de-escalate much faster.",
+        "script": "You are mad because screen time is over"
+      },
+      {
+        "kind": "strategies",
+        "title": "Recommended Strategies",
+        "body": "- Give simple countdown warnings\n- Use a timer to make it neutral\n- Redirect the child to a bridging activity and model it"
+      },
+      {
+        "kind": "expectations",
+        "title": "Consistency and Extinction Burst",
+        "body": "Finally, remember the importance of consistency. If you stick to a predictable routine and calm boundaries, Jd will eventually learn that protesting doesn't bring the screen back. As you implement these new strategies, be aware of an \"extinction burst\"—his tantrums might temporarily get louder or last longer as he tests if his old ways of whining will still work. Stay calm, hold the limit, and trust that this phase will pass as he adapts to the new routine. You are doing a wonderful job navigating a very tough parenting moment!"
+      }
+    ]
+  },
+  "emotionTimeline": [
+    {
+      "seconds": 3,
+      "level": 1,
+      "label": "Protesting and asking to wait"
+    },
+    {
+      "seconds": 9,
+      "level": 1,
+      "label": "Bargaining for one more minute"
+    },
+    {
+      "seconds": 15,
+      "level": 2,
+      "label": "Upset when phone is removed"
+    },
+    {
+      "seconds": 21,
+      "level": 2,
+      "label": "Whining and stomping feet"
+    },
+    {
+      "seconds": 27,
+      "level": 3,
+      "label": "Loud crying begins"
+    },
+    {
+      "seconds": 51,
+      "level": 3,
+      "label": "Repeatedly yelling for the phone"
+    },
+    {
+      "seconds": 81,
+      "level": 3,
+      "label": "Yelling and trying to bargain"
+    },
+    {
+      "seconds": 135,
+      "level": 3,
+      "label": "Continuous yelling for the phone"
+    }
+  ],
+  "recommendedStrategies": [
+    "countdown",
+    "timer",
+    "bridging"
+  ],
+  "myPlan": {
+    "activeStrategyId": 8,
+    "activeStrategy": "Co-regulate first, then teach",
+    "whyItWorks": "When Jd is upset, his prefrontal cortex is offline and cannot process logic. Calm co-regulation helps him de-escalate much faster.",
+    "protocolSteps": [
+      "Stay physically close to Jd without arguing or explaining.",
+      "Calmly name his feeling in a neutral tone.",
+      "Quietly hold the limit and use minimal words until he calms down."
+    ],
+    "focusAreas": [
+      {
+        "title": "Name the feeling calmly",
+        "detail": "\"You are mad because screen time is over\""
+      },
+      {
+        "title": "Stop back-and-forth arguing",
+        "detail": "Avoid explanations, threats, lectures, or bargaining while he is upset."
+      },
+      {
+        "title": "Hold the limit quietly",
+        "detail": "Keep the phone away and stay close with minimal talking."
+      }
+    ],
+    "crisisTool": {
+      "isNeeded": true,
+      "title": "High-Tension Meltdowns",
+      "action": "Stay close, hold the boundary quietly, and minimize verbal engagement.",
+      "script": "You are mad because screen time is over"
+    }
+  },
+  "suggestedStrategies": [
+    {
+      "name": "Co-regulate first, then teach",
+      "description": "Stay close, calmly name Jd's feeling, and hold the limit quietly instead of lecturing."
+    },
+    {
+      "name": "Give simple countdown warnings",
+      "description": "Offer short warnings ahead of time to prepare Jd before screen time ends."
+    },
+    {
+      "name": "Use a neutral timer",
+      "description": "Set a visual timer so the device signals the end of screen time."
+    },
+    {
+      "name": "Redirect with a bridging activity",
+      "description": "Start modeling an engaging alternate activity to transition Jd away from screens."
+    }
+  ],
+  "format": "narrative",
+  "narrative": "I can hear how stressful and exhausting this situation was for you. Managing a toddler's meltdown, especially with a sibling chiming in, is incredibly difficult. You did a great job initially trying to use a timer to set a boundary. Most importantly, you held firm and did not give the phone back despite Jd’s intense protests. That takes immense patience and strength!\n\nHere is a look at Jd’s emotional escalation during this transition:\n\n- [00:03] Level 1: Protesting and asking to wait\n- [00:09] Level 1: Bargaining for one more minute\n- [00:15] Level 2: Upset when phone is removed\n- [00:21] Level 2: Whining and stomping feet\n- [00:27] Level 3: Loud crying begins\n- [00:51] Level 3: Repeatedly yelling for the phone\n- [01:21] Level 3: Yelling and trying to bargain\n- [02:15] Level 3: Continuous yelling for the phone\n\n**Pattern:** Jd started with mild protests and bargaining. The emotion quickly escalated to loud crying when the phone was physically removed. The meltdown was prolonged by the ongoing back-and-forth arguing, sibling interference, and long explanations (nagging). \n\n**Best Tip:** **Co-regulate first, then teach.** When Jd is at a Level 3, his prefrontal cortex is offline, meaning he cannot process logic, threats, or lectures. Instead of explaining, arguing, or asking him to be a \"good boy,\" stay close, calmly name his feeling (\"You are mad because screen time is over\"), and hold the limit quietly. Less talking will help him de-escalate much faster.\n\n**Recommended Strategies**\nGive simple countdown warnings\nUse a timer to make it neutral\nRedirect the child to a bridging activity and model it\n\nFinally, remember the importance of consistency. If you stick to a predictable routine and calm boundaries, Jd will eventually learn that protesting doesn't bring the screen back. As you implement these new strategies, be aware of an \"extinction burst\"—his tantrums might temporarily get louder or last longer as he tests if his old ways of whining will still work. Stay calm, hold the limit, and trust that this phase will pass as he adapts to the new routine. You are doing a wonderful job navigating a very tough parenting moment!",
+  "progress": {
+    "dayNumber": 1
+  }
+}

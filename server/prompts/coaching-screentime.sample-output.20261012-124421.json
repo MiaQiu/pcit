@@ -1,0 +1,42 @@
+{
+  "myPlan": {
+    "crisisTool": {
+      "title": "High-Tension Meltdowns",
+      "action": "Sit calmly within arm's reach, keep a neutral posture, and ensure physical safety.",
+      "script": "You are so mad the show is over. It is hard to stop. I am right here.",
+      "isNeeded": true
+    },
+    "whyItWorks": "For a 3-year-old with ADHD traits like Lucas, sudden transitions cause a dopamine crash. Countdowns give his brain the runway it needs to shift attention smoothly.",
+    "protocolSteps": [
+      "Give a 5-minute and 2-minute warning before the screen goes off.",
+      "Use a visual timer so the limit is neutral and predictable.",
+      "Offer a choice of who pushes the off button to give him control."
+    ],
+    "activeStrategy": "Countdown Warnings"
+  },
+  "generatedAt": "2026-10-12T04:45:01.424Z",
+  "coachingReport": {
+    "topMoment": {
+      "quote": "I’m going to sit right here on the couch so you stay safe while your big feelings come out.",
+      "title": "Co-Regulation & Holding the Limit",
+      "explanation": "This was brilliant. By staying close and keeping your voice calm, you provided a safe container for his big emotions. You didn't give in to the demand, but you also didn't punish him for his feelings. This helps soothe his nervous system and teaches him that you can handle his biggest emotions."
+    },
+    "introduction": "Hello! I'm Nora. I want to start by acknowledging how incredibly tough it is to sit through a massive meltdown. You stayed so calm and grounded when Lucas was having a really hard time, and that takes a lot of energy and patience. You did a wonderful job being his safe anchor during a stressful moment.",
+    "whatWeLearned": {
+      "title": "What We Learned About Lucas",
+      "description": "We learned that Lucas has a very strong reaction to sudden transitions, which is completely normal for his developmental stage and ADHD traits. To help build his resilience and make deposits into his emotional bank account, we can introduce emotional massage during non-screen times. This specialized play will strengthen your connection and help him practice emotional regulation when he isn't in a state of stress."
+    },
+    "nextGrowthFocus": {
+      "title": "Scaffolding the Transition",
+      "rationale": "Providing immediate warnings and a visual or auditory cue helps his ADHD brain anticipate the change, reducing the shock and making him feel more in control of the transition.",
+      "strategies": [
+        {
+          "name": "Countdown Warnings",
+          "description": "Give a 5-minute and 2-minute warning before screen time ends to help his brain prepare."
+        }
+      ],
+      "explanation": "For a 3-year-old, especially one with ADHD traits, task switching is incredibly difficult. Screens provide a steady stream of dopamine, and when it suddenly stops, his brain experiences a shock. While you mentioned the timer at the start, his brain needs more immediate, predictable cues right before the transition happens.",
+      "exampleQuote": "Lucas, in two minutes the timer will beep and Dino Ranch is done. Will you press the off button, or should I?"
+    }
+  }
+}

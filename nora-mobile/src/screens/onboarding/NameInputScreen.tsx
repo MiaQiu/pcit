@@ -10,11 +10,12 @@ import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { OnboardingLayout } from '../../components/OnboardingLayout';
-import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
 import { OnboardingTextInput } from '../../components/OnboardingTextInput';
-import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
+import { OnboardingFooter } from '../../components/OnboardingFooter';
 import amplitudeService from '../../services/amplitudeService';
 import { useAuthService } from '../../contexts/AppContext';
+import { saveOnboardingFields } from '../../utils/onboardingDraft';
+import { goBackTo } from '../../navigation/goBackTo';
 
 export const NameInputScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -29,7 +30,7 @@ export const NameInputScreen: React.FC = () => {
     if (name.trim()) {
       updateData({ name: name.trim() });
       amplitudeService.trackOnboardingStepCompleted('name_input', 12);
-      authService.completeOnboarding({ name: name.trim() }).catch(() => {});
+      saveOnboardingFields(authService, { name: name.trim() });
       navigation.navigate('Relationship');
     }
   };
@@ -38,8 +39,6 @@ export const NameInputScreen: React.FC = () => {
 
   return (
     <OnboardingLayout useKeyboardAvoid>
-      <OnboardingProgressHeader phase={1} step={1} totalSteps={7} />
-
       <OnboardingTextInput
         title={t('onboarding.nameInput.title')}
         value={name}
@@ -49,17 +48,9 @@ export const NameInputScreen: React.FC = () => {
 
       <View style={styles.spacer} />
 
-      <OnboardingButtonRow
-        onBack={() => {
-          if (navigation.canGoBack()) {
-            navigation.goBack();
-          } else {
-            navigation.reset({
-              index: 2,
-              routes: [{ name: 'OB1V2' }, { name: 'OB2V2' }, { name: 'OB3V2' }],
-            });
-          }
-        }}
+      <OnboardingFooter
+        parentPadding={20}
+        onBack={() => goBackTo(navigation, 'OB2V2')}
         onContinue={handleContinue}
         continueDisabled={!isValid}
       />

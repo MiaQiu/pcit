@@ -1,0 +1,118 @@
+{
+  "report": {
+    "headline": "I know how exhausting it is when a screen-time ending turns into a long meltdown, especially with a sibling chiming in. You are handling a very stressful situation, and it is completely normal to feel frustrated. Let's look at how we can make these transitions smoother for you and Jd.",
+    "sections": [
+      {
+        "kind": "win",
+        "title": "What You Did Well",
+        "body": "You did a fantastic job holding the limit. Even though Jd was very upset and crying for a long time, you did not give the phone back. Staying firm on the boundary is incredibly important. You also utilized a timer, which is a great foundation for screen-time routines!"
+      },
+      {
+        "kind": "emotion",
+        "title": "Emotion Timeline",
+        "body": "*Pattern:* Jd’s emotions started as verbal protests and bargaining, escalated to whining when the phone was removed, and peaked at loud crying. The crying was sustained at a Level 3 because of the ongoing back-and-forth conversation and sibling interference. \n\n*Best Tip to Reduce Outbursts:* **Co-regulate first, then teach.** When Jd is at a Level 3, his \"thinking brain\" is offline. Logic, lectures about being a \"good boy,\" or threats will only fuel the fire. Instead, stay close, stay calm, and simply hold the limit in silence or with a brief",
+        "script": "I know it's hard to stop."
+      },
+      {
+        "kind": "grow",
+        "title": "Opportunities for Improvement",
+        "body": "Here are three strategies to adjust for next time:\n- **Give simple countdown warnings:** You mentioned the timer went off five minutes ago. Next time, give Jd warnings *before* the time is up (e.g., \"2 minutes left,\" \"Last video, then we stop\"). This helps his brain prepare for the transition.\n- **Redirect to a bridging activity and model it:** Telling Jd to \"go find your toys\" is often too big of a leap for a toddler. Instead, have an activity ready (like blocks). Sit down, start playing with it yourself, and enthusiastically describe what you are doing. Ignore his protests and only give him attention once he joins you.\n- **Effective follow-through (Avoid Nagging):** Once the phone is taken, avoid arguing, pleading, or making threats (like spanking or YouTube). Make one brief, matter-of-fact statement (\"Time is up, so I took the phone\"), and then stop engaging in the debate."
+      },
+      {
+        "kind": "expectations",
+        "title": "The Importance of Consistency",
+        "body": "As you shift to using countdowns, modeling bridging activities, and dropping the back-and-forth arguing, Jd might actually protest *louder* at first. This is called an **extinction burst**—his brain is testing if the old way of yelling will eventually get him the phone or your attention. Stay calm and perfectly consistent. Over time, his brain will learn that the boundary is firm, and the meltdowns will fade. You've got this!"
+      }
+    ]
+  },
+  "emotionTimeline": [
+    {
+      "seconds": 3,
+      "level": 1,
+      "label": "Protesting with words"
+    },
+    {
+      "seconds": 9,
+      "level": 1,
+      "label": "Bargaining for one minute"
+    },
+    {
+      "seconds": 21,
+      "level": 2,
+      "label": "Whining and stomping feet"
+    },
+    {
+      "seconds": 27,
+      "level": 3,
+      "label": "Loud crying begins"
+    },
+    {
+      "seconds": 51,
+      "level": 3,
+      "label": "Repeatedly yelling for phone"
+    },
+    {
+      "seconds": 87,
+      "level": 3,
+      "label": "Yelling continues despite lecturing"
+    },
+    {
+      "seconds": 135,
+      "level": 3,
+      "label": "Still yelling for the phone"
+    }
+  ],
+  "myPlan": {
+    "activeStrategyId": 8,
+    "activeStrategy": "Co-regulate first, then teach",
+    "whyItWorks": "When Jd is at a Level 3, his thinking brain is offline. Logic and lectures fuel the fire, while calm support helps him settle.",
+    "protocolSteps": [
+      "Stay close to Jd and keep your own body and voice completely calm.",
+      "Hold the limit firmly without arguing, lecturing, pleading, or making threats.",
+      "Validate his feelings briefly in silence or with a short supportive phrase."
+    ],
+    "focusAreas": [
+      {
+        "title": "Give simple countdown warnings",
+        "detail": "\"2 minutes left, then we stop.\""
+      },
+      {
+        "title": "Model the bridging activity",
+        "detail": "Sit down, start playing with blocks yourself, and describe what you are doing."
+      },
+      {
+        "title": "Avoid nagging and debates",
+        "detail": "\"Time is up, so I took the phone.\""
+      }
+    ],
+    "crisisTool": {
+      "isNeeded": true,
+      "title": "Level 3 Meltdowns",
+      "action": "Stay close, stay calm, and hold the limit in silence.",
+      "script": "I know it's hard to stop."
+    }
+  },
+  "suggestedStrategies": [
+    {
+      "name": "Co-regulate first, then teach",
+      "description": "Stay close and calm rather than using logic, lectures, or threats when emotions peak."
+    },
+    {
+      "name": "Give simple countdown warnings",
+      "description": "Give warnings before screen time ends to help Jd's brain prepare for the transition."
+    },
+    {
+      "name": "Redirecting for bridging activity & Modeling",
+      "description": "Set up a toy, start playing enthusiastically yourself, and ignore protests until he joins."
+    },
+    {
+      "name": "Effective follow through",
+      "description": "Make one brief, matter-of-fact statement when removing the phone, then avoid further debate."
+    }
+  ],
+  "format": "narrative",
+  "narrative": "I know how exhausting it is when a screen-time ending turns into a long meltdown, especially with a sibling chiming in. You are handling a very stressful situation, and it is completely normal to feel frustrated. Let's look at how we can make these transitions smoother for you and Jd.\n\n**What You Did Well**\nYou did a fantastic job holding the limit. Even though Jd was very upset and crying for a long time, you did not give the phone back. Staying firm on the boundary is incredibly important. You also utilized a timer, which is a great foundation for screen-time routines!\n\n**Emotion Timeline**\n- [00:03] Level 1: Protesting with words\n- [00:09] Level 1: Bargaining for one minute\n- [00:21] Level 2: Whining and stomping feet\n- [00:27] Level 3: Loud crying begins\n- [00:51] Level 3: Repeatedly yelling for phone\n- [01:27] Level 3: Yelling continues despite lecturing\n- [02:15] Level 3: Still yelling for the phone\n\n*Pattern:* Jd’s emotions started as verbal protests and bargaining, escalated to whining when the phone was removed, and peaked at loud crying. The crying was sustained at a Level 3 because of the ongoing back-and-forth conversation and sibling interference. \n\n*Best Tip to Reduce Outbursts:* **Co-regulate first, then teach.** When Jd is at a Level 3, his \"thinking brain\" is offline. Logic, lectures about being a \"good boy,\" or threats will only fuel the fire. Instead, stay close, stay calm, and simply hold the limit in silence or with a brief \"I know it's hard to stop.\" \n\n**Opportunities for Improvement**\nHere are three strategies to adjust for next time:\n1. **Give simple countdown warnings:** You mentioned the timer went off five minutes ago. Next time, give Jd warnings *before* the time is up (e.g., \"2 minutes left,\" \"Last video, then we stop\"). This helps his brain prepare for the transition.\n2. **Redirect to a bridging activity and model it:** Telling Jd to \"go find your toys\" is often too big of a leap for a toddler. Instead, have an activity ready (like blocks). Sit down, start playing with it yourself, and enthusiastically describe what you are doing. Ignore his protests and only give him attention once he joins you.\n3. **Effective follow-through (Avoid Nagging):** Once the phone is taken, avoid arguing, pleading, or making threats (like spanking or YouTube). Make one brief, matter-of-fact statement (\"Time is up, so I took the phone\"), and then stop engaging in the debate. \n\n**The Importance of Consistency**\nAs you shift to using countdowns, modeling bridging activities, and dropping the back-and-forth arguing, Jd might actually protest *louder* at first. This is called an **extinction burst**—his brain is testing if the old way of yelling will eventually get him the phone or your attention. Stay calm and perfectly consistent. Over time, his brain will learn that the boundary is firm, and the meltdowns will fade. You've got this!",
+  "progress": {
+    "dayNumber": 1
+  }
+}

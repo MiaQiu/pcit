@@ -1,0 +1,45 @@
+{
+  "coachingReport": {
+    "introduction": "Hi there! I'm Nora. I absolutely loved reading through this transcript. The imaginative connection you share with Lucas is so beautiful to witness. You are doing an incredible job engaging with him!",
+    "topMoment": {
+      "title": "Entering His World",
+      "quote": "Yes, we're at KidStop.",
+      "explanation": "By enthusiastically joining his pretend play and following his lead, you are making a massive deposit into Lucas's emotional bank account. This kind of child-led play acts as a powerful 'emotional massage,' soothing his nervous system and building the deep trust needed to navigate harder moments like screen-time transitions."
+    },
+    "nextGrowthFocus": {
+      "title": "Scaffolding Screen-Time Transitions",
+      "explanation": "You mentioned in your notes that screen time often ends without a warning, leading to big feelings and tantrums. For a 5-year-old with ADHD, the brain hyper-focuses on the screen. A sudden stop feels like a shock to his nervous system because task-switching is developmentally challenging for him.",
+      "strategies": [
+        {
+          "name": "Countdown Warnings",
+          "description": "Provide clear, predictable time markers before the screen turns off so his brain can prepare for the shift."
+        },
+        {
+          "name": "Bridge to Offline Play",
+          "description": "Use his love for pretend play (like KidStop) as the immediate next activity to make the transition appealing."
+        }
+      ],
+      "exampleQuote": "Lucas, we have 5 more minutes of screen time, and then it's time to play KidStop!",
+      "rationale": "Predictability reduces anxiety. It gives his ADHD brain the runway it needs to shift gears safely, significantly reducing the intensity of the tantrums and helping him feel secure."
+    },
+    "whatWeLearned": {
+      "title": "What We Learned About Lucas",
+      "description": "Lucas has a rich imagination and thrives when you participate in his world. We can use this to our advantage! By offering a few minutes of 'emotional massage' through pretend play right after screens, we create a highly rewarding bridge that makes turning off the device much easier for him."
+    }
+  },
+  "myPlan": {
+    "activeStrategy": "Countdown Warnings",
+    "whyItWorks": "Lucas's ADHD brain struggles with abrupt task-switching. Predictable warnings give his nervous system the necessary time to prepare for the end of screen time without triggering a tantrum.",
+    "protocolSteps": [
+      "Give a calm 5-minute warning before screen time ends.",
+      "Give a 2-minute warning, gently touching his shoulder to ensure he hears you.",
+      "At zero, confidently state screen time is over and bridge to pretend play."
+    ],
+    "crisisTool": {
+      "isNeeded": true,
+      "title": "Managing Big Feelings Tantrums",
+      "action": "Sit within arm's reach, take deep breaths, and wait for the storm to pass without negotiating.",
+      "script": "You are so mad screen time is over. It is hard to stop. I am right here with you."
+    }
+  }
+}

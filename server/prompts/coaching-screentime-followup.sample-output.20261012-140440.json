@@ -1,0 +1,51 @@
+{
+  "myPlan": {
+    "crisisTool": {
+      "title": "Handling Unexpected Pushback",
+      "action": "Sit close, take a deep breath, and hold the boundary calmly without extra talking.",
+      "script": "It is hard to stop playing. I am right here with you.",
+      "isNeeded": false
+    },
+    "whyItWorks": "For a 3-year-old with ADHD traits like Lucas, shifting focus can be jarring. Starting the next activity yourself acts as a gentle magnet, drawing his attention naturally without demands.",
+    "protocolSteps": [
+      "Set the timer and announce the upcoming fun activity as usual.",
+      "When screen time ends, start the new activity yourself and describe what you are doing out loud.",
+      "Give enthusiastic labeled praise the moment Lucas joins you."
+    ],
+    "activeStrategy": "Redirecting for bridging activity"
+  },
+  "progress": {
+    "dayNumber": 3,
+    "outcomeReason": "You successfully set up the apple snack transition ahead of time, held the boundary when the timer beeped, and guided Lucas smoothly to the next activity.",
+    "todaysOutcome": "Success",
+    "daysOnStrategy": 1,
+    "parentSelfReport": "success",
+    "strategyMastered": true,
+    "practicedStrategy": "Pre-Planned Positive Transitions"
+  },
+  "generatedAt": "2026-10-12T06:05:18.088Z",
+  "coachingReport": {
+    "topMoment": {
+      "quote": "You really love Dino Ranch. When the timer beeps, the TV is off. Do you want to press the button or should I?",
+      "title": "Empowering Through Autonomy",
+      "explanation": "You validated his feelings while holding the boundary, and offering him the choice to press the button gave him a sense of control. This is a massive deposit into his emotional bank account and helps calm his nervous system during a tricky transition."
+    },
+    "introduction": "Welcome to Day 3! You mentioned today went well, and I completely agree. For your first day practicing Pre-Planned Positive Transitions, you executed it beautifully and gave Lucas exactly the structure he needed.",
+    "whatWeLearned": {
+      "title": "What We Learned About Lucas",
+      "description": "Lucas responds beautifully to visual cues like the timer and autonomy like pressing the button. Even when he feels disappointed, knowing exactly what comes next helps him regulate and move forward."
+    },
+    "nextGrowthFocus": {
+      "title": "Drawing Him In",
+      "rationale": "Children with ADHD often struggle with shifting their attention. Narrating an engaging activity acts as a gentle magnet for their focus, reducing the cognitive load of transitioning.",
+      "strategies": [
+        {
+          "name": "The Magnet Effect",
+          "description": "Start the bridging activity yourself and narrate your actions enthusiastically to draw him in."
+        }
+      ],
+      "explanation": "Lucas did incredibly well today, but toddlers with ADHD traits can sometimes get stuck in the transition even with a plan. To make the next step even smoother, we can use your own play as a magnet.",
+      "exampleQuote": "Wow, this apple is so crunchy! I wonder if yours is as loud as mine?"
+    }
+  }
+}

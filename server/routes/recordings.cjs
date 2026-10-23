@@ -12,7 +12,7 @@ const { requireAuth } = require('../middleware/auth.cjs');
 // Import from new service modules
 const { transcribeRecording } = require('../services/transcriptionService.cjs');
 const { processRecordingWithRetry, notifyProcessingFailure, notifyQualityRejection } = require('../services/processingService.cjs');
-const { SessionQualityError, PermanentFailureError, getParentSkillProgress } = require('../services/pcitAnalysisService.cjs');
+const { SessionQualityError, PermanentFailureError, getParentSkillProgress, LEARN_MODULE_KEYS, MODULE_SELF_REPORTS } = require('../services/pcitAnalysisService.cjs');
 const { generateGoalForLevel, formatGoalHeadline } = require('../utils/levelGoalEngine.cjs');
 const { getUtterances } = require('../utils/utteranceUtils.cjs');
 
@@ -156,7 +156,7 @@ async function startBackgroundProcessing(sessionId, userId, storagePath, duratio
 router.post('/upload/init', requireAuth, async (req, res) => {
   try {
     const userId = req.userId;
-    const { durationSeconds, mimeType = 'audio/m4a', mode: requestedMode } = req.body;
+    const { durationSeconds, mimeType = 'audio/m4a', mode: requestedMode, moduleKey: requestedModuleKey, moduleSelfReport: requestedSelfReport } = req.body;
 
     if (!durationSeconds || durationSeconds < 1) {
       return res.status(400).json({
@@ -167,6 +167,10 @@ router.post('/upload/init', requireAuth, async (req, res) => {
 
     // Validate mode - default to CDI if not provided or invalid
     const mode = (requestedMode === 'CDI' || requestedMode === 'PDI') ? requestedMode : 'CDI';
+    // Recording made from a Learn module (e.g. screen-time ending) — analyzed
+    // with the module's coaching prompt instead of the PCIT pipeline.
+    const moduleKey = LEARN_MODULE_KEYS.has(requestedModuleKey) ? requestedModuleKey : null;
+    const moduleSelfReport = moduleKey && MODULE_SELF_REPORTS.has(requestedSelfReport) ? requestedSelfReport : null;
 
     const sessionId = crypto.randomUUID();
 
@@ -177,6 +181,8 @@ router.post('/upload/init', requireAuth, async (req, res) => {
         id: sessionId,
         userId: userId,
         mode: mode,
+        moduleKey,
+        moduleSelfReport,
         storagePath: 'pending_upload',
         durationSeconds: parseInt(durationSeconds, 10),
         transcript: '',
@@ -446,9 +452,12 @@ router.get('/dashboard', requireAuth, async (req, res) => {
     weekStart.setTime(weekStart.getTime() - SGT_OFFSET_MS);
 
     const [todayRecordings, thisWeekRecordings, latestWithReport, allCompleted] = await Promise.all([
+      // Learn module recordings (moduleKey set) aren't play sessions — kept out
+      // of the play stats, streaks and latest-report lookup below.
       prisma.session.findMany({
         where: {
           userId: userId,
+          moduleKey: null,
           createdAt: {
             gte: todayStart,
             lte: todayEnd
@@ -469,6 +478,7 @@ router.get('/dashboard', requireAuth, async (req, res) => {
       prisma.session.findMany({
         where: {
           userId: userId,
+          moduleKey: null,
           createdAt: {
             gte: weekStart
           }
@@ -485,6 +495,7 @@ router.get('/dashboard', requireAuth, async (req, res) => {
       prisma.session.findFirst({
         where: {
           userId: userId,
+          moduleKey: null,
           analysisStatus: 'COMPLETED'
         },
         orderBy: {
@@ -505,6 +516,7 @@ router.get('/dashboard', requireAuth, async (req, res) => {
       prisma.session.findMany({
         where: {
           userId: userId,
+          moduleKey: null,
           analysisStatus: 'COMPLETED'
         },
         select: { createdAt: true }
@@ -639,6 +651,25 @@ async function buildAnalysisResponse(id, { requesterUserId } = {}) {
     };
   }
 
+  // Learn module sessions skip PCIT coding — their report is moduleCoaching.
+  if (session.moduleKey) {
+    if (session.analysisStatus !== 'COMPLETED' || !session.moduleCoaching) {
+      return { status: 202, body: { status: 'processing', message: 'Module analysis processing' } };
+    }
+    return {
+      status: 200,
+      body: {
+        status: 'completed',
+        recordingId: session.id,
+        createdAt: session.createdAt,
+        durationSeconds: session.durationSeconds,
+        mode: session.mode,
+        moduleKey: session.moduleKey,
+        moduleCoaching: session.moduleCoaching,
+      },
+    };
+  }
+
   if (!session.transcript) {
     return { status: 202, body: { status: 'processing', message: 'Transcription in progress' } };
   }
@@ -658,6 +689,7 @@ async function buildAnalysisResponse(id, { requesterUserId } = {}) {
       where: {
         userId: session.userId,
         analysisStatus: 'COMPLETED',
+        moduleKey: null,
         createdAt: { lt: session.createdAt },
       },
     });
@@ -941,7 +973,8 @@ router.get('/', requireAuth, async (req, res) => {
     const userId = req.userId;
     const { from, to } = req.query;
 
-    const where = { userId: userId };
+    // Play sessions only — Learn module recordings have their own reports.
+    const where = { userId: userId, moduleKey: null };
 
     if (from || to) {
       where.createdAt = {};
@@ -979,7 +1012,16 @@ router.get('/', requireAuth, async (req, res) => {
       analysisStatus: session.analysisStatus
     }));
 
-    res.json({ recordings });
+    // Learn module reports (e.g. screen-time endings), listed separately so
+    // play-session stats/streaks built from `recordings` are unaffected —
+    // the Progress calendar shows both.
+    const moduleSessions = await prisma.session.findMany({
+      where: { ...where, moduleKey: { not: null }, analysisStatus: 'COMPLETED' },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, moduleKey: true, createdAt: true, analysisStatus: true }
+    });
+
+    res.json({ recordings, moduleRecordings: moduleSessions });
 
   } catch (error) {
     console.error('Get recordings error:', error);

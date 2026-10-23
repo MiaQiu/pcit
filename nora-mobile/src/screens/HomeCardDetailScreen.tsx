@@ -23,6 +23,7 @@ import { LESSON_TEXT_DARK, LESSON_TEXT_GREY } from '../constants/lessonViewerCol
 import { useRecordingService } from '../contexts/AppContext';
 import amplitudeService from '../services/amplitudeService';
 import { TrackedTouchable } from '../components/TrackedTouchable';
+import { goBackTo } from '../navigation/goBackTo';
 
 type HomeCardComponentType = 'TEXT' | 'IMAGE' | 'OPEN_DETAILS' | 'USER_INPUT';
 
@@ -113,6 +114,10 @@ const UserInputComponent: React.FC<{ cardId: string; component: HomeCardComponen
 
 export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ route, navigation }) => {
   const { cardId } = route.params;
+  // Opened cold from a shared card link, nothing is behind this screen
+  const handleClose = () => {
+    goBackTo(navigation, 'MainTabs');
+  };
   const recordingService = useRecordingService();
   const { t, i18n } = useTranslation();
 
@@ -183,7 +188,7 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
         <View style={styles.navRow}>
           <TrackedTouchable analyticsId="Close"
             style={styles.closeButton}
-            onPress={() => navigation.goBack()}
+            onPress={handleClose}
             accessibilityLabel="Close"
           >
             <Ionicons name="chevron-down" size={24} color={COLORS.textDark} />
@@ -203,7 +208,7 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
       <View style={styles.navRow}>
         <TrackedTouchable analyticsId="Close"
           style={styles.closeButton}
-          onPress={() => navigation.goBack()}
+          onPress={handleClose}
           accessibilityLabel="Close"
         >
           <Ionicons name="chevron-down" size={24} color={COLORS.textDark} />

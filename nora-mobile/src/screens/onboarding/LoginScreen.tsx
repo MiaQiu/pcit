@@ -33,6 +33,10 @@ import { useUploadProcessing } from '../../contexts/UploadProcessingContext';
 import { useTranslation } from 'react-i18next';
 import { TrackedTouchable } from '../../components/TrackedTouchable';
 import { reportError } from '../../utils/reportError';
+import { useOnboarding } from '../../contexts/OnboardingContext';
+import { buildProfilePayload, clearDraft } from '../../utils/onboardingDraft';
+import * as userStorage from '../../lib/userStorage';
+import { goBackTo } from '../../navigation/goBackTo';
 
 const PENDING_REFERRAL_KEY = '@nora_pending_referral_code';
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
@@ -44,7 +48,11 @@ export const LoginScreen: React.FC = () => {
   const authService = useAuthService();
   const socialAuthService = useSocialAuthService();
 
-  const [email, setEmail] = useState('');
+  const { data: onboardingData } = useOnboarding();
+  // Account-last signup: the parent's email was already registered and they chose to
+  // log in and overwrite that account's child profile with their onboarding answers
+  const overrideWithOnboarding = !!route.params?.overrideWithOnboarding;
+  const [email, setEmail] = useState(route.params?.email ?? '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -66,14 +74,30 @@ export const LoginScreen: React.FC = () => {
   }, [route.params?.referralCode]);
 
   const navigateAfterAuth = async () => {
-    const { step, user } = await checkOnboardingStep(authService);
+    if (overrideWithOnboarding) {
+      await overrideProfileAndContinue();
+      return;
+    }
+    // Logged into an existing account: a half-finished account-last draft no longer applies
+    await clearDraft();
+    const { step, user, draft } = await checkOnboardingStep(authService);
     reinitializeUnread(user.id);
     await reinitializeUpload();
     if (step) {
       navigation.dispatch(
         CommonActions.reset({
           index: 0,
-          routes: [{ name: 'Onboarding' as any, params: { initialStep: step, resumeUserData: user } }],
+          routes: [
+            {
+              name: 'Onboarding' as any,
+              params: {
+                initialStep: step,
+                resumeUserData: user,
+                // Mid-onboarding on this device: back to the screen they left, with their answers
+                ...(draft ? { initialStepParams: draft.lastStep.params, draftData: draft.data } : {}),
+              },
+            },
+          ],
         })
       );
     } else {
@@ -81,6 +105,24 @@ export const LoginScreen: React.FC = () => {
         CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' as any }] })
       );
     }
+  };
+
+  // Writes the onboarding answers over the logged-in account's child profile, then
+  // continues onboarding where CreateAccount would have (reminder, or the screen-time plan)
+  const overrideProfileAndContinue = async () => {
+    const user = await authService.getCurrentUser(true);
+    await userStorage.setCurrentUserId(String(user.id));
+    await userStorage.migrateLegacyDeviceKeys();
+    reinitializeUnread(user.id);
+    await reinitializeUpload();
+    try {
+      await authService.completeOnboarding(buildProfilePayload(onboardingData));
+    } catch (error) {
+      reportError(error, 'LoginScreen.overrideProfile');
+    }
+    await clearDraft();
+    const next = route.params?.next ?? 'ReminderTime';
+    navigation.navigate(next as any, route.params?.nextParams as any);
   };
 
   const applyPendingReferral = async () => {
@@ -117,8 +159,6 @@ export const LoginScreen: React.FC = () => {
           : 0;
 
         amplitudeService.identifyUser(response.user.id, {
-          email: response.user.email,
-          name: response.user.name,
           currentStreak: response.user.currentStreak || 0,
           longestStreak: response.user.longestStreak || 0,
           subscriptionPlan: response.user.subscriptionPlan,
@@ -216,7 +256,7 @@ export const LoginScreen: React.FC = () => {
         style={styles.keyboardView}
       >
         {/* Back Button */}
-        <TrackedTouchable analyticsId="Back" style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TrackedTouchable analyticsId="Back" style={styles.backButton} onPress={() => goBackTo(navigation, 'Start')}>
           <Ionicons name="chevron-back" size={28} color="#1E2939" />
         </TrackedTouchable>
 
@@ -360,7 +400,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 56,
     backgroundColor: '#000000',
-    borderRadius: 32,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
@@ -371,7 +411,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   appleButtonText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     fontSize: 16,
     color: '#FFFFFF',
   },
@@ -379,7 +419,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 56,
     backgroundColor: '#FFFFFF',
-    borderRadius: 32,
+    borderRadius: 10,
     borderWidth: 1.5,
     borderColor: '#E5E7EB',
     alignItems: 'center',
@@ -387,7 +427,7 @@ const styles = StyleSheet.create({
     marginBottom: 28,
   },
   googleButtonText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     fontSize: 16,
     color: '#1E2939',
   },
@@ -442,7 +482,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 56,
     backgroundColor: '#8C49D5',
-    borderRadius: 32,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
@@ -451,7 +491,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   loginButtonText: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: 'DMSans_700Bold',
     fontSize: 16,
     color: '#FFFFFF',
     letterSpacing: 1,

@@ -1,6 +1,8 @@
 /**
  * Start Screen
- * Introduction screen with "Get Started" button
+ * Introduction screen with "Get Started" button. Account-first signup: Get Started
+ * creates the account, then onboarding continues at OB1V2. The Terms and Privacy
+ * line is on CreateAccount.
  */
 
 import React, { useEffect } from 'react';
@@ -8,9 +10,7 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   Dimensions,
-  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -31,6 +31,7 @@ export const StartScreen: React.FC = () => {
   }, []);
 
   const handleGetStarted = () => {
+    amplitudeService.trackOnboardingStepCompleted('start', 2);
     navigation.navigate('CreateAccount');
   };
 
@@ -79,13 +80,6 @@ export const StartScreen: React.FC = () => {
           <Text style={styles.loginButtonText}>{t('start.alreadyHaveAccount')}</Text>
         </TrackedTouchable>
 
-        {/* Terms and Privacy Policy */}
-        <Text style={styles.termsText}>
-          {t('start.termsPrefix')}
-          <Text style={styles.termsLink} onPress={() => Linking.openURL('https://hinora.co/terms')}>{t('start.termsOfService')}</Text>
-          {t('start.termsAnd')}
-          <Text style={styles.termsLink} onPress={() => Linking.openURL('https://hinora.co/privacy')}>{t('start.privacyPolicy')}</Text>
-        </Text>
       </View>
     </SafeAreaView>
   );
@@ -144,7 +138,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 56,
     backgroundColor: '#1E2939',
-    borderRadius: 32,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -166,7 +160,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 56,
     backgroundColor: 'transparent',
-    borderRadius: 32,
+    borderRadius: 10,
     borderWidth: 2,
     borderColor: '#E5E7EB',
     alignItems: 'center',
@@ -177,17 +171,5 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans_600SemiBold',
     fontSize: 16,
     color: '#1E2939',
-  },
-  termsText: {
-    fontFamily: 'PlusJakartaSans_400Regular',
-    fontSize: 12,
-    color: '#8C8C8C',
-    textAlign: 'center',
-    lineHeight: 18,
-    marginTop: 8,
-  },
-  termsLink: {
-    color: '#1E2939',
-    textDecorationLine: 'underline',
   },
 });

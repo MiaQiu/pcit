@@ -281,6 +281,10 @@ app.use('/api/wacb-survey', wacbSurveyRoutes);
 const phq2SurveyRoutes = require('./server/routes/phq2-survey.cjs');
 app.use('/api/phq2-survey', phq2SurveyRoutes);
 
+// Learn module plan ("My plan" tab) routes
+const learnModuleRoutes = require('./server/routes/learn-modules.cjs');
+app.use('/api/learn-modules', learnModuleRoutes);
+
 // Mount recording upload routes (mobile app)
 const recordingRoutes = require('./server/routes/recordings.cjs');
 app.use('/api/recordings', recordingRoutes);

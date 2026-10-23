@@ -5,6 +5,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import * as userStorage from '../lib/userStorage';
+import { clearUserDraft } from '../utils/onboardingDraft';
 
 export interface OnboardingData {
   // User data
@@ -21,6 +22,10 @@ export interface OnboardingData {
   parentGoal: string | string[];
   diagnosisStatus: string;
   professionalSupport: string | string[];
+
+  // Answers from the screen-time branch (see screens/onboarding/screenTime),
+  // keyed by step field, e.g. { hardest: 'stop', stops: ['asks'] }
+  screenTime?: Record<string, string | string[]>;
 
   // WACB Survey data
   wacb?: {
@@ -96,6 +101,7 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
   const completeOnboarding = async () => {
     try {
       await userStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
+      await clearUserDraft();
       updateData({ hasCompletedOnboarding: true });
     } catch (error) {
       console.error('Error saving onboarding completion:', error);

@@ -3,32 +3,47 @@
  * Handles the onboarding flow screens
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { OnboardingStackParamList, RootStackParamList } from './types';
-import { RouteProp } from '@react-navigation/native';
-import { useOnboarding } from '../contexts/OnboardingContext';
+import { CommonActions, RouteProp } from '@react-navigation/native';
+import { useOnboarding, type OnboardingData } from '../contexts/OnboardingContext';
+import { useAuthService } from '../contexts/AppContext';
+import { DraftStep, isResumableStep, saveDraft, saveUserDraft } from '../utils/onboardingDraft';
+import { previousOnboardingStep } from './onboardingPreviousStep';
 
-// Flow: Welcome → Start → (Login | CreateAccount) → OB1–3 →
-//   NameInput → Relationship → ChildName → ChildGender → ChildBirthday →
-//   ChildIssue → [branch] → ParentGoalIntro → OBLetter → OBLetterContent →
-//   OBPlay1 → OBPlay2 → OBDiscipline → OBIntro1 → ReminderTime → OBIntro2 →
-//   MainTabs (OBIntro2 completes onboarding directly)
+// Flow (account-first signup): Welcome → Start → (Login | CreateAccount) →
+//   OB1V2 → OB2V2 → NameInput → Relationship → ChildName → ChildGender → ChildBirthday →
+//   ChildIssue → [branch] → ParentGoalIntro → OBLetterV2 → OBLetterContent →
+//   OBPlay1V2 → OBPlay2V2 → OBDisciplineV2 → OBIntro1V2 →
+//   ReminderTime → OBIntro2V2 → MainTabs (OBIntro2V2 completes onboarding directly)
+// Answers are saved to the account screen by screen; OBIntro1V2 (or the screen-time
+// plan) saves the full profile once more for the fields that aren't.
+// Account-last leftovers: a parent with a device draft from the earlier account-last
+// flow (utils/onboardingDraft.ts) resumes without an account, and OBIntro1V2 / the
+// screen-time plan send them to CreateAccount with `next` before continuing.
+// Email already registered there → CreateAccount offers a new email, or Login with
+// overrideWithOnboarding (overwrites that account's child profile, then continues).
+// OB3V2 is no longer in the flow (OB2V2 goes straight to NameInput).
 // Branch at ChildIssue: selecting ADHD Support, Developmental Concerns, or
 // Anxiety routes through DiagnosisStatus → ProfessionalSupport instead of
 // ParentGoal (see ChildIssueScreen's nextScreen resolver /
 // hasAdhdOrDevelopmentalConcern()).
 // Both paths rejoin at ParentGoalIntro.
+// Selecting Screen-time management instead enters the screen-time branch
+// (ScreenTimeStep, see screens/onboarding/screenTime/screenTimeFlow.ts), which
+// creates the account before its plan screen, and goes straight to MainTabs.
 // Subscription is a standalone screen entered from RecordScreen / ProfileScreen.
 // Demo1–5/Demo1B/Demo2B/ParentingIntro/ChildSnapshotIntro/WacbQuestion1–10/
 // ChildBehaviorProfile/Intro3/PlaySession1–5/NotificationPermission remain
 // registered (unreachable from the linear flow) so deep links / old resume
 // state referencing them don't crash.
-// OB1V2/OB2V2/OB3V2/OBLetterV2/OBPlay1V2/OBPlay2V2/OBDisciplineV2 are preview
-// variants of the OBTemplate image screens: same (still text-baked-in)
-// background art with real text overlaid on top, ready to line up once a
-// text-free version of the art lands. Not wired into the linear flow yet —
-// preview one via RootNavigator's DEV_FORCE_ONBOARDING_SCREEN.
+// The V2 screens (OB1V2–OB3V2, OBLetterV2, OBPlay1V2/OBPlay2V2,
+// OBDisciplineV2, OBIntro1V2, OBIntro2V2) replaced their V1 counterparts in
+// the linear flow. The V1 screens (OB1–3, OBLetter, OBPlay1/OBPlay2,
+// OBDiscipline, OBIntro1, OBIntro2) are no longer navigated to and stay
+// registered only for old resume state. Preview any screen via
+// RootNavigator's DEV_FORCE_ONBOARDING_SCREEN.
 import { WelcomeScreen } from '../screens/onboarding/WelcomeScreen';
 import { StartScreen } from '../screens/onboarding/StartScreen';
 import { LoginScreen } from '../screens/onboarding/LoginScreen';
@@ -58,6 +73,7 @@ import { ChildIssueScreen } from '../screens/onboarding/ChildIssueScreen';
 import { DiagnosisStatusScreen } from '../screens/onboarding/DiagnosisStatusScreen';
 import { ProfessionalSupportScreen } from '../screens/onboarding/ProfessionalSupportScreen';
 import { ParentGoalScreen } from '../screens/onboarding/ParentGoalScreen';
+import { ScreenTimeStepScreen } from '../screens/onboarding/screenTime/ScreenTimeStepScreen';
 import { ParentGoalIntroScreen } from '../screens/onboarding/ParentGoalIntroScreen';
 import { OBLetterScreen } from '../screens/onboarding/OBLetterScreen';
 import { OBLetterScreen_v2 } from '../screens/onboarding/OBLetterScreen_v2';
@@ -102,9 +118,14 @@ interface OnboardingNavigatorProps {
 
 export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route }) => {
   const initialStep = route?.params?.initialStep;
+  const initialStepParams = route?.params?.initialStepParams;
   const resumeUserData = route?.params?.resumeUserData;
   const wacbReturnRecordingId = route?.params?.wacbReturnRecordingId;
-  const { updateData } = useOnboarding();
+  const draftData = route?.params?.draftData;
+  const { data, updateData } = useOnboarding();
+  const authService = useAuthService();
+  // A ref, not state: recording the screen must not re-render the stack mid-transition
+  const lastStepRef = useRef<DraftStep | null>(null);
 
   // Pre-populate context with existing server data when resuming mid-onboarding.
   // Without this, OnboardingContext starts empty and SubscriptionScreen's
@@ -118,12 +139,53 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
         childBirthday: resumeUserData.childBirthday ? new Date(resumeUserData.childBirthday) : null,
         issue: resumeUserData.issue || '',
         relationshipToChild: resumeUserData.relationshipToChild || null,
+        childGender: resumeUserData.childGender || null,
       });
     }
     if (wacbReturnRecordingId) {
       updateData({ wacbReturnRecordingId });
     }
+    // Resuming from a draft: restore the answers (over the server's, which can lag)
+    if (draftData) {
+      updateData({
+        ...draftData,
+        childBirthday: draftData.childBirthday ? new Date(draftData.childBirthday as string) : null,
+      });
+    }
   }, []);
+
+  // Mirror the answers and the current screen so closing the app resumes here (see
+  // utils/onboardingDraft.ts): per user once the account exists, on the device before
+  const persistDraft = () => {
+    const lastStep = lastStepRef.current;
+    if (!lastStep || !isResumableStep(lastStep.name) || data.hasCompletedOnboarding) return;
+    if (authService.isAuthenticated()) saveUserDraft({ data, lastStep });
+    else saveDraft({ data, lastStep });
+  };
+  useEffect(persistDraft, [data]);
+
+  // A restored screen (draft or server resume point) starts alone in the stack, so
+  // swipe-back does nothing. Whenever the focused screen is the bottom one, slip the
+  // screen before it in underneath, one at a time as the parent goes back.
+  const dataRef = useRef(data);
+  dataRef.current = data;
+  const ensureHistoryBehind = (screenNavigation: any, screenRoute: { key: string; name: string; params?: object }) => {
+    const state = screenNavigation.getState();
+    if (state.routes[0]?.key !== screenRoute.key) return;
+    // The draft restore lands in context a render after the first focus
+    const live = dataRef.current;
+    const draft = (draftData ?? {}) as Partial<OnboardingData>;
+    const answers: Partial<OnboardingData> = {
+      issue: live.issue?.length ? live.issue : draft.issue,
+      screenTime: live.screenTime && Object.keys(live.screenTime).length ? live.screenTime : draft.screenTime,
+    };
+    const previous = previousOnboardingStep(screenRoute, answers, authService.isAuthenticated());
+    if (!previous) return;
+    screenNavigation.dispatch((current: any) => {
+      const routes = [{ key: `${previous.name}-${Date.now()}`, name: previous.name, params: previous.params }, ...current.routes];
+      return CommonActions.reset({ ...current, routes, index: current.index + 1 });
+    });
+  };
 
   // Determine initial route name based on the incomplete step
   const getInitialRouteName = (): keyof OnboardingStackParamList => {
@@ -137,6 +199,13 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
 
   return (
     <Stack.Navigator
+      screenListeners={({ navigation: screenNavigation, route: screenRoute }) => ({
+        focus: () => {
+          lastStepRef.current = { name: screenRoute.name, params: screenRoute.params as Record<string, unknown> | undefined };
+          persistDraft();
+          ensureHistoryBehind(screenNavigation, screenRoute);
+        },
+      })}
       screenOptions={{
         headerShown: false,
         animation: 'slide_from_right',
@@ -152,7 +221,11 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
-      <Stack.Screen name="CreateAccount" component={CreateAccountScreen} />
+      <Stack.Screen
+        name="CreateAccount"
+        component={CreateAccountScreen}
+        initialParams={initialStep === 'CreateAccount' ? initialStepParams : undefined}
+      />
       <Stack.Screen name="OB1" component={OB1Screen} />
       <Stack.Screen name="OB2" component={OB2Screen} />
       <Stack.Screen name="OB3" component={OB3Screen} />
@@ -176,6 +249,11 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
       <Stack.Screen name="DiagnosisStatus" component={DiagnosisStatusScreen} />
       <Stack.Screen name="ProfessionalSupport" component={ProfessionalSupportScreen} />
       <Stack.Screen name="ParentGoal" component={ParentGoalScreen} />
+      <Stack.Screen
+        name="ScreenTimeStep"
+        component={ScreenTimeStepScreen}
+        initialParams={initialStep === 'ScreenTimeStep' ? initialStepParams : undefined}
+      />
       <Stack.Screen name="ParentGoalIntro" component={ParentGoalIntroScreen} />
       <Stack.Screen name="OBLetter" component={OBLetterScreen} />
       <Stack.Screen name="OBLetterV2" component={OBLetterScreen_v2} />

@@ -73,9 +73,10 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode; rcReady
       const offerings = await Purchases.getOfferings();
       setOfferings(offerings);
 
-      if (offerings.current?.availablePackages.length > 0) {
-        setAvailablePackages(offerings.current.availablePackages);
-        setCurrentPackage(offerings.current.availablePackages[0]);
+      const packages = offerings.current?.availablePackages ?? [];
+      if (packages.length > 0) {
+        setAvailablePackages(packages);
+        setCurrentPackage(packages[0]);
       }
     } catch (e) {
       console.error('Error loading offerings:', e);

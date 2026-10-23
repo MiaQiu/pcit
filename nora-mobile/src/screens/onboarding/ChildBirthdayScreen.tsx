@@ -11,10 +11,11 @@ import { useTranslation } from 'react-i18next';
 import { Picker } from '@react-native-picker/picker';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
-import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
-import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
+import { OnboardingFooter } from '../../components/OnboardingFooter';
 import amplitudeService from '../../services/amplitudeService';
 import { useAuthService } from '../../contexts/AppContext';
+import { saveOnboardingFields } from '../../utils/onboardingDraft';
+import { goBackTo } from '../../navigation/goBackTo';
 
 // ─── Android custom scroll picker ────────────────────────────────────────────
 
@@ -129,23 +130,17 @@ export const ChildBirthdayScreen: React.FC = () => {
     const birthday = new Date(selectedYear, selectedMonth, 1);
     updateData({ childBirthday: birthday });
     amplitudeService.trackOnboardingStepCompleted('child_birthday', 16);
-    authService.completeOnboarding({ childBirthday: birthday }).catch(() => {});
+    saveOnboardingFields(authService, { childBirthday: birthday });
     navigation.navigate('ChildIssue');
   };
 
   const handleBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigation.replace('ChildGender');
-    }
+    goBackTo(navigation, 'ChildGender');
   };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.content}>
-        <OnboardingProgressHeader phase={1} step={5} totalSteps={7} />
-
         <View style={styles.header}>
           <Text style={styles.title}>{t('onboarding.childBirthday.title', { name: data.childName })}</Text>
         </View>
@@ -204,7 +199,8 @@ export const ChildBirthdayScreen: React.FC = () => {
       </View>
 
       <View style={styles.footer}>
-        <OnboardingButtonRow
+        <OnboardingFooter
+          parentPadding={20}
           onBack={handleBack}
           onContinue={handleContinue}
         />

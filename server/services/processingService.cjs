@@ -232,10 +232,19 @@ async function processRecordingWithRetry(sessionId, userId, storagePath, duratio
       data: { analysisStatus: 'COMPLETED' }
     });
 
-    // Re-evaluate parent skill level progress (non-blocking)
-    updateParentSkillLevel(userId, sessionId).catch(err => {
-      console.error(`❌ [PARENT-SKILL-LEVEL] Error updating progress for session ${sessionId.substring(0, 8)}:`, err.message);
+    const { moduleKey } = await prisma.session.findUnique({
+      where: { id: sessionId },
+      select: { moduleKey: true }
     });
+
+    // Re-evaluate parent skill level progress (non-blocking). Learn module
+    // recordings (e.g. screen-time endings) aren't play sessions, so they
+    // don't count toward the CDI skill ladder.
+    if (!moduleKey) {
+      updateParentSkillLevel(userId, sessionId).catch(err => {
+        console.error(`❌ [PARENT-SKILL-LEVEL] Error updating progress for session ${sessionId.substring(0, 8)}:`, err.message);
+      });
+    }
 
     // Log enrichment outcome (non-blocking)
     try {
@@ -251,7 +260,13 @@ async function processRecordingWithRetry(sessionId, userId, storagePath, duratio
     // Send push notification to user that report is ready
     console.log(`📱 [PUSH-NOTIFICATION] Sending report ready notification for session ${sessionId.substring(0, 8)}`);
     try {
-      const result = await sendReportReadyNotification(userId, sessionId, 'play session');
+      const result = await sendReportReadyNotification(
+        userId,
+        sessionId,
+        moduleKey ? 'session' : 'play session',
+        // Lets the app open the Learn module report instead of the play report.
+        moduleKey ? { moduleKey } : {}
+      );
       if (result.success) {
         console.log(`✅ [PUSH-NOTIFICATION] Push notification sent successfully for session ${sessionId.substring(0, 8)}`);
       } else {

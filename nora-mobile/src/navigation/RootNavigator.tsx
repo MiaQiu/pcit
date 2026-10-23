@@ -12,7 +12,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ForceUpdateScreen } from '../screens/ForceUpdateScreen';
 import { WhatsNewModal } from '../components/WhatsNewModal';
 import { useNavigation } from '@react-navigation/native';
-import { TabNavigator } from './TabNavigator';
+import { HomeRootScreen } from '../screens/HomeRootScreen';
 import { OnboardingNavigator } from './OnboardingNavigator';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { NotificationSettingsScreen } from '../screens/NotificationSettingsScreen';
@@ -45,6 +45,18 @@ import { ABCLogScreen } from '../screens/ABCLogScreen';
 import { HomeCardDetailScreen } from '../screens/HomeCardDetailScreen';
 import { GetReadyToPlayScreen } from '../screens/GetReadyToPlayScreen';
 import { QuickGuideScreen } from '../screens/QuickGuideScreen';
+import { LearnModuleScreen_v2 } from '../screens/LearnModuleScreen_v2';
+import { ModuleReportScreen } from '../screens/ModuleReportScreen';
+import { ModuleGuideScreen } from '../screens/ModuleGuideScreen';
+import { ModuleRecordGuideScreen } from '../screens/ModuleRecordGuideScreen';
+import { ModulePlanDetailScreen } from '../screens/ModulePlanDetailScreen';
+import { ModuleCheatSheetScreen } from '../screens/ModuleCheatSheetScreen';
+import { ModuleSpecialPlayScreen } from '../screens/ModuleSpecialPlayScreen';
+import { ModuleRoutineScreen } from '../screens/ModuleRoutineScreen';
+import { ModuleChatScreen } from '../screens/ModuleChatScreen';
+import { KeyStrategyScreen } from '../screens/KeyStrategyScreen';
+import { ModuleChatBookmarksScreen } from '../screens/ModuleChatBookmarksScreen';
+import { ModuleLearnScreen } from '../screens/ModuleLearnScreen';
 import { GetReadySectionScreen } from '../screens/GetReadySectionScreen';
 import { RootStackParamList, OnboardingStackParamList } from './types';
 import { useAuthService, useLessonService } from '../contexts/AppContext';
@@ -53,6 +65,7 @@ import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import { User } from '@nora/core';
 import amplitudeService from '../services/amplitudeService';
 import { checkOnboardingStep } from '../utils/onboardingCheck';
+import { loadDraft, OnboardingDraft } from '../utils/onboardingDraft';
 import { prefetchDemoVideoThumbnails } from '../services/demoVideoThumbnailCache';
 import i18n from '../i18n';
 
@@ -63,6 +76,10 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 // force-land there past a Fast Refresh full reload, skipping auth/onboarding
 // status checks. Has no effect in production builds. Revert to null before committing.
 const DEV_FORCE_ONBOARDING_SCREEN: keyof OnboardingStackParamList | null = null;
+// DEV ONLY: params for that forced screen, e.g. { stepId: 'context' } to open a
+// screen-time step (ids in screenTimeFlow.ts); devSample fills in sample answers and a
+// gender if missing. Revert to undefined before committing.
+const DEV_FORCE_ONBOARDING_PARAMS: Record<string, unknown> | undefined = undefined;
 
 function isVersionBelow(current: string, minimum: string): boolean {
   const parse = (v: string) => v.split('.').map(Number);
@@ -84,6 +101,8 @@ export const RootNavigator: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState<string | null>(null);
   const [resumeUserData, setResumeUserData] = useState<User | null>(null);
+  // Logged-out parent with an unfinished account-last onboarding on this device
+  const [onboardingDraft, setOnboardingDraft] = useState<OnboardingDraft | null>(null);
   const [updateRequired, setUpdateRequired] = useState(false);
   const [softUpdate, setSoftUpdate] = useState<{ version: string; whatsNew: string[] } | null>(null);
 
@@ -183,10 +202,13 @@ export const RootNavigator: React.FC = () => {
       if (authenticated) {
         console.log('[Auth] Checking onboarding and subscription status...');
         try {
-          const { step: incompleteStep, user } = await checkOnboardingCompletion();
+          const { step: incompleteStep, user, draft } = await checkOnboardingCompletion();
           console.log('[Auth] Onboarding step:', incompleteStep);
           setOnboardingStep(incompleteStep);
-          if (incompleteStep) {
+          // Resuming this device's draft: its screen params and answers come along
+          setOnboardingDraft(draft ?? null);
+          // A dev-forced screen also gets the user's profile, so name/gender/age render
+          if (incompleteStep || (__DEV__ && DEV_FORCE_ONBOARDING_SCREEN)) {
             setResumeUserData(user);
           }
           // Sync detected/saved UI language to server (covers first-launch device locale)
@@ -194,8 +216,6 @@ export const RootNavigator: React.FC = () => {
 
           // Identify user on session restore so events are never anonymous
           amplitudeService.identifyUser(user.id, {
-            email: user.email,
-            name: user.name,
             currentStreak: user.currentStreak || 0,
             longestStreak: user.longestStreak || 0,
             subscriptionPlan: user.subscriptionPlan,
@@ -218,6 +238,11 @@ export const RootNavigator: React.FC = () => {
         }
       }
 
+      // No account yet: resume an account-last onboarding draft if there is one
+      if (!authenticated) {
+        setOnboardingDraft(await loadDraft());
+      }
+
       // Show app after subscription check completes
       setIsLoading(false);
       console.log('[Auth] Auth check complete');
@@ -233,7 +258,7 @@ export const RootNavigator: React.FC = () => {
     }
   };
 
-  const checkOnboardingCompletion = async (): Promise<{ step: string | null; user: User }> => {
+  const checkOnboardingCompletion = async (): Promise<{ step: string | null; user: User; draft?: OnboardingDraft | null }> => {
     const result = await checkOnboardingStep(authService);
     reinitializeUnread(result.user.id);
     await reinitializeUpload();
@@ -278,17 +303,32 @@ export const RootNavigator: React.FC = () => {
             component={OnboardingNavigator}
             initialParams={
               devForceOnboardingScreen
-                ? { initialStep: devForceOnboardingScreen }
+                ? { initialStep: devForceOnboardingScreen, initialStepParams: DEV_FORCE_ONBOARDING_PARAMS, resumeUserData: resumeUserData ?? undefined }
                 : onboardingStep
-                  ? { initialStep: onboardingStep, resumeUserData: resumeUserData ?? undefined }
-                  : undefined
+                  ? {
+                      initialStep: onboardingStep,
+                      resumeUserData: resumeUserData ?? undefined,
+                      ...(onboardingDraft
+                        ? {
+                            initialStepParams: onboardingDraft.lastStep.params,
+                            draftData: onboardingDraft.data as Record<string, unknown>,
+                          }
+                        : {}),
+                    }
+                  : !isAuthenticated && onboardingDraft
+                    ? {
+                        initialStep: onboardingDraft.lastStep.name,
+                        initialStepParams: onboardingDraft.lastStep.params,
+                        draftData: onboardingDraft.data as Record<string, unknown>,
+                      }
+                    : undefined
             }
           />
-          <Stack.Screen name="MainTabs" component={TabNavigator} />
+          <Stack.Screen name="MainTabs" component={HomeRootScreen} />
         </>
       ) : (
         <>
-          <Stack.Screen name="MainTabs" component={TabNavigator} />
+          <Stack.Screen name="MainTabs" component={HomeRootScreen} />
           <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
         </>
       )}
@@ -515,6 +555,90 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen
         name="QuickGuide"
         component={QuickGuideScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="LearnModule"
+        component={LearnModuleScreen_v2}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="ModuleReport"
+        component={ModuleReportScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="ModuleGuide"
+        component={ModuleGuideScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="ModuleRecordGuide"
+        component={ModuleRecordGuideScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="ModulePlanDetail"
+        component={ModulePlanDetailScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="ModuleCheatSheet"
+        component={ModuleCheatSheetScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="ModuleSpecialPlay"
+        component={ModuleSpecialPlayScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="ModuleRoutine"
+        component={ModuleRoutineScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="ModuleChat"
+        component={ModuleChatScreen}
+        options={{
+          animation: 'slide_from_bottom',
+        }}
+      />
+      <Stack.Screen
+        name="KeyStrategy"
+        component={KeyStrategyScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="ModuleChatBookmarks"
+        component={ModuleChatBookmarksScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="ModuleLearn"
+        component={ModuleLearnScreen}
         options={{
           animation: 'slide_from_right',
         }}

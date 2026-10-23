@@ -6,6 +6,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { OnboardingFooter } from '../../components/OnboardingFooter';
 
 export const RelationshipScreen: React.FC = () => {
   const { data } = useOnboarding();
@@ -26,11 +27,11 @@ export const RelationshipScreen: React.FC = () => {
       dataField="relationshipToChild"
       nextScreen="ChildName"
       prevScreen="NameInput"
-      phase={1}
-      stepInPhase={2}
-      totalStepsInPhase={7}
+      // Profile questions show no progress bar
+      headerOverride={null}
       screenName="relationship"
       screenStep={13}
+      renderButtons={(buttonProps) => <OnboardingFooter {...buttonProps} />}
     />
   );
 };

@@ -56,7 +56,7 @@ export const NotificationPermissionScreen: React.FC = () => {
     setIsRequesting(true);
     try {
       const accessToken = authService.getAccessToken();
-      const granted = await requestNotificationPermissions(accessToken);
+      const granted = await requestNotificationPermissions(accessToken ?? undefined);
       amplitudeService.trackNotificationPermission(granted);
       if (granted) {
         const reminderTime = data.reminderTime || '19:30';

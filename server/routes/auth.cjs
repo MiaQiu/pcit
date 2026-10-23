@@ -688,10 +688,10 @@ router.get('/me', require('../middleware/auth.cjs').requireAuth, async (req, res
 // Update user profile with onboarding data
 router.patch('/complete-onboarding', require('../middleware/auth.cjs').requireAuth, async (req, res) => {
   try {
-    const { name, relationshipToChild, childName, childGender, childBirthday, issue, parentGoal, diagnosisStatus, professionalSupport } = req.body;
+    const { name, relationshipToChild, childName, childGender, childBirthday, issue, parentGoal, diagnosisStatus, professionalSupport, screenTimeIntake } = req.body;
 
     // Validate at least one field is provided
-    if (!name && !relationshipToChild && !childName && !childGender && !childBirthday && !issue && !parentGoal && !diagnosisStatus && !professionalSupport) {
+    if (!name && !relationshipToChild && !childName && !childGender && !childBirthday && !issue && !parentGoal && !diagnosisStatus && !professionalSupport && !screenTimeIntake) {
       return res.status(400).json({ error: 'At least one field required' });
     }
 
@@ -788,6 +788,17 @@ router.patch('/complete-onboarding', require('../middleware/auth.cjs').requireAu
         }
         updateData.professionalSupport = professionalSupport;
       }
+    }
+
+    if (screenTimeIntake) {
+      // Answers from the screen-time onboarding branch, stored as-is
+      if (typeof screenTimeIntake !== 'object' || Array.isArray(screenTimeIntake)) {
+        return res.status(400).json({ error: 'screenTimeIntake must be an object' });
+      }
+      if (JSON.stringify(screenTimeIntake).length > 10000) {
+        return res.status(400).json({ error: 'screenTimeIntake is too large' });
+      }
+      updateData.screenTimeIntake = screenTimeIntake;
     }
 
     // Update user

@@ -237,6 +237,17 @@ async function getOrCreateCache(variant, pdfPath, systemInstruction, model, extr
 }
 
 /**
+ * Forget a variant's cache locally (no API call) — used when Gemini reports it
+ * gone (expired / evicted) before the registry's TTL bookkeeping says so, so the
+ * next getOrCreateCache recreates it.
+ */
+function invalidateCache(variant) {
+  if (!_cacheRegistry[variant]) return;
+  delete _cacheRegistry[variant];
+  saveRegistry();
+}
+
+/**
  * DELETE /cachedContents/{name} — frees the cache immediately.
  */
 async function deleteCache(cacheName) {
@@ -249,4 +260,4 @@ async function deleteCache(cacheName) {
   saveRegistry();
 }
 
-module.exports = { getOrCreateCache, getOrUploadFile, createCache, deleteCache };
+module.exports = { getOrCreateCache, getOrUploadFile, createCache, deleteCache, invalidateCache };

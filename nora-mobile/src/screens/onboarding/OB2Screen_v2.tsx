@@ -23,7 +23,8 @@ export const OB2Screen_v2: React.FC = () => {
       imageScale={1.3}
       onNext={() => {
         amplitudeService.trackOnboardingStepCompleted('ob2', 5);
-        navigation.navigate('OB3V2');
+        // OB3V2 is no longer in the flow
+        navigation.navigate('NameInput');
       }}
     >
       <Text style={[styles.profName, { top: '23%', left: '37%', width: '58%' }]}>

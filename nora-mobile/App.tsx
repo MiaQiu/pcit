@@ -17,6 +17,9 @@ import {
   PlusJakartaSans_700Bold,
   PlusJakartaSans_700Bold_Italic,
 } from '@expo-google-fonts/plus-jakarta-sans';
+// Outfit + DM Sans: screen-time onboarding screens styled after the Nora-Onboarding-1 prototype
+import { Outfit_700Bold, Outfit_800ExtraBold } from '@expo-google-fonts/outfit';
+import { DMSans_400Regular, DMSans_600SemiBold, DMSans_700Bold } from '@expo-google-fonts/dm-sans';
 import crashlytics from '@react-native-firebase/crashlytics';
 import Purchases from 'react-native-purchases';
 import { RootNavigator } from './src/navigation/RootNavigator';
@@ -37,18 +40,21 @@ import amplitudeService from './src/services/amplitudeService';
 import { getSafeRouteParams } from './src/utils/getSafeRouteParams';
 import { REVENUECAT_CONFIG } from './src/config/revenuecat';
 import { getTodaySingapore } from './src/utils/timezone';
+import type { LearnModuleKey } from './src/constants/learnModules';
 
 // Deep linking configuration
 const linking = {
   prefixes: [Linking.createURL('/'), 'nora://', 'https://hinora.co'],
   config: {
     screens: {
+      // Onboarding's route params are the navigator's own props (initialStep etc.),
+      // not NavigatorScreenParams, so the typed config won't accept nested screens here
       Onboarding: {
         screens: {
           ResetPassword: 'reset-password',
           Login: { path: 'join', parse: { referralCode: String } },
         },
-      },
+      } as any,
       MainTabs: {
         screens: {
           Home: 'home',
@@ -159,7 +165,12 @@ const AppContent: React.FC = () => {
     amplitudeService.trackNotificationOpened(notificationType);
 
     whenInApp(() => {
-      if (data.type === 'new_report' || data.type === 'weekly_report') {
+      if (data.type === 'new_report' && data.moduleKey && data.recordingId) {
+        // Learn module recording (e.g. screen-time ending) — its report isn't
+        // surfaced on Home, so open it directly.
+        console.log('[App] Navigating to ModuleReport for', data.moduleKey, data.recordingId);
+        navigation.navigate('ModuleReport', { recordingId: data.recordingId as string, moduleKey: data.moduleKey as LearnModuleKey });
+      } else if (data.type === 'new_report' || data.type === 'weekly_report') {
         // Land on Home, where the report surfaces on the home card. refreshAt
         // makes Home reload: if the user left the app on Home, this navigate
         // doesn't refocus it, so its focus-based reload never runs.
@@ -221,6 +232,11 @@ export default function App() {
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
     PlusJakartaSans_700Bold_Italic,
+    Outfit_700Bold,
+    Outfit_800ExtraBold,
+    DMSans_400Regular,
+    DMSans_600SemiBold,
+    DMSans_700Bold,
   });
   const [langReady, setLangReady] = useState(false);
   const [rcReady, setRcReady] = useState(false);

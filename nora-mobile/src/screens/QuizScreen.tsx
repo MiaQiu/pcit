@@ -149,7 +149,6 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ route, navigation }) => 
               label={option.optionLabel}
               text={option.optionText}
               isSelected={selectedOption === option.id}
-              isSubmitted={isSubmitted}
               isCorrect={option.id === quiz.correctAnswer}
               onPress={() => !isSubmitted && setSelectedOption(option.id)}
             />

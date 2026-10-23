@@ -3,6 +3,7 @@
  * Handles PCIT coding, feedback generation, and score calculation
  */
 const prisma = require('./db.cjs');
+const { Prisma } = require('@prisma/client');
 const { parseJsonResponse } = require('./claudeService.cjs');
 const { llmCall } = require('../llm/gateway.cjs');
 const SCHEMAS = require('../llm/schemas/index.cjs');
@@ -15,6 +16,7 @@ const { decryptSensitiveData } = require('../utils/encryption.cjs');
 const { getLanguageInstruction } = require('../utils/languageUtils.cjs');
 const { classifySpeakersML } = require('./mlDiarizationService.cjs');
 const { parseUserIssues } = require('./priorityEngine.cjs');
+const { formatScreenTimeIntakeForPrompt, summarizeScreenTimeIntake, reportedDifferences } = require('../utils/screenTimeIntake.cjs');
 
 // DPICS asset paths — referenced by gateway cache config for coding and review feedback
 const DPICS_PDF_PATH      = process.env.DPICS_PDF_PATH      || require('path').join(__dirname, '../assets/DPICS-Manual.2.18.pdf');
@@ -94,6 +96,23 @@ const QUALITY_MESSAGES = {
     'zh-CN': '您的录音无法分析。请重新录制一段您和孩子的亲子游戏。',
     'zh-TW': '您的錄音無法分析。請重新錄製一段您和孩子的親子遊戲。',
   },
+  // Learn module recordings (validateModuleSessionQuality). A rejected one
+  // doesn't use up the day: only analyzed reports count.
+  moduleNoSpeech: {
+    eng: 'Your recording didn\'t pick up any speech, so there\'s nothing to coach on yet. Keep your phone close and start recording just before screen time ends.',
+    'zh-CN': '录音没有采集到任何说话声，所以暂时无法给出建议。请把手机放在旁边，在屏幕时间快结束前开始录音。',
+    'zh-TW': '錄音沒有擷取到任何說話聲，所以暫時無法給出建議。請把手機放在旁邊，在螢幕時間快結束前開始錄音。',
+  },
+  moduleRehearsal: {
+    eng: 'It sounds like you were practicing the routine — great preparation! To coach you, Nora needs to hear the real moment with your child, so start recording the next time screen time ends.',
+    'zh-CN': '听起来您是在练习这个流程——准备得很好！为了给您建议，Nora 需要听到您和孩子真实的那一刻，请在下次屏幕时间结束时开始录音。',
+    'zh-TW': '聽起來您是在練習這個流程——準備得很好！為了給您建議，Nora 需要聽到您和孩子真實的那一刻，請在下次螢幕時間結束時開始錄音。',
+  },
+  moduleOffTopic: {
+    eng: 'We couldn\'t find a screen-time ending in this recording, so there\'s no report this time. Start recording just before you tell your child screen time is over, and keep your phone nearby until things settle.',
+    'zh-CN': '这段录音中没有找到屏幕时间结束的过程，所以这次无法生成报告。请在告诉孩子屏幕时间结束之前开始录音，并把手机放在旁边，直到情况平稳下来。',
+    'zh-TW': '這段錄音中沒有找到螢幕時間結束的過程，所以這次無法產生報告。請在告訴孩子螢幕時間結束之前開始錄音，並把手機放在旁邊，直到情況平穩下來。',
+  },
 };
 
 /**
@@ -161,6 +180,61 @@ async function validateSessionQuality(utterances, durationSeconds, roleIdentific
     throw new SessionQualityError(
       result.userMessage || qualityMessage('analysisFailed', language)
     );
+  }
+}
+
+/**
+ * Quality gate for Learn module recordings (in place of validateSessionQuality,
+ * whose play-session rules don't fit: a screen-time ending can be short, and
+ * a silent toddler handing over the tablet is a real, good ending). One LLM
+ * call classifies the recording; a parent practicing the routine alone
+ * ("rehearsal") or anything with no screen time in it ("off_topic") is
+ * rejected. A screen-time moment that isn't an ending ("screen_moment": the
+ * child asking for a screen, a negotiation, a screen taken away) gets the
+ * same report as a real ending. Fails open: an unusable answer lets the
+ * recording through.
+ * Throws SessionQualityError if the recording should not get a report.
+ */
+async function validateModuleSessionQuality(session, transcriptText, childName, language = null) {
+  const sessionId = session.id;
+  const promptName = MODULE_COACHING_CONFIG[session.moduleKey]?.qualityCheckPrompt;
+  if (!promptName) return;
+
+  if (!transcriptText.trim()) {
+    throw new SessionQualityError(qualityMessage('moduleNoSpeech', language));
+  }
+
+  const languageInstruction = getLanguageInstruction(language);
+  const prompt = loadPromptWithVariables(promptName, {
+    CHILD_NAME: childName || 'your child',
+    DURATION_SECONDS: String(session.durationSeconds ?? 'unknown'),
+    TRANSCRIPT: transcriptText,
+    LANGUAGE_INSTRUCTION: languageInstruction
+      ? `${languageInstruction} This applies to "user_message" only — keep the JSON keys, the classification values and "reason" in English.`
+      : '',
+  });
+
+  let result;
+  try {
+    result = await llmCall(prompt, {
+      profile:  'module-quality-check',
+      label:    `module-quality-check-${session.moduleKey}`,
+      sessionId,
+    });
+  } catch (error) {
+    console.warn(`⚠️ [MODULE-QUALITY-GATE] Check failed, letting session ${sessionId.substring(0, 8)} through: ${error.message}`);
+    return;
+  }
+
+  const { classification, child_audible: childAudible, reason, user_message: userMessage } = result || {};
+  console.log(`📊 [MODULE-QUALITY-GATE] Session ${sessionId.substring(0, 8)} (${session.moduleKey}): ${classification}, child audible: ${childAudible} — ${reason}`);
+  // The model's message says what it heard; the fixed one covers an empty answer.
+  const message = (fallbackKey) => (typeof userMessage === 'string' && userMessage.trim()) || qualityMessage(fallbackKey, language);
+  if (classification === 'rehearsal') {
+    throw new SessionQualityError(message('moduleRehearsal'));
+  }
+  if (classification === 'off_topic') {
+    throw new SessionQualityError(message('moduleOffTopic'));
   }
 }
 
@@ -439,6 +513,24 @@ function formatUtterancesForPsychologist(utterances) {
     }).join('\n');
 }
 
+/**
+ * Same as formatUtterancesForPsychologist, each line prefixed with its
+ * [mm:ss] start time — the Day 1 screen-time prompt plots the child's
+ * outburst level over time from these.
+ */
+function formatUtterancesWithTimestamps(utterances) {
+  const clock = (seconds) => {
+    const total = Math.max(0, Math.floor(seconds || 0));
+    return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+  };
+  return utterances
+    .filter(u => u.speaker !== SILENT_SPEAKER_ID)
+    .map(u => {
+      const roleLabel = u.role === 'adult' ? 'Parent' : u.role === 'child' ? 'Child' : u.speaker;
+      return `[${clock(u.startTime)}] ${roleLabel}: ${u.text}`;
+    }).join('\n');
+}
+
 // Human-readable labels for the 10 Child Snapshot ("WACB") behavior items.
 // Mirrors nora-mobile en.json onboarding.page7.wacbQuestions — keep in sync.
 // Used so issuePriority rows sourced from the snapshot survey render as plain
@@ -551,7 +643,53 @@ function buildProfilingVariables(childInfo, tagCounts, utterances) {
       : '',
     TRANSCRIPT: transcript,
     FIRST_SESSION_NOTE: isFirstSession
-      ? `This is the first session the parent has with Nora. Your primary goal is to hook the user in, set expectations that Nora will be very helpful, and get them excited about the emotional massage and the discipline coaching (available once their emotional bank account is ready). Commit them to making daily sessions their priority.`
+      ? `This is the first session the parent has with Nora. Your primary goal is to hook the user in, set expectations that Nora will be very helpful, and get them excited about the emotional massage and the discipline coaching (available once their emotional bank account is ready). Commit them to making daily sessions their priority.
+
+After your main coaching report, include the following "First Session Foundation" section verbatim in structure but translated to the appropriate language and consistent in tone with the rest of your report:
+
+---
+
+Your 5-Minute Foundation:
+Great job on your first session! Think of this 5-minute block as a Training Gym where you and your child both benefit:
+For your child: It is an "emotional massage" that repairs self-esteem and lowers frustration.
+For you: It is a "practice lab" to master expert skills until they become natural habits.
+
+Your PEN Skill Challenge
+Don't worry about being perfect right away—this requires practice! We will break down these skills and lead you step-by-step to make each session more effective.
+
+Aim for these targets during your session:
+
+10 Labeled Praises: Be specific ("I love how you shared those blocks").
+
+10 Echoes: Repeat what they say to show you are truly listening.
+
+10 Narrations: Describe their play like a sports broadcaster.
+
+The "Avoids": No Questions, Commands, or Criticism. Let your child lead!
+
+Over time, these skills will naturally show up in your daily life—during routines and even stressful moments. You won't need to force it forever; with practice, it becomes a habit.
+
+Important Reminder: The Three Modes
+Child-led play does not mean child-led all day. We are building the "Play Time" foundation first. Once it's rock-solid, Nora will guide you through the other essential modes:
+
+Play Time (Child-Led): Building the emotional "bank account."
+
+Teaching Mode: Reading, learning, and coaching new skills.
+
+Leadership Mode: Routines, boundaries, and discipline.
+
+Healthy parenting uses all three modes to raise resilient, successful children.
+
+Why it Works
+This "Emotional Massage" builds the foundation needed for later leadership. Research shows it:
+
+Reduces Opposition: A stronger bond makes them want to cooperate.
+
+Improves Focus: It builds frustration tolerance and longer play periods.
+
+Breaks the Cycle: No matter how tough the day was, it always ends with a win.
+
+Consistency is your superpower. Even on bad days, don't skip your 5 minutes. See you for Day 2!`
       : '',
     ACHIEVED_MILESTONE_KEYS: achievedMilestoneKeys && achievedMilestoneKeys.length > 0
       ? JSON.stringify(achievedMilestoneKeys)
@@ -669,6 +807,554 @@ async function generateAboutChild(utterances, childInfo, tagCounts = {}, session
     console.error('❌ [ABOUT-CHILD] Failed:', error.message);
     return null;
   }
+}
+
+// ============================================================================
+// Learn module coaching — screen-time endings (report + "My Plan")
+// ============================================================================
+
+// Learn modules whose recordings get a module coaching call instead of the
+// PCIT pipeline, mapped to their prompt files and response schemas.
+// Day 1 uses `prompt`: with a `formatPrompt` it writes a free-form report,
+// then the format call splits it into display sections and extracts the
+// "My Plan" (`formatSchema`); without one, `prompt` returns `schema` JSON.
+// Day 2+ (once a plan exists) uses `followupPrompt`. Both the format and
+// follow-up prompts get the strategy knowledge base cut from
+// `knowledgeBasePrompt` (the section between KNOWLEDGE_BASE_START and
+// KNOWLEDGE_BASE_END) so the strategies are edited in one place.
+const MODULE_COACHING_CONFIG = {
+  screenTime: {
+    prompt:         'coaching-screentime_1st',
+    formatPrompt:   'coaching-screentime_1st-format',
+    formatSchema:   SCHEMAS.SCREENTIME_NARRATIVE_FORMAT,
+    // Day 2+ use the same prompt + format call; the format call also judges
+    // today's outcome and mastery (moduleProgressFormatSection).
+    followupFormatSchema: SCHEMAS.SCREENTIME_NARRATIVE_FORMAT_FOLLOWUP,
+    knowledgeBasePrompt: 'coaching-screentime',
+    // Module chat system prompt (routes/coach.cjs, see getModuleChatPrompt).
+    chatPrompt:     'coach-screentime',
+    // Quality gate: is this a real screen-time ending (validateModuleSessionQuality).
+    qualityCheckPrompt: 'moduleQualityCheck-screentime',
+    // Strategies in the Knowledge Base — valid active_strategy_id range.
+    strategyCount:  10,
+  },
+};
+const KNOWLEDGE_BASE_START = '*Strategy Knowledge Base';
+const KNOWLEDGE_BASE_END = '**OUTPUT FORMAT';
+
+function moduleKnowledgeBase(promptName) {
+  const text = loadPrompt(promptName);
+  const start = text.indexOf(KNOWLEDGE_BASE_START);
+  const end = text.indexOf(KNOWLEDGE_BASE_END, start);
+  if (start < 0 || end < 0) {
+    throw new Error(`[MODULE-COACHING] Strategy knowledge base markers not found in prompts/${promptName}.txt`);
+  }
+  return text.slice(start, end).trim();
+}
+
+// How the parent said a module recording went (session.moduleSelfReport),
+// as the prompt's PARENT_SELF_REPORT.
+const MODULE_SELF_REPORT_TEXT = {
+  success:       'It went well',
+  struggle:      'It was a struggle',
+  not_attempted: "Didn't get to try the strategy",
+};
+const MODULE_SELF_REPORTS = new Set(Object.keys(MODULE_SELF_REPORT_TEXT));
+
+const normalizeStrategy = (s) => String(s || '').trim().toLowerCase();
+// Same strategy? By Knowledge Base number when both plans have one (titles
+// drift: "Countdown Warnings" vs "Give simple countdown warnings"), else title.
+const sameStrategy = (plan, strategy, strategyId) =>
+  plan.activeStrategyId && strategyId
+    ? plan.activeStrategyId === strategyId
+    : normalizeStrategy(plan.activeStrategy) === normalizeStrategy(strategy);
+
+/**
+ * The parent's position in a Learn module, derived from their earlier
+ * reports (no separate tally table): each analyzed report is one day; the
+ * active strategy is the one the previous report's plan assigned; days on it
+ * counts the consecutive most recent plans that assigned it; mastered
+ * strategies are those a Day 2+ report judged mastered.
+ *
+ * @returns {Promise<{ dayNumber: number, currentStrategy?: string, currentStrategyId?: number|null,
+ *   currentSteps?: string[], daysOnStrategy?: number, masteredStrategies?: string[] }>}
+ */
+async function getModuleProgressState(session) {
+  const prior = await prisma.session.findMany({
+    where: {
+      userId: session.userId,
+      moduleKey: session.moduleKey,
+      analysisStatus: 'COMPLETED',
+      moduleCoaching: { not: Prisma.DbNull },
+      createdAt: { lt: session.createdAt },
+      id: { not: session.id },
+    },
+    orderBy: { createdAt: 'asc' },
+    select: { moduleCoaching: true },
+  });
+  const plans = prior.map(p => p.moduleCoaching).filter(c => c?.myPlan?.activeStrategy);
+  if (plans.length === 0) return { dayNumber: prior.length + 1 };
+
+  const {
+    activeStrategy: currentStrategy,
+    activeStrategyId: currentStrategyId = null,
+    protocolSteps: currentSteps,
+  } = plans[plans.length - 1].myPlan;
+  let daysOnStrategy = 0;
+  for (let i = plans.length - 1; i >= 0 && sameStrategy(plans[i].myPlan, currentStrategy, currentStrategyId); i--) {
+    daysOnStrategy++;
+  }
+  const masteredStrategies = [...new Map(
+    plans
+      .filter(c => c.progress?.strategyMastered && c.progress.practicedStrategy)
+      .map(c => [c.progress.practicedStrategyId || normalizeStrategy(c.progress.practicedStrategy), c.progress.practicedStrategy]),
+  ).values()];
+
+  return { dayNumber: prior.length + 1, currentStrategy, currentStrategyId, currentSteps: currentSteps || [], daysOnStrategy, masteredStrategies };
+}
+
+const snakeToCamelKeys = (value) => {
+  if (Array.isArray(value)) return value.map(snakeToCamelKeys);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [
+      k.replace(/_([a-z])/g, (_, c) => c.toUpperCase()),
+      snakeToCamelKeys(v),
+    ]));
+  }
+  return value;
+};
+
+// Strategy check-in feedback from the module chat (ModuleStrategyFeedback,
+// saved by the coach's save_strategy_feedback tool), as prompt lines.
+const STRATEGY_FEEDBACK_TRIED_TEXT = {
+  yes:     'tried it',
+  not_yet: "hasn't tried it yet",
+  unsure:  "isn't sure how to do it",
+};
+const STRATEGY_FEEDBACK_OUTCOME_TEXT = {
+  went_well: 'it went well',
+  partly:    'it partly worked',
+  hard:      'it was hard',
+};
+
+function formatStrategyFeedback(rows) {
+  return rows.map(f => {
+    const parts = [`"${f.strategy}": parent ${STRATEGY_FEEDBACK_TRIED_TEXT[f.tried] || f.tried}`];
+    if (f.outcome) parts.push(STRATEGY_FEEDBACK_OUTCOME_TEXT[f.outcome] || f.outcome);
+    if (f.obstacle) parts.push(`difficulty: ${f.obstacle}`);
+    if (f.nextStep) parts.push(`agreed next step: ${f.nextStep}`);
+    if (f.notes) parts.push(`notes: ${f.notes}`);
+    return `- ${f.createdAt.toISOString().slice(0, 10)} ${parts.join('; ')}`;
+  }).join('\n');
+}
+
+// Module reports for this parent, oldest first.
+function getModuleReports(userId, moduleKey, before = undefined) {
+  return prisma.session.findMany({
+    where: {
+      userId,
+      moduleKey,
+      analysisStatus: 'COMPLETED',
+      moduleCoaching: { not: Prisma.DbNull },
+      ...(before ? { createdAt: { lt: before } } : {}),
+    },
+    orderBy: { createdAt: 'asc' },
+    select: { id: true, createdAt: true, moduleCoaching: true },
+  });
+}
+
+// Strategy feedback given in the module chat after the report before
+// `session` and up to `session` — what's new for the next report.
+async function moduleStrategyFeedbackNotes(session) {
+  const prior = await getModuleReports(session.userId, session.moduleKey, session.createdAt);
+  const since = prior[prior.length - 1]?.createdAt;
+  const rows = await prisma.moduleStrategyFeedback.findMany({
+    where: {
+      userId: session.userId,
+      moduleKey: session.moduleKey,
+      createdAt: { ...(since ? { gt: since } : {}), lte: session.createdAt },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+  if (rows.length === 0) return '';
+  return `What the parent told Nora in the chat about the suggested strategies since the last report:\n${formatStrategyFeedback(rows)}`;
+}
+
+const CHILD_PRONOUNS = {
+  BOY:     'he/him',
+  GIRL:    'she/her',
+  UNKNOWN: 'not given: use the name or they/them, never guess he or she',
+};
+
+// What the screen-time onboarding told the parent Nora would do (nora-mobile
+// en.json onboarding.screenTime: easierEnd/routine/specialPlay, coaching, plan
+// — keep in sync), so the chat can pick up where it left off.
+function onboardingPlanText(childName, hasDifferences) {
+  return [
+    `  - Two-month goal: help ${childName} manage screen time without tantrums.`,
+    `  - Start with: helping ${childName} practise switching, coping and moving on in small moments together.`,
+    '  - Nora learns from voice recordings of real screen-time endings and suggests one small step to try next.',
+    hasDifferences
+      ? '  - A predictable screen-time routine plus 5 minutes of Special Play Time daily, from the start (it is on their home page).'
+      : `  - First a predictable screen-time routine; if ${childName} still struggles, Special Play Time comes in later.`,
+  ].join('\n');
+}
+
+/**
+ * System prompt for a Learn module's chat (POST /api/coach/chat with
+ * moduleKey): the module's chat prompt filled with the family's context —
+ * parent and child, the onboarding answers (summarized and in full) and the
+ * plan onboarding showed, day, the latest report's plan, focus areas and
+ * suggested strategies, mastered strategies and the strategy feedback already
+ * given since that report. Returns null for a module without a chat prompt.
+ */
+async function getModuleChatPrompt(userId, moduleKey) {
+  const config = MODULE_COACHING_CONFIG[moduleKey];
+  if (!config?.chatPrompt) return null;
+
+  const [user, reports, lastDecline] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true, childName: true, childGender: true, childBirthYear: true, childBirthday: true, screenTimeIntake: true, specialPlayAddedAt: true },
+    }),
+    getModuleReports(userId, moduleKey),
+    prisma.specialPlayOffer.findFirst({
+      where: { userId, response: 'declined' },
+      orderBy: { respondedAt: 'desc' },
+      select: { respondedAt: true },
+    }),
+  ]);
+  let childName = 'the child';
+  let parentName = '';
+  try {
+    if (user?.childName) childName = decryptSensitiveData(user.childName);
+    if (user?.name) parentName = decryptSensitiveData(user.name);
+  } catch {
+    // keep the generic names
+  }
+  const childAge = user?.childBirthYear ? calculateChildAge(user.childBirthYear, user.childBirthday) : null;
+  const hasDifferences = reportedDifferences(user?.screenTimeIntake).length > 0;
+
+  const latest = reports[reports.length - 1];
+  const coaching = latest?.moduleCoaching || {};
+  const plan = coaching.myPlan || {};
+  const report = coaching.coachingReport || {};
+  const suggested = coaching.suggestedStrategies || report.nextGrowthFocus?.strategies;
+  const mastered = [...new Set(
+    reports
+      .map(r => r.moduleCoaching?.progress)
+      .filter(p => p?.strategyMastered && p.practicedStrategy)
+      .map(p => p.practicedStrategy),
+  )];
+  const feedback = latest
+    ? await prisma.moduleStrategyFeedback.findMany({
+        where: { userId, moduleKey, createdAt: { gt: latest.createdAt } },
+        orderBy: { createdAt: 'asc' },
+      })
+    : [];
+
+  const list = (items, fmt) => (items?.length ? items.map(fmt).join('\n') : '  none yet');
+  const lastSession = latest
+    ? [
+        coaching.progress?.todaysOutcome ? `Outcome: ${coaching.progress.todaysOutcome}. ${coaching.progress.outcomeReason || ''}` : null,
+        report.topMoment?.quote ? `Top moment: "${report.topMoment.quote}" — ${report.topMoment.explanation || ''}` : null,
+        report.whatWeLearned?.description || null,
+        report.nextGrowthFocus?.explanation || null,
+        coaching.narrative || null,
+      ].filter(Boolean).join(' ')
+    : 'none yet (no session recorded yet)';
+
+  return loadPromptWithVariables(config.chatPrompt, {
+    CHILD_NAME:           childName,
+    CHILD_AGE:            childAge != null ? `${childAge} years old` : 'age unknown',
+    CHILD_PRONOUNS:       CHILD_PRONOUNS[user?.childGender] || CHILD_PRONOUNS.UNKNOWN,
+    PARENT_NAME:          parentName || 'not given',
+    SESSION_NUMBER:       String(reports.length + 1),
+    ONBOARDING_SUMMARY:   summarizeScreenTimeIntake(user?.screenTimeIntake) || '  none provided',
+    ONBOARDING_ANSWERS:   formatScreenTimeIntakeForPrompt(user?.screenTimeIntake) || '  none provided',
+    ONBOARDING_PLAN:      user?.screenTimeIntake ? onboardingPlanText(childName, hasDifferences) : '  none (did not go through the screen-time onboarding)',
+    ACTIVE_STRATEGY:      plan.activeStrategy || 'none yet',
+    PROTOCOL_STEPS:       list(plan.protocolSteps, (step, i) => `  ${i + 1}. ${step}`),
+    FOCUS_AREAS:          list(plan.focusAreas, f => `  - ${f.title}: ${f.detail}`),
+    SUGGESTED_STRATEGIES: list(suggested, s => `  - ${s.name}: ${s.description}`),
+    LAST_SESSION_SUMMARY: lastSession,
+    MASTERED_STRATEGIES:  mastered.join(', ') || 'none yet',
+    RECENT_FEEDBACK:      feedback.length ? formatStrategyFeedback(feedback) : '  none yet',
+    // The Play time card shows for parents who reported a learning and
+    // thinking difference, or who agreed to add it here (add_special_play).
+    SPECIAL_PLAY:         user?.specialPlayAddedAt || hasDifferences
+      ? 'already on their home page'
+      : specialPlayNotAddedText(lastDecline?.respondedAt),
+  });
+}
+
+// A "no" to the special play offer lives in SpecialPlayOffer, not just the
+// chat history (which only keeps the last messages), so the coach doesn't
+// offer again too soon.
+const SPECIAL_PLAY_REOFFER_DAYS = 7;
+function specialPlayNotAddedText(declinedAt) {
+  if (!declinedAt) return 'not added yet';
+  const days = Math.floor((Date.now() - declinedAt.getTime()) / 86400000);
+  const when = `${declinedAt.toISOString().slice(0, 10)} (${days === 0 ? 'today' : days === 1 ? '1 day ago' : `${days} days ago`})`;
+  return days < SPECIAL_PLAY_REOFFER_DAYS
+    ? `not added yet — the parent said no to it on ${when}. Don't offer it again yet; keep coaching the routine.`
+    : `not added yet — the parent said no to it on ${when}. You may offer it again only if the routine still isn't working, acknowledging they passed on it before.`;
+}
+
+/**
+ * Generate the Learn module report + "My Plan" (e.g. for a screen-time
+ * ending) from a recording's transcript.
+ *
+ * Day 1 (no plan yet) uses the module's first prompt (with a formatPrompt:
+ * a free-form write-up, then a format call for sections + plan); Day 2+ uses its
+ * follow-up prompt with the parent's progress state (see
+ * getModuleProgressState) and also returns today's outcome.
+ *
+ * @param {string} moduleKey      - Key in MODULE_COACHING_CONFIG (e.g. 'screenTime')
+ * @param {string} transcriptText - Fills {{TRANSCRIPT}}: formatted utterances
+ * @param {Object} childInfo      - { name, ageYears, traitsText, sessionNotes, screenTimeIntake }
+ * @param {Object} [progressState] - getModuleProgressState() result (defaults to Day 1)
+ * @param {string|null} [selfReport] - session.moduleSelfReport ('success' | 'struggle' | 'not_attempted')
+ * @returns {Promise<Object>} { coachingReport, myPlan, progress } (camelCased), or on a
+ *   narrative Day 1 { format: 'narrative', narrative, report, myPlan, suggestedStrategies, progress }; progress
+ *   carries dayNumber and, on Day 2+, practicedStrategy/daysOnStrategy/todaysOutcome/strategyMastered
+ */
+async function generateModuleCoaching(moduleKey, transcriptText, childInfo, sessionId = null, language = null, progressState = { dayNumber: 1 }, selfReport = null) {
+  const config = MODULE_COACHING_CONFIG[moduleKey];
+  if (!config) throw new PermanentFailureError(`Unknown module: ${moduleKey}`, 'An error occurred while analyzing your recording. Please try again.');
+
+  const { name, ageYears, gender, traitsText, sessionNotes, screenTimeIntake } = childInfo;
+  // A learning/thinking difference reported in onboarding (anything but
+  // "None that I know of") → special play time right away, not only once the
+  // screen-time steps have failed.
+  const differences = reportedDifferences(screenTimeIntake);
+  const specialPlaytimeRule = differences.length
+    ? `  IMPORTANT for this family: in onboarding the parent reported this about ${name || 'the child'}: ${differences.join('; ')}. `
+      + 'Do NOT wait for the steps above to fail. In this report, introduce special play time (a few minutes every day of '
+      + 'child-led play where the parent follows the child\'s lead and praises, describes and reflects what the child does), '
+      + 'explain briefly why it helps a child like this, and suggest the parent start it right away, alongside the screen-time strategy.'
+    : '';
+  const isFollowup = !!progressState.currentStrategy;
+  // Narrative modules use the Day 1 prompt every day; on Day 2+ it learns the
+  // parent's progress through the session notes, and the format call judges
+  // today's outcome / mastery (PROGRESS_SECTION).
+  const isNarrative = !!config.formatPrompt;
+  const progressNotes = isFollowup
+    ? [
+        `This is the parent's session ${progressState.dayNumber} in the screen-time module (not the first). A session is one recording, not a calendar day.`,
+        `The parent has been practicing "${progressState.currentStrategy}" for ${progressState.daysOnStrategy} session(s), with these steps:`,
+        ...(progressState.currentSteps.length ? progressState.currentSteps.map((step, i) => `  ${i + 1}. ${step}`) : ['  (none recorded)']),
+        `Strategies already mastered: ${progressState.masteredStrategies.join(', ') || 'none yet'}.`,
+        `How the parent said today went: ${MODULE_SELF_REPORT_TEXT[selfReport] || 'not provided'}.`,
+        'Briefly connect today to their progress with this strategy.',
+      ].join('\n')
+    : '';
+  const variables = {
+    CHILD_NAME:    name || 'the child',
+    CHILD_AGE:     ageYears != null ? `${ageYears} years` : 'unknown',
+    CHILD_PRONOUNS: CHILD_PRONOUNS[gender] || CHILD_PRONOUNS.UNKNOWN,
+    CHILD_TRAITS:  traitsText || 'none reported',
+    SESSION_NOTES: [isNarrative ? progressNotes : '', sessionNotes].filter(Boolean).join('\n\n') || 'none',
+    // Screen-time onboarding Q&A (User.screenTimeIntake).
+    ONBOARDING_ANSWERS:    formatScreenTimeIntakeForPrompt(screenTimeIntake) || 'none provided',
+    SPECIAL_PLAYTIME_RULE: specialPlaytimeRule,
+    TRANSCRIPT:    transcriptText,
+  };
+  if (isFollowup) {
+    Object.assign(variables, {
+      SESSION_NUMBER:               String(progressState.dayNumber),
+      CURRENT_ACTIVE_STRATEGY:      progressState.currentStrategy,
+      CURRENT_PROTOCOL_STEPS:       progressState.currentSteps.map((step, i) => `  ${i + 1}. ${step}`).join('\n') || '  (none recorded)',
+      SESSIONS_ON_CURRENT_STRATEGY: String(progressState.daysOnStrategy),
+      MASTERED_STRATEGIES:          progressState.masteredStrategies.join(', ') || 'none yet',
+      PARENT_SELF_REPORT:           MODULE_SELF_REPORT_TEXT[selfReport] || 'Not provided',
+      STRATEGY_KNOWLEDGE_BASE:      moduleKnowledgeBase(config.knowledgeBasePrompt),
+    });
+  }
+  const prompt = loadPromptWithVariables(isFollowup && !isNarrative ? config.followupPrompt : config.prompt, variables);
+  const languageInstruction = getLanguageInstruction(language);
+  const promptFinal = languageInstruction ? `${prompt}\n\n${languageInstruction}` : prompt;
+
+  // Same model knob as CDI coaching ($GEMINI_STREAMING_MODEL, e.g.
+  // gemini-3.1-pro-preview), not the 'gemini' (flash) profile default.
+  // Unset → falls back to the profile default.
+  const coachingModel = process.env.GEMINI_STREAMING_MODEL || undefined;
+
+  console.log(`📊 [MODULE-COACHING] Generating ${moduleKey} day ${progressState.dayNumber} report + plan${isFollowup ? ` (on "${progressState.currentStrategy}" session ${progressState.daysOnStrategy})` : ''}${coachingModel ? ` (${coachingModel})` : ''}...`);
+  let raw;
+  let narrative = null;
+  if (isNarrative) {
+    narrative = (await llmCall(withChildNameDirective(promptFinal, name), {
+      profile: 'coaching-narrative',
+      ...(coachingModel ? { model: coachingModel } : {}),
+      label:   `module-coaching-${moduleKey}-narrative`,
+      sessionId,
+    })).trim();
+    console.log(`📊 [MODULE-COACHING] Narrative received (${narrative.length} chars) — formatting...`);
+    const formatPrompt = loadPromptWithVariables(config.formatPrompt, {
+      COACHING_REPORT:         narrative,
+      CHILD_NAME:              variables.CHILD_NAME,
+      STRATEGY_KNOWLEDGE_BASE: moduleKnowledgeBase(config.knowledgeBasePrompt),
+      LANGUAGE_INSTRUCTION:    languageInstruction || '',
+      // Timestamped lines: where the graph's added points and callouts go.
+      TRANSCRIPT:              transcriptText,
+      PROGRESS_SECTION:        isFollowup ? moduleProgressFormatSection(progressState, selfReport) : '',
+    });
+    // Not best-effort like CDI's format pass: the plan comes from here, and
+    // Day 2+, the Cheat Sheet and the module chat all need it.
+    raw = await llmCall(withChildNameDirective(formatPrompt, name), {
+      profile: 'coaching-format',
+      schema:  isFollowup ? config.followupFormatSchema : config.formatSchema,
+      label:   `module-coaching-${moduleKey}-format`,
+      sessionId,
+    });
+    if (!raw?.report?.sections?.length || !raw?.my_plan) throw new Error('Module coaching format response missing report/my_plan');
+    if (isFollowup && !raw.progress) throw new Error('Module coaching format response missing progress');
+  } else {
+    raw = await llmCall(withChildNameDirective(promptFinal, name), {
+      profile: 'module-coaching',
+      ...(coachingModel ? { model: coachingModel } : {}),
+      schema:  isFollowup ? config.followupSchema : config.schema,
+      label:   `module-coaching-${moduleKey}${isFollowup ? '-followup' : ''}`,
+      sessionId,
+    });
+    if (!raw?.coaching_report || !raw?.my_plan) throw new Error('Module coaching response missing coaching_report/my_plan');
+    if (isFollowup && !raw.progress) throw new Error('Module coaching follow-up response missing progress');
+  }
+
+  const result = snakeToCamelKeys(raw);
+  if (isNarrative) {
+    // App renders result.report's sections instead of coachingReport's cards.
+    result.format = 'narrative';
+    result.narrative = narrative;
+    Object.assign(result, cleanEmotionChart(result.emotionTimeline, result.emotionCallouts, transcriptText));
+  }
+  // The prompt asks for exactly 3; keep the Cheat Sheet to 3 if it returns more.
+  result.myPlan.focusAreas = (result.myPlan.focusAreas || []).slice(0, 3);
+  const strategyId = result.myPlan.activeStrategyId;
+  if (!Number.isInteger(strategyId) || strategyId < 1 || strategyId > config.strategyCount) {
+    console.warn(`⚠️ [MODULE-COACHING] Invalid active_strategy_id ${strategyId} — stored as null`);
+    result.myPlan.activeStrategyId = null;
+  }
+  result.progress = isFollowup
+    ? {
+        dayNumber:           progressState.dayNumber,
+        practicedStrategy:   progressState.currentStrategy,
+        practicedStrategyId: progressState.currentStrategyId,
+        daysOnStrategy:      progressState.daysOnStrategy,
+        parentSelfReport:  selfReport || null,
+        ...result.progress,
+      }
+    : { dayNumber: progressState.dayNumber };
+
+  console.log(`✅ [MODULE-COACHING] ${moduleKey} day ${progressState.dayNumber}: ${isFollowup ? `outcome ${result.progress.todaysOutcome}, mastered ${result.progress.strategyMastered}, ` : ''}next strategy #${result.myPlan.activeStrategyId} "${raw.my_plan.active_strategy}", ${raw.my_plan.protocol_steps?.length || 0} steps`);
+  return result;
+}
+
+/**
+ * Day 2+ part of the narrative format prompt ({{PROGRESS_SECTION}}): judge
+ * today against the strategy the parent was practicing, and keep the plan on
+ * it unless mastered or stuck. Rules from coaching-screentime-followup.txt.
+ */
+function moduleProgressFormatSection(progressState, selfReport) {
+  const { dayNumber, currentStrategy, currentStrategyId, currentSteps, daysOnStrategy, masteredStrategies } = progressState;
+  return `================================================================
+**PART 6 — PROGRESS (session ${dayNumber}: judge today, then adjust the plan)**
+================================================================
+
+The parent was practicing: "${currentStrategy}"${currentStrategyId ? ` (Knowledge Base #${currentStrategyId})` : ''}, for ${daysOnStrategy} session(s) including this one (sessions are recordings, not calendar days).
+Its steps:
+${currentSteps.map((step, i) => `  ${i + 1}. ${step}`).join('\n') || '  (none recorded)'}
+Strategies already mastered: ${masteredStrategies.join(', ') || 'none yet'}
+How the parent said today went: ${MODULE_SELF_REPORT_TEXT[selfReport] || 'Not provided'}
+
+"progress": judge today against "${currentStrategy}" only, from the TRANSCRIPT and the write-up (use the parent's own view as context; when they differ, go with the transcript).
+- "todays_outcome": "Success" (the parent clearly used the strategy and it helped, even if the child still protested), "Struggle" (tried it but it didn't land, or used it only partly) or "Did Not Attempt" (didn't use it).
+- "outcome_reason": one sentence.
+- "strategy_mastered": true only when today is a Success AND the parent used the strategy confidently and naturally (e.g. a second success on it, or an unmistakably fluent first one). When unsure, false.
+
+This changes how PART 4 picks the plan's strategy:
+1. Mastered → pick a NEW strategy from the write-up's recommendations that builds on it.
+2. Stuck (Struggle or Did Not Attempt, and ${daysOnStrategy} session(s) on it is 3 or more) → the write-up's easier or smaller next step.
+3. Otherwise → keep "${currentStrategy}"${currentStrategyId ? ` (active_strategy_id ${currentStrategyId})` : ''} as the plan's strategy, with steps refined from today.
+Never pick a strategy already mastered.
+
+
+`;
+}
+
+/**
+ * Keeps the outburst graph honest: levels clamped to 0-5 (one decimal), points
+ * in time order, and callouts only at a time a transcript line starts (snapped
+ * to the nearest one within 5 s, else dropped), at most 2. No [mm:ss] lines in
+ * the transcript → no graph.
+ */
+function cleanEmotionChart(timeline, callouts, transcriptText) {
+  const times = [...String(transcriptText).matchAll(/^\[(\d+):(\d{2})\]/gm)].map(m => Number(m[1]) * 60 + Number(m[2]));
+  if (!times.length) return { emotionTimeline: [], emotionCallouts: [] };
+  const emotionTimeline = (timeline || [])
+    .filter(p => Number.isFinite(p.seconds) && Number.isFinite(p.level))
+    .map(p => ({ ...p, level: Math.round(Math.min(5, Math.max(0, p.level)) * 10) / 10, added: !!p.added }))
+    .sort((a, b) => a.seconds - b.seconds);
+  const emotionCallouts = (callouts || [])
+    .map(c => {
+      const nearest = times.reduce((best, t) => (Math.abs(t - c.seconds) < Math.abs(best - c.seconds) ? t : best), times[0]);
+      return Math.abs(nearest - c.seconds) <= 5 ? { ...c, seconds: nearest } : null;
+    })
+    .filter(Boolean)
+    .slice(0, 2);
+  return { emotionTimeline, emotionCallouts };
+}
+
+/**
+ * Analysis path for Learn module recordings, called by analyzePCITCoding once
+ * speaker roles are identified. Skips the PCIT quality gate, DPICS coding and
+ * CDI coaching (none of which fit a screen-time ending) and stores the module
+ * report + plan on session.moduleCoaching — unless the module's own quality
+ * gate rejects the recording (validateModuleSessionQuality).
+ */
+async function analyzeModuleSession(session, user, childName, childAge, primaryLanguage) {
+  const sessionId = session.id;
+  const utterances = await getUtterances(sessionId); // re-read: roles were just assigned
+  const transcriptText = formatUtterancesWithTimestamps(utterances);
+
+  await validateModuleSessionQuality(session, transcriptText, childName, primaryLanguage);
+
+  const sessionNotes = await moduleStrategyFeedbackNotes(session);
+
+  const moduleCoaching = await generateModuleCoaching(
+    session.moduleKey,
+    transcriptText,
+    { name: childName, ageYears: childAge, gender: user.childGender, traitsText: moduleTraitsText(user), sessionNotes, screenTimeIntake: user.screenTimeIntake },
+    sessionId,
+    primaryLanguage,
+    await getModuleProgressState(session),
+    session.moduleSelfReport,
+  );
+  await storeModuleCoaching(sessionId, moduleCoaching);
+}
+
+// Child traits for the module prompt: diagnosed conditions + the concerns the
+// parent picked in onboarding.
+function moduleTraitsText(user) {
+  const traits = [
+    ...parseUserIssues(user.childConditions).filter(c => c.toLowerCase() !== 'none'),
+    ...parseUserIssues(user.issue),
+  ].map(t => t.replace(/_/g, ' ').toLowerCase());
+  return [...new Set(traits)].join(', ');
+}
+
+async function storeModuleCoaching(sessionId, moduleCoaching) {
+  await prisma.session.update({
+    where: { id: sessionId },
+    data: {
+      moduleCoaching: { ...moduleCoaching, generatedAt: new Date().toISOString() },
+      // No CDI enrichment runs for module sessions — mark it done so repair
+      // jobs and the enrichment-incomplete warning leave them alone.
+      enrichmentStatus: 'COMPLETED',
+    },
+  });
+  console.log(`✅ [MODULE-COACHING] Stored module coaching for session ${sessionId.substring(0, 8)}`);
 }
 
 // ============================================================================
@@ -835,7 +1521,9 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
   const { name, userId: childUserId } = childInfo;
 
   console.log(`📊 [CDI-COACHING] Step 1: Computing goal payload...`);
-  const preSessionProgress = await getParentSkillProgress(childUserId);
+  // childInfo.preSessionProgress: rerun scripts only — the level as it was before
+  // this session, since ParentSkillProgress has already moved past it.
+  const preSessionProgress = childInfo.preSessionProgress || await getParentSkillProgress(childUserId);
   const parentProgress = projectLevelForGoal(preSessionProgress, 'CDI', tagCounts);
   const leveledUpThisSession = parentProgress.currentLevel > preSessionProgress.currentLevel;
   const goalPayload = generateGoalForLevel(parentProgress.currentLevel, tagCounts, 'CDI', parentProgress, language);
@@ -986,7 +1674,10 @@ ${variables.LANGUAGE_INSTRUCTION}`;
         alertOnFailure: false,
       });
       const cc = formatted?.coach_corner;
-      if (cc && typeof cc === 'object' && cc.did_well) {
+      // Require growth_focus too: a truncated response that JSON repair closed
+      // after did_well would otherwise ship an empty "Grow next" tab — keep the
+      // raw-report string fallback instead.
+      if (cc && typeof cc === 'object' && cc.did_well && cc.growth_focus) {
         coachingPart1 = {
           didWell: {
             theme:      cc.did_well.theme || '',
@@ -1798,7 +2489,7 @@ async function generatePDITwoChoicesAnalysis(utterances, childName, sessionId = 
  * @returns {{ roleIdentificationJson: Object, roleMap: Object }}
  *   roleMap: { speaker_0: 'adult', speaker_1: 'child', ... }  (lowercase)
  */
-async function identifyRolesWithVoting(utterancesForPrompt, utterances, storagePath, sessionId) {
+async function identifyRolesWithVoting(utterancesForPrompt, utterances, storagePath, sessionId, { expectChild = true } = {}) {
   const prompt = loadPromptWithVariables('roleIdentification', {
     UTTERANCES_JSON: JSON.stringify(utterancesForPrompt, null, 2)
   });
@@ -1924,9 +2615,12 @@ async function identifyRolesWithVoting(utterancesForPrompt, utterances, storageP
   // ── Fallback: every speaker labeled ADULT ────────────────────────────────
   // A PCIT play session always contains a child. If role-ID came back with no
   // CHILD at all, demote the speaker whose ADULT call is weakest — lowest LLM
-  // confidence, falling back to ML confidence — to CHILD.
+  // confidence, falling back to ML confidence — to CHILD. Not for Learn module
+  // recordings (expectChild false): the child may be silent, or absent (a
+  // parent rehearsing alone, which the module quality gate then rejects), and
+  // a demoted parent voice would be read as the child's outbursts.
   const allSpeakerIds = Object.keys(roleMap);
-  if (allSpeakerIds.length >= 2 && allSpeakerIds.every(id => roleMap[id] === 'adult')) {
+  if (expectChild && allSpeakerIds.length >= 2 && allSpeakerIds.every(id => roleMap[id] === 'adult')) {
     const confidenceOf = (id) => {
       const llmConf = baseSpeakers[id]?.confidence;
       if (typeof llmConf === 'number') return llmConf;
@@ -2004,7 +2698,8 @@ async function analyzePCITCoding(sessionId, userId, preferredLanguage = null) {
       childBirthday: true,
       issue: true,
       parentGoal: true,
-      childConditions: true
+      childConditions: true,
+      screenTimeIntake: true
     }
   });
   if (!user) {
@@ -2070,6 +2765,8 @@ async function analyzePCITCoding(sessionId, userId, preferredLanguage = null) {
   console.log(`✅ [ANALYSIS-STEP-2] Found ${utterances.length} utterances`);
 
   if (utterances.length === 0) {
+    // A silent module recording is the parent's to redo, not a system failure.
+    if (session.moduleKey) throw new SessionQualityError(qualityMessage('moduleNoSpeech', preferredLanguage));
     throw new Error('No utterances found in session data');
   }
 
@@ -2118,7 +2815,7 @@ async function analyzePCITCoding(sessionId, userId, preferredLanguage = null) {
   } else {
     try {
       const { roleIdentificationJson: rij, roleMap } = await identifyRolesWithVoting(
-        utterancesForPrompt, utterances, session.storagePath, sessionId
+        utterancesForPrompt, utterances, session.storagePath, sessionId, { expectChild: !session.moduleKey }
       );
       roleIdentificationJson = rij;
 
@@ -2160,6 +2857,14 @@ async function analyzePCITCoding(sessionId, userId, preferredLanguage = null) {
       console.error('❌ [ROLE-ID-ERROR] Failed role identification:', roleIdError.message);
       throw new Error(`Failed role identification: ${roleIdError.message}`);
     }
+  }
+
+  // Learn module recordings (e.g. screen-time endings) aren't play sessions:
+  // skip the play-session quality gate and PCIT coding, generate the module
+  // report + plan instead.
+  if (session.moduleKey) {
+    await analyzeModuleSession(session, user, childName, childAge, primaryLanguage);
+    return;
   }
 
   // Quality gate — one fast LLM call; throws SessionQualityError if invalid
@@ -2369,7 +3074,7 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
     const utterancesForProfiling = await getUtterances(sessionId);
     const childSpeaker = getChildSpeaker(roleIdentificationJson);
     const [priorCompletedCount, existingChildMilestones] = await Promise.all([
-      prisma.session.count({ where: { userId, analysisStatus: 'COMPLETED' } }),
+      prisma.session.count({ where: { userId, analysisStatus: 'COMPLETED', moduleKey: null } }),
       child ? prisma.childMilestone.findMany({
         where: { childId: child.id },
         include: { MilestoneLibrary: { select: { key: true } } }
@@ -2704,6 +3409,7 @@ module.exports = {
   PermanentFailureError,
   analyzePCITCoding,
   validateSessionQuality,
+  validateModuleSessionQuality,
   identifyRolesWithVoting,
   generateCDIFeedback,
   generateReportHighlights,
@@ -2715,6 +3421,10 @@ module.exports = {
   generateLegacyCdiCoaching,
   generateAboutChild,
   generateFirstSessionInsights,
+  generateModuleCoaching,
+  getModuleChatPrompt,
+  LEARN_MODULE_KEYS: new Set(Object.keys(MODULE_COACHING_CONFIG)),
+  MODULE_SELF_REPORTS,
   getParentSkillProgress,
   dpicsCacheKey,
   DPICS_PDF_PATH,

@@ -32,6 +32,7 @@ export interface User {
   professionalSupport?: string | string[];
   profileImageUrl?: string;
   relationshipToChild?: RelationshipToChild;
+  childGender?: 'BOY' | 'GIRL' | 'OTHER';
   therapistId?: string | null;
   currentStreak?: number;
   lastSessionDate?: Date | null;
@@ -50,6 +51,8 @@ export interface User {
   subscriptionStartDate?: Date;
   subscriptionEndDate?: Date;
   isFreeAccount?: boolean;
+  // Computed by GET /api/auth/me: free account, or an active Stripe/RevenueCat subscription
+  isSubscribed?: boolean;
 }
 
 // Child Snapshot survey — 10-item behavior questionnaire + parenting stress
@@ -113,7 +116,9 @@ export interface SignupRequest {
   name: string;
   childName: string;
   childBirthYear?: number;
-  childConditions?: string;
+  childBirthday?: string;
+  childConditions?: string | string[];
+  issue?: string;
 }
 
 // Session types

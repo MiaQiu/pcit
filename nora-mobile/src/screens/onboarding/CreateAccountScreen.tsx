@@ -14,12 +14,13 @@ import {
   Platform,
   ActivityIndicator,
   ScrollView,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { CommonActions, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Purchases from 'react-native-purchases';
-import { OnboardingStackNavigationProp } from '../../navigation/types';
+import { OnboardingStackNavigationProp, OnboardingStackParamList } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useAuthService } from '../../contexts/AppContext';
 import { ErrorMessages, getErrorMessage } from '../../utils/errorMessages';
@@ -29,12 +30,21 @@ import { useTranslation } from 'react-i18next';
 import { TrackedTouchable } from '../../components/TrackedTouchable';
 import { reportError } from '../../utils/reportError';
 import * as userStorage from '../../lib/userStorage';
+import { buildProfilePayload, clearDraft } from '../../utils/onboardingDraft';
+import { SCREEN_TIME_STEPS, adjacentStepIndex } from './screenTime/screenTimeFlow';
+import { goBackTo } from '../../navigation/goBackTo';
 
 export const CreateAccountScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<OnboardingStackNavigationProp>();
-  const { updateData } = useOnboarding();
+  const route = useRoute<RouteProp<OnboardingStackParamList, 'CreateAccount'>>();
+  const { data, updateData } = useOnboarding();
   const authService = useAuthService();
+  // Account-first signup: Start opens this screen with no params and onboarding
+  // continues at OB1V2. With `next`, it's the end-of-onboarding signup for a
+  // parent whose answers are still only a device draft (account-last).
+  const next = route.params?.next;
+  const nextParams = route.params?.nextParams;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,8 +53,21 @@ export const CreateAccountScreen: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-  }, []);
+  // Resumed from a saved draft, this screen has no history behind it: go to the
+  // screen that opens it (Start, the step before the screen-time plan, or OBIntro1V2)
+  const handleBack = () => {
+    if (!next) {
+      goBackTo(navigation, 'Start');
+      return;
+    }
+    if (next === 'ScreenTimeStep') {
+      const planIndex = typeof nextParams?.step === 'number' ? nextParams.step : SCREEN_TIME_STEPS.length - 1;
+      const prevIndex = adjacentStepIndex(planIndex, -1, data.screenTime ?? {});
+      goBackTo(navigation, 'ScreenTimeStep', { step: Math.max(prevIndex, 0) });
+      return;
+    }
+    goBackTo(navigation, 'OBIntro1V2');
+  };
 
   // Validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -85,17 +108,32 @@ export const CreateAccountScreen: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // For now, we'll create a temporary account with minimal data
-      // The full profile will be filled in during the next steps
+      // Account-first, answers are empty here and filled in screen by screen. Account-last,
+      // every answer is already collected, so the account is created with the real
+      // profile; fields signup doesn't take follow right after
+      const birthday = data.childBirthday ? new Date(data.childBirthday) : null;
       const response = await authService.signup({
         email: email.toLowerCase().trim(),
         password,
-        name: '', // Placeholder — updated in NameInputScreen
-        childName: '', // Placeholder — updated in ChildNameScreen
-        childBirthYear: new Date().getFullYear() - 5, // Placeholder
-        childConditions: ['none'],// Placeholder
+        name: data.name,
+        childName: data.childName,
+        childBirthYear: birthday ? birthday.getFullYear() : new Date().getFullYear() - 5,
+        ...(birthday ? { childBirthday: birthday.toISOString() } : {}),
+        ...(typeof data.issue === 'string' && data.issue ? { issue: data.issue } : {}),
+        childConditions: ['none'],
       });
       handleApiSuccess(); // Mark server as up
+
+      const profile = buildProfilePayload(data);
+      if (Object.keys(profile).length > 0) {
+        try {
+          await authService.completeOnboarding(profile);
+        } catch (profileError) {
+          // The account exists; don't strand the parent over the follow-up save
+          reportError(profileError, 'CreateAccountScreen.saveProfile');
+        }
+      }
+      await clearDraft();
 
       // Without this, userStorage has no userId yet this session, so every
       // setItem/getItem call during onboarding (reminder prefs, etc.) no-ops.
@@ -107,8 +145,6 @@ export const CreateAccountScreen: React.FC = () => {
       // Track signup in Amplitude with user properties
       if (response && response.user) {
         amplitudeService.identifyUser(response.user.id, {
-          email: response.user.email,
-          name: response.user.name,
           currentStreak: 0,
           longestStreak: 0,
           subscriptionPlan: response.user.subscriptionPlan,
@@ -135,9 +171,33 @@ export const CreateAccountScreen: React.FC = () => {
       // Store email in onboarding context
       updateData({ email: email.toLowerCase().trim() });
 
-      // Navigate to next step
-      navigation.navigate('OB1V2');
+      if (!next) {
+        // Onboarding starts here; with the account made, there's no going back to Start or signup
+        navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'OB1V2' }] }));
+        return;
+      }
+      // Continue the onboarding flow (reminder, or the screen-time plan)
+      navigation.navigate(next as any, nextParams as any);
     } catch (error: any) {
+      // Account-first there are no answers to carry over, so a taken email is a plain signup error
+      if (error?.code === 'CONFLICT' && next) {
+        // Email already registered: start over with another email (new account), or log
+        // in to that account and overwrite its child profile with these answers
+        Alert.alert(t('createAccount.emailInUseTitle'), t('createAccount.emailInUseMessage'), [
+          { text: t('createAccount.emailInUseNewAccount'), style: 'cancel' },
+          {
+            text: t('createAccount.emailInUseUpdateExisting'),
+            onPress: () =>
+              navigation.navigate('Login', {
+                overrideWithOnboarding: true,
+                email: email.toLowerCase().trim(),
+                next,
+                nextParams,
+              }),
+          },
+        ]);
+        return;
+      }
       reportError(error, 'CreateAccountScreen.handleSignup');
       console.error('Signup error:', error);
       const errorMessage = getErrorMessage(error, ErrorMessages.AUTH.SIGNUP_FAILED);
@@ -162,7 +222,7 @@ export const CreateAccountScreen: React.FC = () => {
           {/* Back Button */}
           <TrackedTouchable analyticsId="Back"
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={handleBack}
             activeOpacity={0.7}
           >
             <Ionicons name="arrow-back" size={24} color="#1F2937" />
@@ -288,11 +348,12 @@ export const CreateAccountScreen: React.FC = () => {
           </TrackedTouchable>
 
           {/* Terms */}
-          {/* <Text style={styles.terms}>
-            By continuing, you agree to our{'\n'}
-            <Text style={styles.termsLink}>Terms of Service</Text> and{' '}
-            <Text style={styles.termsLink}>Privacy Policy</Text>
-          </Text> */}
+          <Text style={styles.terms}>
+            {t('start.termsPrefix')}
+            <Text style={styles.termsLink} onPress={() => Linking.openURL('https://hinora.co/terms')}>{t('start.termsOfService')}</Text>
+            {t('start.termsAnd')}
+            <Text style={styles.termsLink} onPress={() => Linking.openURL('https://hinora.co/privacy')}>{t('start.privacyPolicy')}</Text>
+          </Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -353,7 +414,7 @@ const styles = StyleSheet.create({
     height: 56,
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    borderRadius: 16,
+    borderRadius: 12,
     paddingHorizontal: 20,
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 16,
@@ -364,7 +425,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    borderRadius: 16,
+    borderRadius: 12,
     height: 56,
   },
   passwordInput: {
@@ -390,8 +451,8 @@ const styles = StyleSheet.create({
   button: {
     width: '100%',
     height: 56,
-    backgroundColor: '#1E1E1E',
-    borderRadius: 30,
+    backgroundColor: '#8C49D5',
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -401,23 +462,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E7EB',
   },
   buttonText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 18,
+    fontFamily: 'DMSans_700Bold',
+    fontSize: 16,
     color: '#FFFFFF',
   },
   buttonTextDisabled: {
     color: '#9CA3AF',
   },
   terms: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
-    color: '#9CA3AF',
+    color: '#8C8C8C',
     textAlign: 'center',
-    marginTop: 8,
     lineHeight: 18,
+    marginBottom: 8,
   },
   termsLink: {
-    color: '#8C49D5',
+    color: '#1E2939',
     textDecorationLine: 'underline',
   },
 });

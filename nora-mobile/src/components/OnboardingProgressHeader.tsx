@@ -16,6 +16,13 @@ interface OnboardingProgressHeaderProps {
   // flows that now run separately from onboarding (e.g. the WACB survey),
   // where the already-completed earlier phases shouldn't be shown.
   singlePhase?: boolean;
+  // Section title under the bar, in place of the phase name. With singlePhase,
+  // the bar and counter show progress through that section (e.g. 3/6)
+  label?: string;
+  // Number of sections on the parent's path, one equal segment each: `phase` is the
+  // current section (1-based), earlier ones show full, and `label` names the
+  // current section
+  sections?: number;
 }
 
 const TOTAL_PHASES = 2;
@@ -25,10 +32,13 @@ export const OnboardingProgressHeader: React.FC<OnboardingProgressHeaderProps> =
   step,
   totalSteps,
   singlePhase = false,
+  label,
+  sections,
 }) => {
   const { t } = useTranslation();
-  const phaseName = t(`onboarding.progressHeader.phase${phase}`, '') as string;
-  const segmentCount = singlePhase ? 1 : TOTAL_PHASES;
+  const phaseName = label ?? (t(`onboarding.progressHeader.phase${phase}`, '') as string);
+  const segmentCount = sections ?? (singlePhase ? 1 : TOTAL_PHASES);
+  const perSection = singlePhase || sections !== undefined;
 
   return (
     <View style={styles.container}>
@@ -46,15 +56,14 @@ export const OnboardingProgressHeader: React.FC<OnboardingProgressHeaderProps> =
         {/* Title + counter row */}
         <View style={styles.titleRow}>
           <Text style={styles.title}>{t('onboarding.progressHeader.title')}</Text>
-          <Text style={styles.counterText}>
-            {singlePhase ? `${step}/${totalSteps}` : `${phase}/${TOTAL_PHASES}`}
-          </Text>
+          {/* Per-section bars show progress without a screen count */}
+          {!perSection && <Text style={styles.counterText}>{`${phase}/${TOTAL_PHASES}`}</Text>}
         </View>
 
         {/* Progress segments */}
         <View style={styles.segmentsContainer}>
           {Array.from({ length: segmentCount }).map((_, index) => {
-            const segmentPhase = singlePhase ? phase : index + 1;
+            const segmentPhase = singlePhase && sections === undefined ? phase : index + 1;
             let fillRatio = 0;
 
             if (segmentPhase < phase) {

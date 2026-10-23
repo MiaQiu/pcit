@@ -1,0 +1,51 @@
+{
+  "myPlan": {
+    "crisisTool": {
+      "title": "Handling the Pushback",
+      "action": "Stay calm, hold the boundary, and gently guide her to the next activity without over-explaining or negotiating.",
+      "script": "I know it is hard to stop watching. Screen time is all done. It is bath time now.",
+      "isNeeded": true
+    },
+    "whyItWorks": "Anya's 3-year-old brain needs predictability to feel safe and shift gears. Giving her a clear warning and a specific activity to look forward to reduces her urge to argue.",
+    "protocolSteps": [
+      "Plan a specific, calming activity (like a bath) before screen time starts.",
+      "Give a clear 2-minute warning paired with the upcoming activity.",
+      "Turn off the device confidently and immediately guide Anya to the new activity."
+    ],
+    "activeStrategy": "Pre-Planned Positive Transitions"
+  },
+  "progress": {
+    "dayNumber": 3,
+    "outcomeReason": "The parent successfully introduced the next activity but forgot the two-minute warning, resulting in a partial implementation.",
+    "todaysOutcome": "Struggle",
+    "daysOnStrategy": 1,
+    "parentSelfReport": null,
+    "strategyMastered": false,
+    "practicedStrategy": "Pre-Planned Positive Transitions"
+  },
+  "generatedAt": "2026-10-12T06:24:35.999Z",
+  "coachingReport": {
+    "topMoment": {
+      "quote": "",
+      "title": "Planting the Seed",
+      "explanation": "Even though you forgot the warning, you successfully told Anya about the bath before turning off the screen. By giving her brain a preview of what was coming next, you reduced the shock of the transition. This is exactly why the ending felt easier than usual, even with a little bit of complaining!"
+    },
+    "introduction": "Welcome to Day 3! I am so proud of you for jumping in and trying your new strategy today. Remembering all the steps in the heat of the moment is incredibly difficult, and it is completely normal that you only used part of it on your first try. The fact that you noticed it was already easier than usual is a huge win!",
+    "whatWeLearned": {
+      "title": "What We Learned About Anya",
+      "description": "Anya responds very well to knowing what comes next. The simple act of previewing the bath helped her transition more smoothly, showing us that with a little more predictability, she can handle these endings beautifully."
+    },
+    "nextGrowthFocus": {
+      "title": "Bridging the Gap with Warnings",
+      "rationale": "Predictability helps toddlers feel safe. By giving her a countdown, you are making a deposit into her emotional bank account, showing her that you respect her time while still holding a firm, healthy boundary.",
+      "strategies": [
+        {
+          "name": "The 2-Minute Heads Up",
+          "description": "Give a clear, calm warning two minutes before the screen turns off, pairing it with a reminder of the fun activity coming next."
+        }
+      ],
+      "explanation": "At 3 years old, Anya's brain gets deeply absorbed in what she is watching. When the screen turns off abruptly, it can feel jarring, which often leads to arguing or asking for more time. The 2-minute warning acts as a gentle bridge between her show and the real world.",
+      "exampleQuote": "Two more minutes of your show, Anya, and then it is time for our fun bath!"
+    }
+  }
+}

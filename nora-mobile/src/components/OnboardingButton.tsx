@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 56,
     backgroundColor: '#8C49D5',
-    borderRadius: 30,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -49,9 +49,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E7EB',
   },
   buttonText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 18,
+    fontFamily: 'DMSans_700Bold',
+    fontSize: 16,
     color: '#FFFFFF',
+    textAlign: 'center', // keeps wrapped (two-line) labels centered
   },
   buttonTextDisabled: {
     color: '#9CA3AF',

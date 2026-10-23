@@ -54,9 +54,13 @@ const PROFILES = {
   'coaching-format': {
     model:       'gemini',
     temperature: 0,
-    maxTokens:   8192,
+    // Thinking tokens count against maxOutputTokens. Uncapped, flash spent
+    // 7.8k of 8k thinking on this verbatim-extraction pass (prod session
+    // 2e99ba82), truncating the JSON after did_well → empty growthFocus.
+    maxTokens:   16384,
     timeout:     120_000,
     output:      'json',
+    _geminiConfig: { thinkingConfig: { thinkingBudget: 1024 } },
   },
 
   'coaching-notifications': {
@@ -107,6 +111,16 @@ const PROFILES = {
     output:      'json',
   },
 
+  // Learn module sessions (e.g. screen-time endings) — one call produces both
+  // the module report and the "My Plan" payload.
+  'module-coaching': {
+    model:       'gemini',
+    temperature: 0.5,
+    maxTokens:   16384,
+    timeout:     180_000,
+    output:      'json',
+  },
+
   'crisis-coaching': {
     model:       'gemini',
     temperature: 0.5,
@@ -152,6 +166,17 @@ const PROFILES = {
     temperature: 0,
     maxTokens:   512,
     timeout:     30_000,
+    output:      'json',
+  },
+
+  // Learn module gate: also writes the parent-facing reason. Thinking counts
+  // against maxTokens and took 1,965 of 2,048 on a 2-min screen-time clip
+  // (dev session 956f34aa); recordings run up to 30 min.
+  'module-quality-check': {
+    model:       'gemini',
+    temperature: 0,
+    maxTokens:   8192,
+    timeout:     60_000,
     output:      'json',
   },
 

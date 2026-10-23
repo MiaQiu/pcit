@@ -32,6 +32,7 @@ import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
 import { TrackedTouchable } from '../components/TrackedTouchable';
 import { reportError } from '../utils/reportError';
+import { parseQuickReplies } from '../utils/chatQuickReplies';
 
 const PSYCH_REQUESTED_KEY = '@nora_psych_requested';
 
@@ -95,6 +96,9 @@ const Bubble: React.FC<{ message: Message }> = ({ message }) => {
   const { t } = useTranslation();
   const isUser = message.role === 'user';
   const isPsychologist = message.role === 'psychologist';
+  // History is shared with Learn module chats, whose replies may end with a
+  // quick-reply OPTIONS line — not shown here.
+  const text = isUser ? message.text : parseQuickReplies(message.text).text;
   return (
     <View style={[styles.bubbleRow, isUser ? styles.bubbleRowUser : styles.bubbleRowModel]}>
       {!isUser && (
@@ -110,7 +114,7 @@ const Bubble: React.FC<{ message: Message }> = ({ message }) => {
         )}
         <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleModel]}>
           <Text style={[styles.bubbleText, isUser ? styles.bubbleTextUser : styles.bubbleTextModel]}>
-            {message.text}
+            {text}
           </Text>
         </View>
       </View>

@@ -7,9 +7,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
-import { PersonalizingProgressHeader } from '../../components/PersonalizingProgressHeader';
+import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
 import { useAuthService } from '../../contexts/AppContext';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { saveOnboardingFields } from '../../utils/onboardingDraft';
+import { OnboardingFooter } from '../../components/OnboardingFooter';
 
 export const ProfessionalSupportScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -18,12 +20,14 @@ export const ProfessionalSupportScreen: React.FC = () => {
   const childName = data.childName || 'your child';
 
   const handleBeforeNavigate = async (selectedValue: any) => {
-    authService.completeOnboarding({ professionalSupport: selectedValue }).catch(() => {});
+    saveOnboardingFields(authService, { professionalSupport: selectedValue });
   };
 
   return (
     <MultipleChoiceScreen
-      headerOverride={<PersonalizingProgressHeader step={2} totalSteps={4} />}
+      headerOverride={
+        <OnboardingProgressHeader phase={1} step={2} totalSteps={2} singlePhase />
+      }
       headerText=""
       title={t('onboarding.professionalSupport.title', { childName })}
       options={[
@@ -42,6 +46,7 @@ export const ProfessionalSupportScreen: React.FC = () => {
       multiSelect={true}
       screenName="professional_support"
       screenStep={47}
+      renderButtons={(buttonProps) => <OnboardingFooter {...buttonProps} />}
       onBeforeNavigate={handleBeforeNavigate}
     />
   );

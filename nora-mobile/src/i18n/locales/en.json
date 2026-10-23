@@ -41,7 +41,10 @@
     "termsPrefix": "By continuing, you agree to Nora's\n",
     "termsOfService": "Terms of Service",
     "termsAnd": " and ",
-    "privacyPolicy": "Privacy Policy"
+    "privacyPolicy": "Privacy Policy",
+    "welcomeTitle": "Beyond Parenting Advice. Build Real Skills.",
+    "welcomeSubtitle": "Personalised AI coaching to help you navigate tantrums, build better listening and develop your child’s focus.",
+    "letsStart": "Let's start"
   },
   "login": {
     "title": "Let's get you logged in",
@@ -74,7 +77,11 @@
     "weakPasswordTitle": "Weak Password",
     "weakPasswordMessage": "Password must be at least 8 characters with 1 uppercase, 1 lowercase, and 1 number",
     "passwordMismatchTitle": "Password Mismatch",
-    "signupFailedTitle": "Signup Failed"
+    "signupFailedTitle": "Signup Failed",
+    "emailInUseTitle": "This email already has an account",
+    "emailInUseMessage": "Use a different email to create a new account, or log in to update that account with the answers you just gave. Updating replaces its child profile.",
+    "emailInUseNewAccount": "Use a different email",
+    "emailInUseUpdateExisting": "Log in and update it"
   },
   "forgotPassword": {
     "title": "Forgot Password?",
@@ -252,6 +259,7 @@
       "confidence": "Confidence",
       "developmental_concerns": "Developmental Concerns",
       "parenting_strategies": "Learning More Effective Parenting Strategies",
+      "screen_time": "Screen-Time Management",
       "defiance": "Defiance",
       "aggression": "Aggression",
       "emotional": "Emotional Regulation",
@@ -656,6 +664,7 @@
         "adhd": "{{childName}}'s attention and hyperactivity",
         "developmental_concerns": "{{childName}}'s development",
         "parenting_strategies": "finding parenting approaches that actually work",
+        "screen_time": "managing {{childName}}'s screen time",
         "behavior_challenges": "{{childName}}'s tantrums and pushback",
         "big_emotions": "handling {{childName}}'s big emotions",
         "frustration_tolerance": "how quickly {{childName}} gets frustrated",
@@ -1271,6 +1280,248 @@
     "playGuideTitle": "Play Guide",
     "playGuideSubtitle": "Get set for your first play",
     "playGuideMeta": "8 quick topics",
+    "modulesTitle": "Modules",
+    "modules": {
+      "screenTime": {
+        "title": "Screen Time Management",
+        "days": {
+          "1": {
+            "title": "Let's see what happens",
+            "subtitle": "Record a real screen-time ending today\n(just as it normally happens).",
+            "practiceTitle": "Record a real screen-time ending at home",
+            "tags": {
+              "duration": "10–30 min",
+              "voice": "Voice only",
+              "device": "Phone/Tablet/TV"
+            },
+            "primaryCta": "Start recording",
+            "primaryNote": "Voice only, no video. Just parent as you normally would.",
+            "helpLinks": {
+              "howTo": {
+                "title": "How to record?",
+                "subtitle": "Step-by-step guide"
+              },
+              "whatTo": {
+                "title": "Why record?",
+                "subtitle": "What Nora learns from it"
+              }
+            }
+          }
+        },
+        "plan": {
+          "strategy": "Visual Timers & Transitions",
+          "why": "Quick transitions are tough for {{name}}. Clear, visual boundaries make the end of screen time predictable and lower the urge to fight it.",
+          "steps": {
+            "1": "Give a '2-Minute Warning' & start a visual timer",
+            "2": "Give 2 acceptable choices for what to do next (\"Read a dinosaur book or play blocks?\")",
+            "3": "When the alarm sounds, calmly close, support big feelings, and keep the limit (\"It's okay to feel mad. I am here.\")"
+          },
+          "crisis": {
+            "title": "High-Tension Meltdowns",
+            "items": {
+              "1": "**The Silent Anchoring:** Sit within arm's reach, don't argue.",
+              "2": "**Short validation script:** \"You're super angry, I know. It's safe to cry here.\""
+            }
+          }
+        },
+        "guides": {
+          "howToRecord": {
+            "title": "How to Record",
+            "subtitle": "Step-by-step guide",
+            "body": "Recording takes just a tap. Here's how to capture a real screen-time ending — no setup or script needed.\n\n### 📱 Step 1: Get Ready Before the Ending\nA few minutes before screen time is due to end, open Nora and go to **Screen Time Management → Today**.\n\n* Keep your phone **within a few steps** of you and your child — on a table or shelf works well.\n* You can **lock the screen** or put the phone down. Recording keeps going in the background.\n\n### 🎙️ Step 2: Tap \"Start recording\"\nTap **Start recording** just before you start wrapping up screen time — before your warning, or before you say it's time to stop.\n\n### 🏡 Step 3: Parent as You Normally Would\nThere's nothing to perform. Say what you'd usually say and handle it the way you usually would — **including the hard parts**. Protests, tears and negotiating are exactly what Nora needs to hear to help you.\n\n### ⏹️ Step 4: Stop Once Things Have Settled\nWhen your child has moved on to the next activity (or calmed down), tap **Stop recording**.\n\n* Most endings take **10–30 minutes**.\n* If you forget, Nora **stops automatically after 30 minutes**.\n\n### 📩 Step 5: Get Your Report\nNora analyzes your recording and lets you know when your report is ready — usually within a few minutes. You'll find it on the **Today** screen under **Read report**, along with your updated plan in **My plan**.\n\n**💡 Not able to record today?** Tap **Tell Nora** instead and answer a few quick questions. You'll still get a report and plan."
+          },
+          "whyRecord": {
+            "title": "Why Record?",
+            "subtitle": "How recording helps you",
+            "body": "Screen-time endings happen fast, and in the moment it's hard to notice what helped and what didn't. A short recording lets Nora see the moment the way it really happened.\n\n### 🔍 See What Really Happens\nNora listens for the small things that make a big difference — when the warning came, the exact words used, and how your child responded. These are hard to remember accurately afterward.\n\n### 🎯 A Plan Built for Your Family\nInstead of generic tips, your report highlights **what already worked for you** and gives you **one strategy** to practice next — with steps and words that fit your child.\n\n### 📈 Track Real Progress\nEach day builds on the last. Recording helps Nora notice when a strategy is working, so you can move on — or when it's time to try something easier.\n\n### 💜 It's Not a Test\nThere's no pass or fail. A messy ending is just as helpful as a smooth one — often more. Every recording is a step toward calmer transitions.\n\n### 🔒 Your Recordings Are Private\n* **Coaching Use Only:** Audio is analyzed strictly to give you insights.\n* **Encrypted & Secure:** All session data is encrypted and stored securely.\n* **Never Sold:** Your recordings and data are never sold to third parties.\n* **Full Control:** You can delete your data or account at any time in your settings."
+          }
+        },
+        "recordGuides": {
+          "howToRecord": {
+            "title": "Let’s record a\nscreentime moment",
+            "subtitle": "Nora will listen and help you understand what’s happening.",
+            "steps": {
+              "1": {
+                "title": "5 minutes before screentime ends",
+                "body": "Tap record in Nora."
+              },
+              "2": {
+                "title": "Tap record and lock your phone",
+                "body": "Place it nearby. Nora will keep recording in the background."
+              },
+              "3": {
+                "title": "Handle screentime as usual",
+                "body": "Use the steps you normally use. Nora will listen to how your child responds."
+              },
+              "4": {
+                "title": "Nora stops automatically",
+                "body": "Recording will stop after 30 minutes, or you can stop anytime."
+              },
+              "5": {
+                "title": "Get your report",
+                "body": "Nora will generate a report based on what has happened, with insights about your child and your response."
+              }
+            },
+            "cta": "Start recording"
+          },
+          "whyRecord": {
+            "title": "Why record a\nreal-life moment?",
+            "subtitle": "Nora transcribes and analyzes your real interaction so you get customized feedback with zero form-filling.",
+            "exampleLabel": "Example:",
+            "steps": {
+              "1": {
+                "title": "Child Dynamics",
+                "body": "Tracks real-time emotional shifts and triggers.",
+                "example": "Amy’s emotion spikes from calm to yelling at 3:42 after screentime ended. She didn’t explode because of the screen—rapid questions and repeat explanations overloaded her dysregulated brain."
+              },
+              "2": {
+                "title": "Actionable Feedback",
+                "body": "Pins exact moments where a small adjustment in tone or timing turns a meltdown into cooperation.",
+                "example": "Say “Screentime ends when this timer dings.” then silently wait—no questions, no explanations."
+              }
+            }
+          }
+        },
+        "goal": {
+          "title": "Making screentime endings predictable",
+          "subtitle": "Let's keep practising so your child knows what comes next."
+        },
+        "goals": {
+          "predictable": {
+            "title": "Making screentime endings predictable",
+            "description": "Help your child know what comes next before screen time ends."
+          },
+          "tantrumSkills": {
+            "title": "Build the skills behind the tantrum",
+            "description": "Strengthen your child's ability to manage big feelings and frustration."
+          }
+        },
+        "cheatSheet": {
+          "title": "Quick Cheat Sheet",
+          "subtitle": "What to Say & Do",
+          "focusTitle_one": "Your Focus Area",
+          "focusTitle": "Your {{count}} Focus Areas",
+          "focusSubtitle": "Your core focus from the latest report",
+          "routineHeading": "Other steps in your screen-time routine",
+          "routine": {
+            "1": {
+              "moment": "Before screen time",
+              "action": "Share the plan. “After screen time, we're going to build with blocks. What would you like to play?”"
+            },
+            "2": {
+              "moment": "5 minutes left",
+              "action": "“5 minutes left, then screen time is finished.” Use a timer."
+            },
+            "3": {
+              "moment": "2 minutes left",
+              "action": "“2 minutes left. Finish this episode, then we stop.” Aim for a natural stopping point when possible."
+            },
+            "4": {
+              "moment": "Time to stop",
+              "action": "Give one clear command: “Please turn off the TV.”"
+            },
+            "5": {
+              "moment": "If your child ignores you",
+              "action": "Offer two choices: “You turn it off, or Mama turns it off for you.” Wait 5 seconds."
+            },
+            "6": {
+              "moment": "If your child still refuses",
+              "action": "Turn it off calmly. Say once: “You didn't turn it off, so I turned it off for you.”"
+            },
+            "7": {
+              "moment": "During the crying",
+              "action": "“You're upset because screen time is finished.” Stay nearby, hold the limit, and start the next activity yourself."
+            },
+            "8": {
+              "moment": "When your child joins",
+              "action": "Praise specifically: “You started playing with the blocks! Great job joining me.”"
+            }
+          }
+        },
+        "specialPlay": {
+          "title": "Routines failing? Build the skill behind the rule.",
+          "subtitle": "Why 5 minutes of Special Playtime fixes screentime battles when rules and timers aren’t enough.",
+          "cta": "Start 5-Min Special Playtime",
+          "brain": {
+            "title": "The Hidden Neuroscience Behind Screentime Meltdowns",
+            "lead": "A routine is just a rule. Play builds the brain muscle to follow it.",
+            "body": "Screentime floods a child’s brain with rapid dopamine, and transitions require strong executive function and emotional regulation. 5 minutes of child-led play fills {{name}}’s need for autonomy before the boundary happens."
+          },
+          "research": {
+            "title": "The Science Behind Special Playtime",
+            "lead": "Grounded in 50+ years of clinical psychology research.",
+            "body": "Special Playtime is built on decades of research into child-led play. Practicing 5 minutes of child-led interaction daily leads to key developmental shifts that reduce screentime tantrums."
+          },
+          "coaching": {
+            "title": "How Nora’s AI Coaching Helps",
+            "lead": "No generic advice. Real coaching from your real interactions.",
+            "body": "Hit record during your 5-minute play session. Nora analyzes your voice to keep you in the “sweet spot” and flags accidental questions or commands that pull control away from {{name}}.",
+            "penTitle": "The PEN skills",
+            "praise": "Praise: Catch good behavior with positive words.",
+            "echo": "Echo: Repeat {{name}}’s words back to show you’re listening.",
+            "narrate": "Narrate: Describe what {{name}} is doing out loud like a sports announcer.",
+            "avoid": "Avoid: Hold back on criticism, questions, and commands so {{name}} stays in the driver's seat."
+          }
+        },
+        "routinePage": {
+          "title": "Making screentime endings predictable",
+          "subtitle": "Help {{name}} know what comes next so screen time ends without a fight.",
+          "why": {
+            "title": "Why a Routine Stops Screentime Tantrums",
+            "surprises": {
+              "title": "Removes Sudden Surprises",
+              "body": "A structured routine turns an abrupt shock into a familiar, expected habit."
+            },
+            "badGuy": {
+              "title": "Shifts the “Bad Guy” Role",
+              "body": "The routine becomes the boundary, so you don’t have to constantly decide when time is up."
+            },
+            "overload": {
+              "title": "Reduces Brain Overload",
+              "body": "Knowing the exact steps frees up energy so {{name}} can focus on self-regulating."
+            }
+          },
+          "flow": {
+            "title": "The Predictable 8-Step Transition Flow",
+            "hint": "Tap each step to view exact scripts and tips:",
+            "steps": {
+              "1": {
+                "moment": "Before screen time",
+                "summary": "Set expectations early & announce a bridging activity."
+              },
+              "2": {
+                "moment": "5 minutes left",
+                "summary": "Give a clear, neutral countdown warning."
+              },
+              "3": {
+                "moment": "2 minutes left",
+                "summary": "Pair time remaining with a natural stopping point."
+              },
+              "4": {
+                "moment": "Time to stop",
+                "summary": "Announce time is up with a neutral timer cue."
+              },
+              "5": {
+                "moment": "If {{name}} ignores you",
+                "summary": "Use calm, silent waiting instead of rapid repeat commands."
+              },
+              "6": {
+                "moment": "If {{name}} still refuses",
+                "summary": "Guide firmly & calmly without negotiating or arguing."
+              },
+              "7": {
+                "moment": "During the crying",
+                "summary": "Stay present, validate feelings, and avoid lecturing."
+              },
+              "8": {
+                "moment": "When {{name}} joins",
+                "summary": "Use labeled praise instantly when they cooperate."
+              }
+            }
+          }
+        }
+      }
+    },
     "gettingStartedTitle": "Getting Started",
     "quickGuidesTitle": "Quick Guides",
     "quickGuides": {
@@ -1291,6 +1542,102 @@
         "card1Body": "Parents tell us they feel more present and intentional once they hit Record — putting the skills they're learning into practice.",
         "card2": "Nora then helps you spot **what you might miss** and what to try next.",
         "card3": "It's not a test.\n~~It's your mirror.~~"
+      }
+    },
+    "moduleScreen": {
+      "dayLabel": "DAY {{day}}",
+      "todaysPractice": "Today's practice",
+      "comingSoon": "Coming soon",
+      "tabs": {
+        "today": "Today",
+        "plan": "My plan",
+        "collection": "Collection",
+        "profile": "Profile",
+        "learn": "Learn"
+      },
+      "yourChild": "your child",
+      "plan": {
+        "title": "Your Custom Plan",
+        "activeStrategy": "Active Strategy:",
+        "whyItWorks": "Why it works",
+        "todaysProtocol": "Today's Protocol",
+        "crisisTitle": "Crisis Tool: {{title}}",
+        "crisisAction": "What to do:",
+        "crisisScript": "What to say:",
+        "masteredTitle": "Strategies you've mastered"
+      },
+      "processingStart": "Great job! We're analyzing your recording with ",
+      "processingEnd": ". Your report will be ready in a moment.",
+      "readReport": "Read report",
+      "followup": {
+        "title": "Keep practicing",
+        "subtitle": "Use today's protocol at your next screen-time ending.",
+        "record": "Record"
+      },
+      "previousDay": "Previous day",
+      "nextDay": "Next day",
+      "backToToday": "Back to today (Day {{day}})"
+    },
+    "moduleRecorder": {
+      "recording": "Recording…",
+      "saving": "Saving your recording…",
+      "hint": "Keep your phone nearby and parent as you normally would. Tap Stop once screen time has ended and things have settled.",
+      "stop": "Stop recording",
+      "tooShortTitle": "Recording is too short",
+      "tooShortMessage": "Record the whole screen-time ending so Nora has enough to give you helpful feedback.",
+      "offlineTitle": "No internet connection",
+      "offlineMessage": "Recording needs an internet connection so your report can be prepared.",
+      "busyTitle": "One moment",
+      "busyMessage": "Your previous recording is still being processed. Please try again when it's done.",
+      "leaveTitle": "Recording in progress",
+      "leaveMessage": "Stop the recording before leaving this screen.",
+      "keepRecording": "Keep recording"
+    },
+    "moduleScreenV2": {
+      "goalLabel": "Goal {{number}}",
+      "checkIn": {
+        "eyebrow": "Daily check in",
+        "title": "Check in with your coach",
+        "body": "Share how things have been, ask questions, or get quick advice.",
+        "button": "Open chat with Nora"
+      },
+      "checkInFirstTime": {
+        "eyebrow": "Start here",
+        "title": "Say hi to Nora",
+        "body": "Not sure where to begin? Just tell Nora how things are going at home.",
+        "button": "Start chatting with Nora"
+      },
+      "practiceNextTitle": "Record the next screen time ending",
+      "practiceBody": "Nora will show you what helped and what to try next time with {{name}}.",
+      "cheatSheet": "Cheat Sheet from Last Session",
+      "planOverview": {
+        "title": "My plan",
+        "subtitle": "A step-by-step plan based on what we found in your last session.",
+        "status": {
+          "completed": "Completed",
+          "current": "Current goal",
+          "next": "Next goal",
+          "later": "Later"
+        },
+        "inProgress": "In progress",
+        "done": "Done",
+        "locked": "Locked",
+        "lockedToast": "Finish your current goal to unlock this one.",
+        "pastReports": "Past reports",
+        "screenTimeReport": "Screen-time report",
+        "pastReportsEmpty": "Your past recording reports will be displayed here.",
+        "detailTitle": "Current plan"
+      },
+      "playTime": {
+        "eyebrow": "Play time",
+        "title": "Record 5 minutes of play time",
+        "body": "Play together with {{name}} for 5 minutes, letting them lead.",
+        "body_boy": "Play together with {{name}} for 5 minutes, letting him lead.",
+        "body_girl": "Play together with {{name}} for 5 minutes, letting her lead.",
+        "cta": "Start play recording",
+        "hint": "Follow {{name}}'s lead and enjoy playing together. The recording stops on its own after 5 minutes.",
+        "processing": "Nora is preparing your play time report. This takes a few minutes.",
+        "tooShortMessage": "Play together for the full 5 minutes so Nora has enough to give you helpful feedback."
       }
     }
   },
@@ -1520,8 +1867,8 @@
       "ageSuitabilityNote": "* Note on Age Suitability: Nora's method is clinically evidenced to be most effective for children between 2 and 7 years old. However, the foundational skills taught here, such as positive reinforcement and emotional regulation, can be adapted and beneficial for children of any age."
     },
     "childIssue": {
-      "headerText": "There are no right or wrong answers. Select all that applies.",
-      "title": "What Brings You Here?",
+      "headerText": "There are no right or wrong answers. Pick the one that fits best.",
+      "title": "What feels hardest right now?",
       "bigFeelingsTantrums": "Big Feelings & Tantrums",
       "behaviorChallenges": "Behavior Challenges",
       "listeningCooperation": "Listening & Cooperation",
@@ -1532,6 +1879,7 @@
       "adhd": "ADHD Support",
       "developmentalConcerns": "Developmental Concerns",
       "parentingStrategies": "Become a More Confident Parent",
+      "screenTime": "Screen-time management",
       "other": "Other",
       "otherPlaceholder": "Please describe the issue..."
     },
@@ -1929,6 +2277,251 @@
       "other": "Other",
       "none": "None",
       "preferNotToSay": "I'd rather not say"
+    },
+    "screenTime": {
+      "continue": "Continue",
+      "selectAll": "Select all that apply.",
+      "agreement": {
+        "strongly_disagree": "Strongly disagree",
+        "somewhat_disagree": "Somewhat disagree",
+        "somewhat_agree": "Somewhat agree",
+        "agree": "Agree"
+      },
+      "frequency": {
+        "almost_never": "Almost never",
+        "rarely": "Rarely",
+        "quite_often": "Quite often",
+        "almost_always": "Almost always"
+      },
+      "yesNo": {
+        "yes": "Yes",
+        "no": "No"
+      },
+      "intro": {
+        "title": "You’re not alone.",
+        "p1": "Many parents find it hard when screen time ends.",
+        "p2": "Screen-time transitions can be genuinely challenging for young children, and every child is different.",
+        "p3": "It’s often less about behavior and more about <hl>something deeper beneath the surface.</hl>",
+        "p4": "Let’s look at whether we can find any patterns. So Nora can help you find an approach that works for your family.",
+        "cta": "Let's start"
+      },
+      "hardest": {
+        "title": "What feels hardest right now?",
+        "options": {
+          "resist": "My child resists or refuses to stop.",
+          "long_meltdowns": "The meltdowns can last a long time.",
+          "stay_calm": "I find it hard to stay calm.",
+          "consistency": "It's difficult to be consistent.",
+          "exhausted": "I'm exhausted and don't know what else to try."
+        }
+      },
+      "pmum": {
+        "prompt": "Do you agree with the following statement?",
+        "statement0": "It is hard for my child to stop using screen media.",
+        "statement1": "Screen media is the only thing that seems to motivate my child.",
+        "statement2": "Screen media is all that my child seems to think about.",
+        "statement3": "My child’s screen media use interferes with family activities.",
+        "statement4": "My child’s screen media use causes problems for the family.",
+        "statement5": "My child becomes frustrated when he/she cannot use screen media.",
+        "statement6": "The amount of time my child wants to use screen media keeps increasing.",
+        "statement7": "My child sneaks using screen media.",
+        "statement8": "When my child has had a bad day, screen media seems to be the only thing that helps him/her feel better."
+      },
+      "dopamine": {
+        "title": "Have you heard about the dopamine loop?"
+      },
+      "context": {
+        "title": "Screens are incredibly stimulating.",
+        "lead": "They deliver constant novelty and excitement in a way that few other activities can match.",
+        "p1": "<b>This makes stopping genuinely hard for many kids.</b>",
+        "p2": "When the stimulation suddenly stops, their nervous system has to shift gears quickly, and that shift can feel really uncomfortable.",
+        "callout1": "This is called <b>the dopamine loop.</b>",
+        "callout2": "The meltdown isn't defiance or manipulation-<hl>it's a brain that hasn't caught up to the transition yet.</hl>",
+        "cta": "Sounds familiar"
+      },
+      "differences": {
+        "title": "Does {{name}} have any learning and thinking differences?",
+        "note": "This helps Nora tailor its suggestions to your child. You don’t need a formal diagnosis to tell us what you’ve noticed.",
+        "options": {
+          "none": "None that I know of",
+          "developmental_delays": "Developmental delays",
+          "adhd": "ADHD",
+          "asd": "ASD",
+          "anxiety": "Anxiety",
+          "another": "Another difference not listed here",
+          "suspected": "I suspect one of those, but haven’t gotten a diagnosis yet"
+        }
+      },
+      "strategies": {
+        "title": "What have you already tried to make screen time easier to end?",
+        "options": {
+          "warning": "Giving a warning before time is up",
+          "timer": "Using a timer",
+          "rules": "Setting screen-time rules in advance",
+          "activity": "Offering another activity",
+          "explaining": "Explaining why it’s time to stop",
+          "extra": "Giving a little extra time",
+          "away": "Taking the device away"
+        }
+      },
+      "worked": {
+        "title": "How well have those approaches worked?",
+        "options": {
+          "smoothly": "Screen time usually ends smoothly",
+          "improvement": "Some improvement",
+          "sometimes": "Helps only sometimes",
+          "no_change": "No real change",
+          "harder": "It’s getting harder"
+        }
+      },
+      "stress": {
+        "title": "How hard are screen-time endings on you?",
+        "options": {
+          "manageable": "Manageable",
+          "somewhat": "Somewhat stressful",
+          "very": "Very stressful",
+          "overwhelming": "Overwhelming"
+        }
+      },
+      "teen": {
+        "title": "Do you worry those challenges might get harder as your child becomes a teenager?",
+        "options": {
+          "yes": "Yes",
+          "no": "No",
+          "not_sure": "Not sure"
+        }
+      },
+      "why": {
+        "none": {
+          "title": "Why hasn’t it worked so far?",
+          "p1": "Most screen-time strategies focus on getting {{name}} to put the device down.",
+          "p2": "<hl>But that’s only the surface.</hl>",
+          "callout1": "<b>It’s not always about getting your child to listen.</b> Stopping a screen can be genuinely hard for young children.",
+          "p3": "Let’s look at the hidden signals you might have missed to understand how they are really coping."
+        },
+        "differences": {
+          "title": "Why hasn’t it worked so far?",
+          "p1": "For some children, stopping screens is harder than it looks.",
+          "p2": "Shifting attention, handling disappointment, or adjusting to change may take extra support.",
+          "callout1": "<b>Your child may need a different approach, not just more reminders.</b>",
+          "p3": "Let’s look at the hidden signals you might have missed to understand how they are really coping."
+        }
+      },
+      "signals": {
+        "question0": "How often does your child fidget with objects (pens, clothes, or hair)?",
+        "question1": "How often does your child chew on things like pencils, toys, or shirt sleeves?",
+        "question2": "Does your child have compulsive habits (nail-biting, lip-chewing, or nose-picking)?",
+        "question3": "How often does your child avoid eye contact or socializing when upset?",
+        "question4": "Does your child fight sleep more when they know a hard day is coming?",
+        "question4_boy": "Does your child fight sleep more when he knows a hard day is coming?",
+        "question4_girl": "Does your child fight sleep more when she knows a hard day is coming?",
+        "question5": "How often do your child’s frustrations turn into meltdowns with yelling?"
+      },
+      "cortex": {
+        "title": "Have you heard of the prefrontal cortex?",
+        "options": {
+          "yes": "Yes",
+          "not_really": "Not really"
+        }
+      },
+      "cortexHelp": {
+        "title": "What does the prefrontal cortex help children do?",
+        "p1": "It helps children <hl>focus, pause, and switch plans.</hl>",
+        "p2": "These skills develop over time, which is why stopping a screen can be harder than it looks.",
+        "cta": "How can I help?"
+      },
+      "canLearn": {
+        "title": "Your child can learn to make the transition.",
+        "p1": "{{name}} is still learning how to <hl>stop, handle disappointment, and move on.</hl>",
+        "callout1": "You can help by making screen-time endings more predictable and practising these skills.",
+        "cta": "Where do we start?"
+      },
+      "easierEnd": {
+        "title": "Let’s make screen time easier to end.",
+        "p1": "We’ll start by understanding what happens when screen time ends and help you build a <hl>predictable routine</hl> that works for your family.",
+        "callout1": "We’ll adjust our approach based on how {{name}} responds.",
+        "cta": "How does Nora help?"
+      },
+      "windows": {
+        "title": "The windows of opportunity.",
+        "p1": "At {{name}}’s age, the prefrontal cortex is still developing.",
+        "p2": "This is a key time to practise <hl>focus, self-control, and managing frustration.</hl>",
+        "callout1": "<b>And you have the greatest influence on their learning.</b>"
+      },
+      "practice": {
+        "title": "You’re part of how {{name}} learns.",
+        "p1": "Small moments with you give {{name}} chances to <hl>wait, handle “no,” try a different plan, and recover</hl> when something doesn’t work.",
+        "callout1": "Those are the same kinds of skills screen-time endings ask for.",
+        "cta": "Where do we start?"
+      },
+      "transition": {
+        "title": "We will start with understanding what’s happening during the screen-time transition first, and coach you on how to apply strategies to make screen time predictable for your child.",
+        "callout1": "Once screen time becomes predictable, we will coach you on techniques to practise with {{name}} during your daily play time if {{name}} still finds it challenging."
+      },
+      "playAwareness": {
+        "title": "Have you heard before that play is one of the main ways children learn?"
+      },
+      "play": {
+        "title": "Why start with play?",
+        "p1": "Imagine {{name}} builds a tower and it falls. They feel disappointed—but <hl>the stakes are low, and you’re right there.</hl>",
+        "p1_boy": "Imagine {{name}} builds a tower and it falls. He feels disappointed—but <hl>the stakes are low, and you’re right there.</hl>",
+        "p1_girl": "Imagine {{name}} builds a tower and it falls. She feels disappointed—but <hl>the stakes are low, and you’re right there.</hl>",
+        "callout1": "Play gives {{name}} room to practise trying again or changing plans.",
+        "p2": "It also gives you a calmer moment to practise how you respond, so you have something familiar to draw on when emotions run high.",
+        "cta": "How does Nora help?"
+      },
+      "nora": {
+        "tagline": "Nora helps you build the skills for <hl>hard moments</hl>, together.",
+        "advisorAlt": "Prof. Yi-Chuen Chen, PhD. Clinical Child Psychologist. Clinical Advisor to Nora.",
+        "cta": "Create an account to see your 8-week plan"
+      },
+      "routine": {
+        "title": "We’ll help you create a predictable screen-time routine while introducing simple ways to practise emotional skills during 5 minutes of special time play daily.",
+        "callout1": "We’ll take it one small step at a time, at your child’s pace.",
+        "cta": "What is Special Play Time?"
+      },
+      "specialPlay": {
+        "title": "Special Play Time: Small moments, lasting skills",
+        "p1": "Special Play Time is an evidence-based approach to parent-child play that helps build <hl>connection, emotional regulation, and executive function.</hl>",
+        "callout1": "Just five minutes of child-led play each day gives {{name}} a chance to practise these skills with you. And you may notice positive changes beyond screen time, in other everyday moments together.",
+        "cta": "How does Nora help?"
+      },
+      "coaching": {
+        "differences": {
+          "title": "Coaching based on your real moments.",
+          "p1": "Nora learns from your voice recordings to understand what happens with {{name}} and suggest what to try next — <hl>during screen time and play.</hl>",
+          "cta": "Create my account"
+        },
+        "none": {
+          "title": "Coaching based on your real moments.",
+          "p1": "Nora learns from your voice recordings to understand what happens when screen time ends and suggest <hl>one small step to try next.</hl>",
+          "callout1": "If {{name}} still struggles, we’ll introduce Special Play Time to help build emotional and attention skills through play.",
+          "cta": "Create my account"
+        }
+      },
+      "plan": {
+        "title": "{{name}}’s starting plan.",
+        "twoMonthGoal": "Our two-month goal: Help {{name}} manage screen time without tantrums.",
+        "before": "Before",
+        "after": "After — our goal",
+        "imageAlt": "Illustrated goal: a child upset at the end of screen time, followed by the same child calmly putting the tablet away with a supportive parent.",
+        "imageAlt_boy": "Illustrated goal: a boy upset at the end of screen time, followed by the same boy calmly putting the tablet away with a supportive parent.",
+        "imageAlt_girl": "Illustrated goal: a girl upset at the end of screen time, followed by the same girl calmly putting the tablet away with a supportive parent.",
+        "disclaimer": "Progress varies from child to child; this is a goal, not a guaranteed outcome.",
+        "hardMoment": "The hard moment",
+        "tried": "What you’ve tried",
+        "startWith": "Start with",
+        "startWithBody": "Helping {{name}} practise <b>switching, coping, and moving on</b> in small moments together.",
+        "closing": "You’re not just making screen-time endings easier. You’re building <b>essential life skills</b> and a <b>stronger parent-child bond</b> that will last for years.",
+        "free": "No payment required to start. The first three times are free!",
+        "listSeparator": ", ",
+        "cta": "Get started"
+      },
+      "sections": {
+        "habits": "Screen time habits",
+        "experience": "Your experience",
+        "signals": "Hidden signals"
+      }
     }
   },
   "quizFeedback": {
@@ -2179,6 +2772,200 @@
         "title": "Data Privacy",
         "subtitle": "Your family's recordings, kept safe.",
         "body": "Your family's private moments are completely safe with Nora.\n\n* **5-Minute or 10-Minute Audio Limit:** Recording automatically stops as soon as your timer ends.\n* **Coaching Use Only:** Audio is analyzed strictly to give you insights.\n* **Encrypted & Secure:** All session data is encrypted and stored securely.\n* **Never Sold:** Your recordings and data are never sold to third parties.\n* **Full Control:** You can delete your data/account at any time in your settings."
+      }
+    }
+  },
+  "moduleReport": {
+    "nextGrowthFocus": "Next Growth Focus",
+    "trySaying": "Try saying",
+    "reflectWithNora": "Talk it through with Nora",
+    "reflectDraft": "About “{{title}}” in my report: ",
+    "emotionLevels": {
+      "0": "Calm",
+      "1": "Asking",
+      "2": "Whining",
+      "3": "Crying",
+      "4": "Meltdown",
+      "5": "Hitting"
+    },
+    "recommendedStrategies": "Other Best Practices",
+    "keyStrategies": {
+      "countdown": {
+        "name": "Give simple countdown warnings",
+        "summary": "Warn before time is up, so the end isn’t a surprise.",
+        "details": "Use short warnings to prepare your child, such as “5 minutes left”, “2 minutes left”, “Last one, then we stop”. This helps your child adjust before the screen turns off.",
+        "why": "Young children find sudden stops hard. A warning gives their brain time to shift gears before the screen goes off.",
+        "steps": [
+          "Give a warning 5 minutes before the end, then again at 2 minutes.",
+          "Get close, make eye contact and say it calmly.",
+          "Name the last one: the last episode, level or song."
+        ],
+        "say": "Two more minutes, then the TV goes off."
+      },
+      "timer": {
+        "name": "Use a timer to make it neutral",
+        "summary": "Let the timer, not you, signal the end.",
+        "details": "A visual timer or alarm shifts the boundary from you to the routine. It supports cooperation because the timer becomes the signal, not the parent.",
+        "why": "When the timer signals the end, the limit comes from the routine, not from you, so there is less to argue about.",
+        "steps": [
+          "Set a visual timer together before screen time starts.",
+          "Put it where your child can see it.",
+          "When it rings, point to it and follow through right away."
+        ],
+        "say": "The timer says screen time is done."
+      },
+      "bridging": {
+        "name": "Redirect to a bridging activity",
+        "summary": "Start a fun next activity yourself and invite your child in.",
+        "details": "Start playing the bridging activity and describe what you’re doing to draw your child’s attention. Don’t give attention to the protest until your child joins you. Once they join, give labeled praise for their effort.",
+        "why": "Going from a screen to nothing feels like a loss. A fun next activity gives your child something to move toward.",
+        "steps": [
+          "Have the next activity ready before the screen goes off.",
+          "Start playing it yourself and describe what you are doing.",
+          "Ignore the protest; when your child joins, praise them for joining."
+        ],
+        "say": "I’m building a tall tower with the red blocks!"
+      }
+    },
+    "consistency": {
+      "title": "Stay Consistent",
+      "body": "Consistency is what makes these changes work. When the limit is the same every time, {{childName}} learns that protesting doesn’t bring the screen back, and the meltdowns fade.\n\nA heads-up: when you start holding the limit, the protests may get **louder or last longer** for a while before they get better. This is called an **extinction burst**: {{childName}} is testing whether the old way still works. It’s a sign the change is working. Stay calm, keep the limit, and it will pass."
+    },
+    "keyStrategyLabels": {
+      "why": "Why it works",
+      "how": "How to do it",
+      "say": "Try saying",
+      "tapHint": "Tap to see how",
+      "showLess": "Show less",
+      "whatToSay": "What to say",
+      "noraTip": "Nora Tip:"
+    },
+    "keyStrategyScreens": {
+      "yourChild": "your child",
+      "countdown": {
+        "title": "Give Simple Countdown Warnings",
+        "subtitle": "Give {{childName}}’s brain a clear boundary and natural stopping point before the screen turns off.",
+        "badge": "Clear Statement + Silent Waiting",
+        "why": "Sudden stops cause meltdowns. Giving a countdown with a natural stopping point (like ending after a song, video, or game round) helps {{childName}} wrap up the activity mentally, so the transition feels predictable instead of abrupt.",
+        "say": [
+          "2 minutes left before screen time ends.",
+          "This is our last song before the tablet goes away."
+        ],
+        "pause": "(Then pause and wait silently: no extra questions or explanations.)"
+      },
+      "timer": {
+        "title": "Use a Neutral Timer",
+        "subtitle": "Let the timer be the boundary so you don’t have to argue.",
+        "badge": "Neutral Timer",
+        "why": "When you say “time’s up”, it can feel like a personal power struggle to {{childName}}. Having an objective, external cue (like a timer) makes the rule neutral and fair, taking you out of the role of the “bad guy”.",
+        "sayIntro": "Choose any option that fits the moment:",
+        "options": [
+          {
+            "label": "Setting the Rule",
+            "text": "Screen time ends when this timer dings."
+          },
+          {
+            "label": "When Time’s Up",
+            "text": "Look, the timer dinged! Time to put the tablet away."
+          },
+          {
+            "label": "Joint Action",
+            "text": "The timer rang! Help me press the red button to turn it off."
+          }
+        ],
+        "tip": "Point to the timer when it goes off rather than giving personal commands. Let the timer do the enforcing."
+      },
+      "bridging": {
+        "title": "Redirect to a Bridging Activity",
+        "subtitle": "Announce a fun, physical activity before screens start to make transitions effortless.",
+        "badge": "Announce Early & Land Smoothly",
+        "why": "Stopping screens cold causes a sudden drop in dopamine. Announcing a high-value physical activity (a crunchy snack, a fun game, or a hands-on task) before screen time starts sets the expectation early. {{childName}}’s brain looks forward to what comes next instead of feeling a sudden loss when screens turn off.",
+        "sayIntro": "(Set the bridge early & land smoothly)",
+        "options": [
+          {
+            "label": "Before screen time starts:",
+            "text": "When screen time ends, you and I are going to build a mega Lego tower!"
+          },
+          {
+            "label": "When screen time ends:",
+            "text": "Time is up! Let’s go build that mega Lego tower together!"
+          }
+        ],
+        "tip": "Announce the exciting bridging activity before taking the device away so {{childName}} anticipates what comes next."
+      }
+    },
+    "nextStep": {
+      "title": "Next time screen time ends, how can Nora help?",
+      "subtitle": "Choose what works best for you.",
+      "record": {
+        "title": "Record the next transition",
+        "body": "See how your child responds and track changes over time.",
+        "confirmation": "Sounds good! When it’s nearly time to turn off the screen, come back to Nora and record the transition. We’ll help you see what changes."
+      },
+      "chat": {
+        "title": "Chat with Nora",
+        "body": "Talk through challenges and find solutions together.",
+        "confirmation": "Of course. Whenever a screen-time struggle comes up, come back and tell Nora what happened. We’ll work through it together."
+      },
+      "footnote": "You can always choose the other option later."
+    },
+    "whatWeObserved": "What We Observed",
+    "emotionTimeline": "Emotion Timeline",
+    "showMoments": "Show all emotion moments",
+    "hideMoments": "Hide emotion moments"
+  },
+  "moduleChat": {
+    "greetingReply": "Hi {{name}}! I'm here to help make screen time easier with {{childName}}. What's on your mind today — how a screen-time ending went, or one of your strategies?",
+    "latestSessionLabel": "Chat about latest session",
+    "latestSessionPrompt": "I'd like to chat about my latest session.",
+    "strategyPrompt": "I'd like to talk about “{{strategy}}”.",
+    "strategiesLabel": "Talk about a strategy",
+    "specialPlay": {
+      "yes": "Yes, add it",
+      "moreInfo": "Tell me more first",
+      "notNow": "Not now",
+      "addedReply": "Done! Special play time is now on your home page. Pick a calm moment today, away from screen time, and let {{childName}} lead for 5 minutes. I'd love to hear how it goes.",
+      "declinedReply": "No problem. We'll keep working on your screen-time routine together, and you can ask me about special play time any time."
+    },
+    "bookmarks": {
+      "title": "Bookmarks",
+      "add": "Bookmark this reply",
+      "remove": "Remove bookmark",
+      "removeTitle": "Remove this bookmark?",
+      "removeConfirm": "Remove",
+      "removeError": "Couldn't remove the bookmark. Please try again.",
+      "loadError": "Couldn't load your bookmarks. Please try again later.",
+      "emptyTitle": "No bookmarks yet",
+      "emptyBody": "Tap the bookmark under any of Nora's replies to save it here."
+    },
+    "checkIn": {
+      "question": "Have you had a chance to try “{{strategy}}” yet?",
+      "tried": "I've tried it",
+      "clarify": "I want to clarify before I try",
+      "triedReply": "That's great! Tell me how it went — how did {{childName}} react, and what felt easy or hard?",
+      "clarifyReply": "Of course! Which part would you like to clarify — what to say, when to do it, or something else?"
+    },
+    "suggestedLabel": "Strategies suggested based on your last session",
+    "firstTime": {
+      "guideSubtitle": "Let’s make screen time easier with {{childName}}.\nWhere would you like to start?",
+      "greetingReply": "Hi {{name}}! I’m here to help make screen time easier with {{childName}}. Would you like to start with what happens when screen time ends, or with planning the next one?",
+      "suggestions": {
+        "wontStop": {
+          "title": "Won’t stop when it’s time",
+          "prompt": "When screen time is over, {{childName}} won’t stop. What can I do?"
+        },
+        "planNext": {
+          "title": "Plan the next ending",
+          "prompt": "Help me plan how to end screen time next time."
+        },
+        "whyHard": {
+          "title": "Why is stopping so hard?",
+          "prompt": "Why is stopping screen time so hard for {{childName}}?"
+        },
+        "recording": {
+          "title": "How recording works",
+          "prompt": "How does recording a screen-time ending work, and what will I get?"
+        }
       }
     }
   }

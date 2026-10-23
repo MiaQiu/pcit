@@ -6,6 +6,8 @@ import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import amplitudeService from '../../services/amplitudeService';
 import { OBTemplateV2 } from './OBTemplateV2';
+import { useAuthService } from '../../contexts/AppContext';
+import { buildProfilePayload, saveOnboardingFields } from '../../utils/onboardingDraft';
 
 // OB-intro1_v2.png (clean, text-free) natural size 654x1164 — the "Just 3
 // simple steps..." heading and all 3 card titles/bodies were dropped from
@@ -16,6 +18,7 @@ const IMAGE_ASPECT_RATIO = 654 / 1164;
 
 export const OBIntro1Screen_v2: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
+  const authService = useAuthService();
   const { data } = useOnboarding();
   const { t } = useTranslation();
   const childName = data.childName || 'your child';
@@ -30,7 +33,15 @@ export const OBIntro1Screen_v2: React.FC = () => {
       imageBoxOffsetY={-30}
       onNext={() => {
         amplitudeService.trackOnboardingStepCompleted('ob_intro1', 25);
-        navigation.navigate('ReminderTime');
+        // Account-first parents saved most answers screen by screen; this saves the rest
+        // (relationship, gender). Parents resumed from an account-last draft create
+        // their account here, before the reminder (which registers push with the server)
+        if (authService.isAuthenticated()) {
+          saveOnboardingFields(authService, buildProfilePayload(data));
+          navigation.navigate('ReminderTime');
+        } else {
+          navigation.navigate('CreateAccount', { next: 'ReminderTime' });
+        }
       }}
       aboveImage={
         <Text style={styles.title}>

@@ -1,0 +1,45 @@
+{
+  "coachingReport": {
+    "introduction": "Welcome to your coaching report. In this session, you and Lucas shared wonderfully imaginative, rich moments together. Stepping into Lucas's world creates powerful opportunities to connect while also navigating big feelings and focus hurdles.",
+    "topMoment": {
+      "title": "Attuned Child-Led Play",
+      "quote": "Oh, how do you know? It is- ... Miss Trouble.",
+      "explanation": "By following Lucas's lead and letting him choose the book and the roles, you made a meaningful deposit into his emotional bank account. This calm, responsive validation helps regulate his nervous system and makes him feel deeply seen and safe."
+    },
+    "nextGrowthFocus": {
+      "title": "Bridging High-Dopamine Shifts",
+      "explanation": "Because Lucas shows traits of ADHD and experiences big feeling tantrums during sudden endings, abrupt shifts without warnings trigger an overwhelming flight-or-fight response in his developing brain. Children with ADHD need extra cognitive scaffolding to disengage dopamine-driven attention and shift focus smoothly.",
+      "strategies": [
+        {
+          "name": "Bridge to Offline Play",
+          "description": "Weave the theme of what Lucas is currently engaged with directly into the next offline activity before the shift happens."
+        },
+        {
+          "name": "Countdown Warnings",
+          "description": "Give a clear verbal notice paired with sensory cues 5 minutes and 2 minutes before changing tasks."
+        }
+      ],
+      "exampleQuote": "In two minutes, our KidStop story finishes, and then we will zoom like cars into the kitchen for snack time.",
+      "rationale": "Forewarning allows his ADHD brain time to wrap up mental loops, preventing sudden dopamine crashes that manifest as defensive tantrums."
+    },
+    "whatWeLearned": {
+      "title": "What We Learned About Lucas",
+      "description": "Lucas blossoms when he takes the lead in collaborative storytelling, but sudden stops are a significant trigger for big tantrums. Grounding him with predictable cues and regular sessions of dedicated 'emotional massage' play will strengthen his resilience and ease daily transitions."
+    }
+  },
+  "myPlan": {
+    "activeStrategy": "Bridge to Offline Play",
+    "whyItWorks": "Connecting Lucas's rich imaginative interests directly to the next activity reduces the neurological shock of shifting away from high-interest focus for his ADHD brain.",
+    "protocolSteps": [
+      "Join Lucas's current focus for two minutes, noticing his characters and theme.",
+      "Introduce a physical bridge activity that continues the story into the next room.",
+      "Praise his participation immediately when his body starts moving toward the new task."
+    ],
+    "crisisTool": {
+      "isNeeded": true,
+      "title": "High-Tension Tantrum De-escalation",
+      "action": "Sit down within arm's reach, keep your posture relaxed and low, and avoid demanding eye contact.",
+      "script": "I see big feelings right now. I am right here with you while your body calms down."
+    }
+  }
+}

@@ -496,6 +496,213 @@ const MILESTONE_DETECTION = {
   required: ['detected_milestones'],
 };
 
+// ── module-coaching-screentime ────────────────────────────────────────────────
+// Screen-time ending session → coaching report + "My Plan" payload
+// (prompts/coaching-screentime.txt). Keys match the prompt's snake_case JSON.
+const SCREENTIME_COACHING = {
+  type: 'object',
+  properties: {
+    coaching_report: {
+      type: 'object',
+      properties: {
+        introduction: { type: 'string' },
+        top_moment: {
+          type: 'object',
+          properties: {
+            title:       { type: 'string' },
+            quote:       { type: 'string' },
+            explanation: { type: 'string' },
+          },
+          required: ['title', 'quote', 'explanation'],
+        },
+        next_growth_focus: {
+          type: 'object',
+          properties: {
+            title:       { type: 'string' },
+            explanation: { type: 'string' },
+            strategies: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  name:        { type: 'string' },
+                  description: { type: 'string' },
+                },
+                required: ['name', 'description'],
+              },
+            },
+            example_quote: { type: 'string' },
+            rationale:     { type: 'string' },
+          },
+          required: ['title', 'explanation', 'strategies', 'example_quote', 'rationale'],
+        },
+        what_we_learned: {
+          type: 'object',
+          properties: {
+            title:       { type: 'string' },
+            description: { type: 'string' },
+          },
+          required: ['title', 'description'],
+        },
+      },
+      required: ['introduction', 'top_moment', 'next_growth_focus', 'what_we_learned'],
+    },
+    my_plan: {
+      type: 'object',
+      properties: {
+        // Number of the strategy in the prompt's Knowledge Base (1-10) — picks
+        // the app's strategy-specific Day 2+ check-in questions.
+        active_strategy_id: { type: 'integer' },
+        active_strategy:    { type: 'string' },
+        why_it_works:       { type: 'string' },
+        protocol_steps:  { type: 'array', items: { type: 'string' } },
+        // The parent's 3 focus areas for the next ending (Cheat Sheet screen).
+        focus_areas: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              title:  { type: 'string' },
+              detail: { type: 'string' },
+            },
+            required: ['title', 'detail'],
+          },
+        },
+        crisis_tool: {
+          type: 'object',
+          properties: {
+            is_needed: { type: 'boolean' },
+            title:     { type: 'string' },
+            action:    { type: 'string' },
+            script:    { type: 'string' },
+          },
+          required: ['is_needed', 'title', 'action', 'script'],
+        },
+      },
+      required: ['active_strategy_id', 'active_strategy', 'why_it_works', 'protocol_steps', 'focus_areas', 'crisis_tool'],
+    },
+  },
+  required: ['coaching_report', 'my_plan'],
+};
+
+// ── module-coaching-screentime (Day 2+) ───────────────────────────────────────
+// prompts/coaching-screentime-followup.txt: today's outcome against the active
+// strategy, then the same report + plan. propertyOrdering puts `progress`
+// first (Gemini otherwise orders alphabetically) so the plan is written after
+// the outcome/mastery call it depends on.
+const SCREENTIME_FOLLOWUP_COACHING = {
+  type: 'object',
+  properties: {
+    progress: {
+      type: 'object',
+      properties: {
+        todays_outcome:    { type: 'string', enum: ['Success', 'Struggle', 'Did Not Attempt'] },
+        outcome_reason:    { type: 'string' },
+        strategy_mastered: { type: 'boolean' },
+      },
+      required: ['todays_outcome', 'outcome_reason', 'strategy_mastered'],
+      propertyOrdering: ['todays_outcome', 'outcome_reason', 'strategy_mastered'],
+    },
+    coaching_report: SCREENTIME_COACHING.properties.coaching_report,
+    my_plan:         SCREENTIME_COACHING.properties.my_plan,
+  },
+  required: ['progress', 'coaching_report', 'my_plan'],
+  propertyOrdering: ['progress', 'coaching_report', 'my_plan'],
+};
+
+// ── module-coaching-screentime-format (Day 1) ─────────────────────────────────
+// prompts/coaching-screentime_1st-format.txt: the free-form Day 1 write-up
+// (coaching-screentime_1st.txt) split into display sections, plus the
+// "My Plan" payload and module-chat strategy ideas extracted from it.
+const SCREENTIME_NARRATIVE_FORMAT = {
+  type: 'object',
+  properties: {
+    report: {
+      type: 'object',
+      properties: {
+        headline: { type: 'string' },
+        sections: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              // Picks the card's icon in the app.
+              kind:   { type: 'string', enum: ['win', 'learned', 'emotion', 'strategies', 'grow', 'reflect', 'expectations', 'other'] },
+              title:  { type: 'string' },
+              body:   { type: 'string' },
+              quote:  { type: 'string' },
+              script: { type: 'string' },
+            },
+            required: ['kind', 'title', 'body'],
+            propertyOrdering: ['kind', 'title', 'body', 'quote', 'script'],
+          },
+        },
+      },
+      required: ['headline', 'sections'],
+      propertyOrdering: ['headline', 'sections'],
+    },
+    // Child's outburst level over the session, drawn as a graph in the
+    // "emotion" section. Empty when the write-up has no timeline.
+    emotion_timeline: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          seconds: { type: 'integer' },
+          level:   { type: 'number' }, // 0-5, continuous
+          label:   { type: 'string' },
+          added:   { type: 'boolean' }, // placed by the formatter for a moment the coaching names
+        },
+        required: ['seconds', 'level', 'label', 'added'],
+        propertyOrdering: ['seconds', 'level', 'label', 'added'],
+      },
+    },
+    // 1-2 moments the coaching is about, marked on the graph.
+    emotion_callouts: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          seconds: { type: 'integer' },
+          label:   { type: 'string' },
+          kind:    { type: 'string', enum: ['trigger', 'fuel', 'calm'] },
+        },
+        required: ['seconds', 'label', 'kind'],
+        propertyOrdering: ['seconds', 'label', 'kind'],
+      },
+    },
+    // Key strategies listed in the "strategies" section; the app shows its
+    // own standard description of each (moduleReport.keyStrategies).
+    recommended_strategies: {
+      type: 'array',
+      items: { type: 'string', enum: ['countdown', 'timer', 'bridging'] },
+    },
+    my_plan: SCREENTIME_COACHING.properties.my_plan,
+    suggested_strategies: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name:        { type: 'string' },
+          description: { type: 'string' },
+        },
+        required: ['name', 'description'],
+      },
+    },
+  },
+  required: ['report', 'emotion_timeline', 'emotion_callouts', 'recommended_strategies', 'my_plan', 'suggested_strategies'],
+  propertyOrdering: ['report', 'emotion_timeline', 'emotion_callouts', 'recommended_strategies', 'my_plan', 'suggested_strategies'],
+};
+
+// Day 2+: the same format call, plus a judgment of today against the strategy
+// the parent was practicing (rules in moduleProgressFormatSection).
+const SCREENTIME_NARRATIVE_FORMAT_FOLLOWUP = {
+  ...SCREENTIME_NARRATIVE_FORMAT,
+  properties: { ...SCREENTIME_NARRATIVE_FORMAT.properties, progress: SCREENTIME_FOLLOWUP_COACHING.properties.progress },
+  required: [...SCREENTIME_NARRATIVE_FORMAT.required, 'progress'],
+  propertyOrdering: [...SCREENTIME_NARRATIVE_FORMAT.propertyOrdering, 'progress'],
+};
+
 module.exports = {
   PCIT_CODING,
   REVIEW_FEEDBACK,
@@ -510,4 +717,8 @@ module.exports = {
   COACHING_FORMAT_LEGACY,
   MILESTONE_DETECTION,
   SKILL_IMPROVE,
+  SCREENTIME_COACHING,
+  SCREENTIME_FOLLOWUP_COACHING,
+  SCREENTIME_NARRATIVE_FORMAT,
+  SCREENTIME_NARRATIVE_FORMAT_FOLLOWUP,
 };

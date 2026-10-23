@@ -66,7 +66,7 @@ export const Input: React.FC<InputProps> = ({
   const borderColor = error
     ? '#EF4444' // red-500
     : isFocused
-      ? colors.primary
+      ? colors.purple.main
       : '#E5E7EB'; // gray-200
 
   return (

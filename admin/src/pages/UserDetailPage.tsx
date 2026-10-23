@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getUserProfile, UserProfile, UserSummary } from '../api/adminApi';
 import { useEnv, PROD_API_URL } from '../context/EnvContext';
+import { MODULE_LABELS } from './SessionReportPage';
 
 export default function UserDetailPage() {
   const { userId } = useParams<{ userId: string }>();
@@ -138,14 +139,14 @@ export default function UserDetailPage() {
                       <tr
                         key={s.id}
                         className={reportable ? 'clickable-row' : undefined}
-                        title={reportable ? 'View session report' : 'Report not available until analysis completes'}
+                        title={reportable ? (s.moduleKey ? 'View module report' : 'View session report') : 'Report not available until analysis completes'}
                         onClick={() => {
                           if (!reportable) return;
                           navigate(`/users/${userId}/sessions/${s.id}`, { state: { userName: user?.name } });
                         }}
                       >
                         <td className="monospace" style={{ fontSize: 12 }}>{s.id}</td>
-                        <td>{s.mode}</td>
+                        <td>{s.moduleKey ? (MODULE_LABELS[s.moduleKey] ?? s.moduleKey) : s.mode}</td>
                         <td>
                           <span className={`status-badge status-${s.status.toLowerCase()}`}>
                             {s.status}

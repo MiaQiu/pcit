@@ -97,7 +97,7 @@ async function repairSession(session) {
     clinicalPriority = { primaryIssue: child.primaryIssue, primaryStrategy: child.primaryStrategy, secondaryIssue: child.secondaryIssue, secondaryStrategy: child.secondaryStrategy, issuePriorities };
   }
 
-  const priorCompletedCount = await prisma.session.count({ where: { userId, analysisStatus: 'COMPLETED' } });
+  const priorCompletedCount = await prisma.session.count({ where: { userId, analysisStatus: 'COMPLETED', moduleKey: null } });
   const utterances = await getUtterances(sessionId);
   const tagCounts = session.tagCounts || {};
   const isCDI = session.mode === 'CDI';
