@@ -1283,6 +1283,7 @@ router.get('/users/:id/profile', requireAdminAuth, async (req, res) => {
         select: {
           id: true,
           mode: true,
+          moduleKey: true,
           analysisStatus: true,
           overallScore: true,
           createdAt: true,
@@ -1306,6 +1307,7 @@ router.get('/users/:id/profile', requireAdminAuth, async (req, res) => {
       sessions: sessions.map(s => ({
         id: s.id,
         mode: s.mode,
+        moduleKey: s.moduleKey,
         status: s.analysisStatus,
         overallScore: s.overallScore,
         createdAt: s.createdAt,
@@ -3055,6 +3057,18 @@ router.get('/sessions', requireAdminAuth, async (req, res) => {
 router.get('/sessions/:id/analysis', requireAdminAuth, async (req, res) => {
   try {
     const result = await buildSessionAnalysisResponse(req.params.id);
+    // Learn module reports (e.g. screen time) carry no transcript in the
+    // mobile payload — the app fetches it separately — so attach it here.
+    if (result.status === 200 && result.body.moduleKey) {
+      const utterances = await getUtterances(req.params.id);
+      result.body.transcript = utterances.map(utt => ({
+        speaker: utt.speaker,
+        text: utt.text,
+        start: utt.startTime,
+        end: utt.endTime,
+        role: utt.role,
+      }));
+    }
     res.status(result.status).json(result.body);
   } catch (error) {
     logError(error, { route: 'admin#GET /admin/sessions/:id/analysis error', userId: req.user?.id });

@@ -149,6 +149,8 @@ export interface UserProfile {
   sessions: Array<{
     id: string;
     mode: string;
+    // Set for Learn module recordings (e.g. 'screenTime'); null for play sessions
+    moduleKey: string | null;
     status: string;
     overallScore: number | null;
     createdAt: string;
@@ -1269,8 +1271,84 @@ export interface SessionReport {
   firstSessionInsights: SessionReportFirstSessionInsights | null;
 }
 
+// ---- Learn module report (mirrors the mobile app's ModuleReportScreen; types
+// from nora-mobile/src/constants/learnModules.ts ModuleCoachingData) ----
+
+export type ModuleReportSectionKind = 'win' | 'learned' | 'emotion' | 'strategies' | 'grow' | 'reflect' | 'expectations' | 'other';
+
+export interface ModuleReportSection {
+  kind: ModuleReportSectionKind;
+  title: string;
+  body: string;
+  quote?: string;
+  script?: string;
+}
+
+export interface ModuleEmotionTimelinePoint {
+  seconds: number;
+  level: number;
+  label: string;
+  added?: boolean;
+}
+
+export interface ModuleEmotionCallout {
+  seconds: number;
+  label: string;
+  kind: 'trigger' | 'fuel' | 'calm';
+}
+
+export interface ModuleCoaching {
+  // 'narrative': free-form Day 1+ write-up in `report`'s sections. Absent: the
+  // fixed `coachingReport` cards (older reports).
+  format?: 'narrative';
+  narrative?: string;
+  report?: { headline: string; sections: ModuleReportSection[] };
+  emotionTimeline?: ModuleEmotionTimelinePoint[];
+  emotionCallouts?: ModuleEmotionCallout[];
+  recommendedStrategies?: string[];
+  coachingReport?: {
+    introduction: string;
+    topMoment: { title: string; quote: string; explanation: string };
+    nextGrowthFocus: {
+      title: string;
+      explanation: string;
+      strategies: { name: string; description: string }[];
+      exampleQuote: string;
+      rationale: string;
+    };
+    whatWeLearned: { title: string; description: string };
+  };
+  myPlan?: {
+    activeStrategy: string;
+    whyItWorks: string;
+    protocolSteps: string[];
+    focusAreas?: { title: string; detail: string }[];
+    crisisTool?: { isNeeded: boolean; title: string; action: string; script: string };
+  };
+  progress?: {
+    dayNumber: number;
+    practicedStrategy?: string;
+    daysOnStrategy?: number;
+    parentSelfReport?: string | null;
+    todaysOutcome?: string;
+    outcomeReason?: string;
+    strategyMastered?: boolean;
+  };
+}
+
+export interface ModuleReport {
+  recordingId: string;
+  createdAt: string;
+  durationSeconds: number;
+  mode: string;
+  moduleKey: string;
+  moduleCoaching: ModuleCoaching;
+  transcript: Array<{ speaker: string; text: string; start: number | null; end: number | null; role: string | null }>;
+}
+
 export type SessionReportResult =
   | { status: 'completed'; report: SessionReport }
+  | { status: 'module'; report: ModuleReport }
   | { status: 'processing'; message: string }
   | { status: 'failed'; message: string }
   | { status: 'not_found' };
@@ -1284,6 +1362,7 @@ export async function getSessionReport(sessionId: string, opts?: ApiEnvOpts): Pr
     return { status: 'failed', message: body.message || body.error || 'Analysis failed' };
   }
   if (!res.ok) throw new Error(body.error || `Request failed: ${res.status}`);
+  if (body.moduleKey) return { status: 'module', report: body };
   return { status: 'completed', report: body };
 }
 

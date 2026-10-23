@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { getSessionReport, SessionReport, SessionReportResult } from '../api/adminApi';
+import { getSessionReport, SessionReport, SessionReportResult, ModuleReport, ModuleEmotionTimelinePoint, ModuleEmotionCallout } from '../api/adminApi';
 import { useEnv, PROD_API_URL } from '../context/EnvContext';
 
 // Renders **bold** spans inside plain text — the subset of markdown the
@@ -10,6 +10,285 @@ function renderBold(text: string) {
     part.startsWith('**') && part.endsWith('**') && part.length > 4
       ? <strong key={i}>{part.slice(2, -2)}</strong>
       : part
+  );
+}
+
+// Display names for Learn module keys (session.moduleKey).
+export const MODULE_LABELS: Record<string, string> = {
+  screenTime: 'Screen time',
+};
+
+// Standard copy the app shows for a narrative report's recommended strategies
+// (mobile en.json moduleReport.keyStrategies.<id>.name / summary).
+const KEY_STRATEGIES: Record<string, { name: string; summary: string }> = {
+  countdown: { name: 'Give simple countdown warnings', summary: 'Warn before time is up, so the end isn\u2019t a surprise.' },
+  timer: { name: 'Use a timer to make it neutral', summary: 'Let the timer, not you, signal the end.' },
+  bridging: { name: 'Redirect to a bridging activity', summary: 'Start a fun next activity yourself and invite your child in.' },
+};
+
+const CALLOUT_COLORS: Record<ModuleEmotionCallout['kind'], string> = {
+  trigger: '#DC2626',
+  fuel: '#D97706',
+  calm: '#3BA55D',
+};
+
+function fmtClock(seconds: number) {
+  const m = Math.floor(seconds / 60);
+  const s = Math.round(seconds % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+// The child's outburst level (0 calm – 5 aggression) over the recording, with
+// the moments the coaching names marked — a plain SVG take on the app's
+// EmotionTimelineChart.
+function EmotionTimeline({ points, callouts }: { points: ModuleEmotionTimelinePoint[]; callouts?: ModuleEmotionCallout[] }) {
+  const W = 700, H = 180, PAD_L = 28, PAD_R = 12, PAD_T = 12, PAD_B = 24;
+  const maxT = Math.max(...points.map((p) => p.seconds), 1);
+  const x = (t: number) => PAD_L + (t / maxT) * (W - PAD_L - PAD_R);
+  const y = (level: number) => PAD_T + (1 - level / 5) * (H - PAD_T - PAD_B);
+  const path = points.map((p, i) => `${i ? 'L' : 'M'}${x(p.seconds).toFixed(1)},${y(p.level).toFixed(1)}`).join(' ');
+  return (
+    <div style={{ margin: '8px 0 12px' }}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto' }}>
+        {[0, 1, 2, 3, 4, 5].map((lvl) => (
+          <g key={lvl}>
+            <line x1={PAD_L} x2={W - PAD_R} y1={y(lvl)} y2={y(lvl)} stroke="#F3F4F6" />
+            <text x={PAD_L - 8} y={y(lvl) + 4} fontSize={11} fill="#9CA3AF" textAnchor="end">{lvl}</text>
+          </g>
+        ))}
+        <text x={PAD_L} y={H - 6} fontSize={11} fill="#9CA3AF">0:00</text>
+        <text x={W - PAD_R} y={H - 6} fontSize={11} fill="#9CA3AF" textAnchor="end">{fmtClock(maxT)}</text>
+        {callouts?.map((c, i) => (
+          <line key={i} x1={x(c.seconds)} x2={x(c.seconds)} y1={PAD_T} y2={H - PAD_B} stroke={CALLOUT_COLORS[c.kind]} strokeDasharray="4 3" />
+        ))}
+        <path d={path} fill="none" stroke="#8C49D5" strokeWidth={2.5} strokeLinejoin="round" />
+        {points.map((p, i) => (
+          <circle key={i} cx={x(p.seconds)} cy={y(p.level)} r={3.5} fill="#8C49D5">
+            <title>{`${fmtClock(p.seconds)} · level ${p.level} · ${p.label}`}</title>
+          </circle>
+        ))}
+      </svg>
+      {callouts && callouts.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6 }}>
+          {callouts.map((c, i) => (
+            <div key={i} style={{ fontSize: 12, color: '#374151' }}>
+              <span style={{ fontWeight: 700, color: CALLOUT_COLORS[c.kind], textTransform: 'capitalize' }}>{c.kind}</span>
+              <span className="monospace" style={{ margin: '0 6px', color: '#9CA3AF' }}>{fmtClock(c.seconds)}</span>
+              {c.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const bodyStyle = { fontSize: 14, color: '#374151', lineHeight: 1.5, whiteSpace: 'pre-wrap' as const };
+const quoteStyle = { fontStyle: 'italic' as const, fontSize: 13, color: '#374151', background: '#F9FAFB', borderRadius: 10, padding: 10, marginBottom: 8 };
+
+// Learn module report (e.g. screen time) — same cards as the app's
+// ModuleReportScreen: a narrative write-up in sections, or the older fixed
+// coachingReport cards; plus the plan it produced and the transcript.
+function ModuleReportView({ report, fmt, fmtDuration }: {
+  report: ModuleReport;
+  fmt: (d: string) => string;
+  fmtDuration: (s: number) => string;
+}) {
+  const [showTranscript, setShowTranscript] = useState(false);
+  const mc = report.moduleCoaching;
+  const narrative = mc.format === 'narrative' ? mc.report : undefined;
+  const cr = mc.coachingReport;
+  const hero = narrative ? narrative.headline : cr?.introduction;
+  const timeline = mc.emotionTimeline ?? [];
+  // Graph goes in the 'emotion' section; the first section if none is tagged
+  const emotionIdx = Math.max(0, narrative?.sections.findIndex((sec) => sec.kind === 'emotion') ?? 0);
+  const strategies = mc.recommendedStrategies ?? [];
+  const progress = mc.progress;
+  const plan = mc.myPlan;
+
+  return (
+    <div style={{ maxWidth: 760 }}>
+      {/* Session meta */}
+      <div className="wr-card" style={{ display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#6B7280' }}>Module</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#1E2939' }}>{MODULE_LABELS[report.moduleKey] ?? report.moduleKey}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#6B7280' }}>Date</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#1E2939' }}>{fmt(report.createdAt)}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#6B7280' }}>Duration</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#1E2939' }}>{fmtDuration(report.durationSeconds)}</div>
+        </div>
+        {progress?.dayNumber != null && (
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#6B7280' }}>Day</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#1E2939' }}>{progress.dayNumber}</div>
+          </div>
+        )}
+        {progress?.todaysOutcome && (
+          <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#6B7280' }}>Outcome</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#6837EA' }}>
+              {progress.todaysOutcome}{progress.strategyMastered ? ' · mastered' : ''}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Day 2+ progress against the strategy assigned the day before */}
+      {progress?.practicedStrategy && (
+        <div className="wr-card">
+          <div className="wr-section-title" style={{ marginBottom: 8 }}>Progress</div>
+          <div style={{ fontWeight: 700, fontSize: 14, color: '#1E2939', marginBottom: 4 }}>
+            {progress.practicedStrategy}
+            {progress.daysOnStrategy != null && (
+              <span style={{ color: '#6B7280', fontWeight: 500 }}> (day {progress.daysOnStrategy} on this strategy)</span>
+            )}
+          </div>
+          {progress.parentSelfReport && (
+            <div style={{ fontSize: 13, color: '#6B7280', marginBottom: 4 }}>Parent self-report: {progress.parentSelfReport}</div>
+          )}
+          {progress.outcomeReason && <div style={bodyStyle}>{progress.outcomeReason}</div>}
+        </div>
+      )}
+
+      {/* Hero */}
+      {hero && (
+        <div className="wr-card" style={{ background: '#F5F0FF' }}>
+          <div style={{ ...bodyStyle, fontSize: 15, color: '#1E2939' }}>{renderBold(hero)}</div>
+        </div>
+      )}
+
+      {narrative ? (
+        narrative.sections.map((section, i) => {
+          const showKeyStrategies = section.kind === 'strategies' && strategies.length > 0;
+          const title = showKeyStrategies ? 'Other Best Practices' : section.kind === 'emotion' ? 'What We Observed' : section.title;
+          return (
+            <div key={i} className="wr-card">
+              <div className="wr-section-title" style={{ marginBottom: 8 }}>{title}</div>
+              {section.quote && <div style={quoteStyle}>“{section.quote}”</div>}
+              {i === emotionIdx && timeline.length > 1 && <EmotionTimeline points={timeline} callouts={mc.emotionCallouts} />}
+              {showKeyStrategies ? (
+                strategies.map((id) => (
+                  <div key={id} style={{ marginBottom: 8 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: '#1E2939' }}>{KEY_STRATEGIES[id]?.name ?? id}</div>
+                    {KEY_STRATEGIES[id] && <div style={{ fontSize: 13, color: '#6B7280' }}>{KEY_STRATEGIES[id].summary}</div>}
+                  </div>
+                ))
+              ) : section.body ? (
+                <div style={bodyStyle}>{renderBold(section.body)}</div>
+              ) : null}
+              {section.script && (
+                <div style={{ marginTop: 8, fontSize: 13, color: '#0B9A6B' }}>
+                  <strong>Try saying: </strong>“{section.script}”
+                </div>
+              )}
+            </div>
+          );
+        })
+      ) : cr ? (
+        <>
+          <div className="wr-card">
+            <div className="wr-section-title" style={{ marginBottom: 8 }}>Top Moment</div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: '#1E2939', marginBottom: 6 }}>{cr.topMoment.title}</div>
+            {cr.topMoment.quote && <div style={quoteStyle}>“{cr.topMoment.quote}”</div>}
+            {cr.topMoment.explanation && <div style={bodyStyle}>{cr.topMoment.explanation}</div>}
+          </div>
+          <div className="wr-card">
+            <div className="wr-section-title" style={{ marginBottom: 8 }}>{cr.whatWeLearned.title || 'What We Learned'}</div>
+            <div style={bodyStyle}>{cr.whatWeLearned.description}</div>
+          </div>
+          <div className="wr-card">
+            <div className="wr-section-title" style={{ marginBottom: 8 }}>Next Growth Focus</div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: '#1E2939', marginBottom: 4 }}>{cr.nextGrowthFocus.title}</div>
+            <div style={{ ...bodyStyle, marginBottom: 8 }}>{cr.nextGrowthFocus.explanation}</div>
+            {cr.nextGrowthFocus.strategies.map((st, i) => (
+              <div key={i} style={{ marginBottom: 8 }}>
+                <div style={{ fontWeight: 700, fontSize: 13, color: '#1E2939' }}>{st.name}</div>
+                <div style={{ fontSize: 13, color: '#374151' }}>{st.description}</div>
+              </div>
+            ))}
+            {cr.nextGrowthFocus.exampleQuote && (
+              <div style={{ fontSize: 13, color: '#0B9A6B' }}>
+                <strong>Try saying: </strong>“{cr.nextGrowthFocus.exampleQuote}”
+              </div>
+            )}
+            {cr.nextGrowthFocus.rationale && (
+              <div style={{ fontSize: 13, color: '#6B7280', marginTop: 8 }}>{cr.nextGrowthFocus.rationale}</div>
+            )}
+          </div>
+        </>
+      ) : mc.narrative ? (
+        <div className="wr-card">
+          <div className="wr-section-title" style={{ marginBottom: 8 }}>Report</div>
+          <div style={bodyStyle}>{renderBold(mc.narrative)}</div>
+        </div>
+      ) : null}
+
+      {/* The plan this report produced (practiced on the next recording) */}
+      {plan?.activeStrategy && (
+        <div className="wr-card">
+          <div className="wr-section-title" style={{ marginBottom: 8 }}>Plan for Next Time</div>
+          <div style={{ fontWeight: 700, fontSize: 15, color: '#1E2939', marginBottom: 4 }}>{plan.activeStrategy}</div>
+          {plan.whyItWorks && <div style={{ ...bodyStyle, marginBottom: 8 }}>{plan.whyItWorks}</div>}
+          {plan.protocolSteps?.length > 0 && (
+            <ol style={{ margin: '0 0 8px', paddingLeft: 20, fontSize: 14, color: '#374151', lineHeight: 1.5 }}>
+              {plan.protocolSteps.map((step, i) => <li key={i}>{step}</li>)}
+            </ol>
+          )}
+          {plan.focusAreas && plan.focusAreas.length > 0 && (
+            <div style={{ marginTop: 8 }}>
+              <div style={{ fontWeight: 600, fontSize: 12, color: '#6B7280', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 }}>
+                Cheat Sheet Focus Areas
+              </div>
+              {plan.focusAreas.map((fa, i) => (
+                <div key={i} style={{ marginBottom: 6 }}>
+                  <div style={{ fontWeight: 700, fontSize: 13, color: '#1E2939' }}>{fa.title}</div>
+                  <div style={{ fontSize: 13, color: '#374151' }}>{fa.detail}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {plan.crisisTool?.isNeeded && (
+            <div style={{ background: '#FEF2F2', borderRadius: 10, padding: 10, marginTop: 8 }}>
+              <div style={{ fontWeight: 700, fontSize: 13, color: '#DC2626', marginBottom: 2 }}>{plan.crisisTool.title}</div>
+              <div style={{ fontSize: 13, color: '#374151' }}>{plan.crisisTool.action}</div>
+              {plan.crisisTool.script && <div style={{ fontSize: 13, fontStyle: 'italic', color: '#374151', marginTop: 4 }}>“{plan.crisisTool.script}”</div>}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Transcript (collapsible) */}
+      <div className="wr-card">
+        <div
+          className="wr-section-title"
+          style={{ marginBottom: showTranscript ? 12 : 0, cursor: 'pointer', display: 'flex', justifyContent: 'space-between' }}
+          onClick={() => setShowTranscript((v) => !v)}
+        >
+          <span>Transcript ({report.transcript?.length ?? 0} lines)</span>
+          <span>{showTranscript ? '▲' : '▼'}</span>
+        </div>
+        {showTranscript && (
+          <div style={{ maxHeight: 420, overflowY: 'auto' }}>
+            {(report.transcript ?? []).map((line, i) => (
+              <div key={i} style={{ marginBottom: 8, fontSize: 13, lineHeight: 1.5 }}>
+                {line.start != null && (
+                  <span className="monospace" style={{ marginRight: 6, color: '#9CA3AF' }}>{fmtClock(line.start)}</span>
+                )}
+                <span style={{ fontWeight: 700, color: line.role === 'child' ? '#D97706' : '#6837EA' }}>
+                  {line.role === 'child' ? 'Child' : line.role === 'adult' || line.role === 'parent' ? 'Parent' : line.speaker}:
+                </span>{' '}
+                <span style={{ color: '#374151' }}>{line.text}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -57,7 +336,11 @@ export default function SessionReportPage() {
             ← Back
           </button>
           <div>
-            <h1>Session Report</h1>
+            <h1>
+              {result?.status === 'module'
+                ? `${MODULE_LABELS[result.report.moduleKey] ?? result.report.moduleKey} Report`
+                : 'Session Report'}
+            </h1>
             <p className="page-subtitle">
               {userName && <span style={{ marginRight: 12 }}>{userName}</span>}
               <span className="monospace" style={{ fontSize: 12, color: '#888' }}>{sessionId}</span>
@@ -83,6 +366,10 @@ export default function SessionReportPage() {
 
       {!loading && !error && result?.status === 'failed' && (
         <div className="error-state">Analysis failed: {result.message}</div>
+      )}
+
+      {!loading && !error && result?.status === 'module' && (
+        <ModuleReportView report={result.report} fmt={fmt} fmtDuration={fmtDuration} />
       )}
 
       {!loading && !error && report && (
