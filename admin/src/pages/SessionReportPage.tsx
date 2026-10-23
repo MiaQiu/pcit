@@ -18,12 +18,30 @@ export const MODULE_LABELS: Record<string, string> = {
   screenTime: 'Screen time',
 };
 
-// Standard copy the app shows for a narrative report's recommended strategies
-// (mobile en.json moduleReport.keyStrategies.<id>.name / summary).
-const KEY_STRATEGIES: Record<string, { name: string; summary: string }> = {
-  countdown: { name: 'Give simple countdown warnings', summary: 'Warn before time is up, so the end isn\u2019t a surprise.' },
-  timer: { name: 'Use a timer to make it neutral', summary: 'Let the timer, not you, signal the end.' },
-  bridging: { name: 'Redirect to a bridging activity', summary: 'Start a fun next activity yourself and invite your child in.' },
+// A narrative report's recommended strategies, as the app's KeyStrategyList
+// rows: name (mobile en.json moduleReport.keyStrategies.<id>.name) on a tint.
+const KEY_STRATEGIES: Record<string, { name: string; bg: string; accent: string }> = {
+  countdown: { name: 'Give simple countdown warnings', bg: '#EDF5FD', accent: '#3E77A8' },
+  timer: { name: 'Use a timer to make it neutral', bg: '#F4ECFC', accent: '#8C49D5' },
+  bridging: { name: 'Redirect to a bridging activity', bg: '#FFF1E6', accent: '#D9703A' },
+};
+
+// Fixed closing card after a narrative report's sections (mobile en.json
+// moduleReport.consistency); the app fills in the child's name.
+const CONSISTENCY_TITLE = 'Stay Consistent';
+const CONSISTENCY_INTRO = 'Consistency is what makes these changes work. When the limit is the same every time, your child learns that protesting doesn\u2019t bring the screen back, and the meltdowns fade.';
+const CONSISTENCY_ALERT = 'A heads-up: when you start holding the limit, the protests may get **louder or last longer** for a while before they get better. This is called an **extinction burst**: your child is testing whether the old way still works. It\u2019s a sign the change is working. Stay calm, keep the limit, and it will pass.';
+
+// Fixed last card (mobile en.json moduleReport.nextStep); the parent picks one
+// option in the app.
+const NEXT_STEP = {
+  title: 'Next time screen time ends, how can Nora help?',
+  subtitle: 'Choose what works best for you.',
+  options: [
+    { title: 'Record the next transition', body: 'See how your child responds and track changes over time.' },
+    { title: 'Chat with Nora', body: 'Talk through challenges and find solutions together.' },
+  ],
+  footnote: 'You can always choose the other option later.',
 };
 
 const CALLOUT_COLORS: Record<ModuleEmotionCallout['kind'], string> = {
@@ -86,9 +104,9 @@ function EmotionTimeline({ points, callouts }: { points: ModuleEmotionTimelinePo
 const bodyStyle = { fontSize: 14, color: '#374151', lineHeight: 1.5, whiteSpace: 'pre-wrap' as const };
 const quoteStyle = { fontStyle: 'italic' as const, fontSize: 13, color: '#374151', background: '#F9FAFB', borderRadius: 10, padding: 10, marginBottom: 8 };
 
-// Learn module report (e.g. screen time) — same cards as the app's
-// ModuleReportScreen: a narrative write-up in sections, or the older fixed
-// coachingReport cards; plus the plan it produced and the transcript.
+// Learn module report (e.g. screen time) — the same cards as the app's
+// ModuleReportScreen: a narrative write-up in sections followed by two fixed
+// cards, or the older fixed coachingReport cards and the transcript.
 function ModuleReportView({ report, fmt, fmtDuration }: {
   report: ModuleReport;
   fmt: (d: string) => string;
@@ -104,7 +122,6 @@ function ModuleReportView({ report, fmt, fmtDuration }: {
   const emotionIdx = Math.max(0, narrative?.sections.findIndex((sec) => sec.kind === 'emotion') ?? 0);
   const strategies = mc.recommendedStrategies ?? [];
   const progress = mc.progress;
-  const plan = mc.myPlan;
 
   return (
     <div style={{ maxWidth: 760 }}>
@@ -128,32 +145,8 @@ function ModuleReportView({ report, fmt, fmtDuration }: {
             <div style={{ fontSize: 15, fontWeight: 700, color: '#1E2939' }}>{progress.dayNumber}</div>
           </div>
         )}
-        {progress?.todaysOutcome && (
-          <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#6B7280' }}>Outcome</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#6837EA' }}>
-              {progress.todaysOutcome}{progress.strategyMastered ? ' · mastered' : ''}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Day 2+ progress against the strategy assigned the day before */}
-      {progress?.practicedStrategy && (
-        <div className="wr-card">
-          <div className="wr-section-title" style={{ marginBottom: 8 }}>Progress</div>
-          <div style={{ fontWeight: 700, fontSize: 14, color: '#1E2939', marginBottom: 4 }}>
-            {progress.practicedStrategy}
-            {progress.daysOnStrategy != null && (
-              <span style={{ color: '#6B7280', fontWeight: 500 }}> (day {progress.daysOnStrategy} on this strategy)</span>
-            )}
-          </div>
-          {progress.parentSelfReport && (
-            <div style={{ fontSize: 13, color: '#6B7280', marginBottom: 4 }}>Parent self-report: {progress.parentSelfReport}</div>
-          )}
-          {progress.outcomeReason && <div style={bodyStyle}>{progress.outcomeReason}</div>}
-        </div>
-      )}
 
       {/* Hero */}
       {hero && (
@@ -163,7 +156,8 @@ function ModuleReportView({ report, fmt, fmtDuration }: {
       )}
 
       {narrative ? (
-        narrative.sections.map((section, i) => {
+        <>
+        {narrative.sections.map((section, i) => {
           const showKeyStrategies = section.kind === 'strategies' && strategies.length > 0;
           const title = showKeyStrategies ? 'Other Best Practices' : section.kind === 'emotion' ? 'What We Observed' : section.title;
           return (
@@ -173,9 +167,9 @@ function ModuleReportView({ report, fmt, fmtDuration }: {
               {i === emotionIdx && timeline.length > 1 && <EmotionTimeline points={timeline} callouts={mc.emotionCallouts} />}
               {showKeyStrategies ? (
                 strategies.map((id) => (
-                  <div key={id} style={{ marginBottom: 8 }}>
-                    <div style={{ fontWeight: 700, fontSize: 14, color: '#1E2939' }}>{KEY_STRATEGIES[id]?.name ?? id}</div>
-                    {KEY_STRATEGIES[id] && <div style={{ fontSize: 13, color: '#6B7280' }}>{KEY_STRATEGIES[id].summary}</div>}
+                  <div key={id} style={{ marginBottom: 8, padding: '12px 14px', borderRadius: 12, background: KEY_STRATEGIES[id]?.bg ?? '#F9FAFB', display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontWeight: 700, fontSize: 14, color: '#1E2939' }}>{KEY_STRATEGIES[id]?.name ?? id}</span>
+                    <span style={{ color: KEY_STRATEGIES[id]?.accent ?? '#6B7280' }}>›</span>
                   </div>
                 ))
               ) : section.body ? (
@@ -188,7 +182,26 @@ function ModuleReportView({ report, fmt, fmtDuration }: {
               )}
             </div>
           );
-        })
+        })}
+        <div className="wr-card">
+          <div className="wr-section-title" style={{ marginBottom: 8 }}>{CONSISTENCY_TITLE}</div>
+          <div style={bodyStyle}>{renderBold(CONSISTENCY_INTRO)}</div>
+          <div style={{ ...bodyStyle, background: '#FEF2F2', borderRadius: 10, padding: 10, marginTop: 10 }}>
+            {renderBold(CONSISTENCY_ALERT)}
+          </div>
+        </div>
+        <div className="wr-card">
+          <div className="wr-section-title" style={{ marginBottom: 2 }}>{NEXT_STEP.title}</div>
+          <div style={{ fontSize: 13, color: '#6B7280', marginBottom: 10 }}>{NEXT_STEP.subtitle}</div>
+          {NEXT_STEP.options.map((opt) => (
+            <div key={opt.title} style={{ border: '1px solid #E5E7EB', borderRadius: 12, padding: '10px 14px', marginBottom: 8 }}>
+              <div style={{ fontWeight: 700, fontSize: 14, color: '#6837EA' }}>{opt.title}</div>
+              <div style={{ fontSize: 13, color: '#374151' }}>{opt.body}</div>
+            </div>
+          ))}
+          <div style={{ fontSize: 12, color: '#9CA3AF' }}>{NEXT_STEP.footnote}</div>
+        </div>
+        </>
       ) : cr ? (
         <>
           <div className="wr-card">
@@ -228,41 +241,10 @@ function ModuleReportView({ report, fmt, fmtDuration }: {
         </div>
       ) : null}
 
-      {/* The plan this report produced (practiced on the next recording) */}
-      {plan?.activeStrategy && (
-        <div className="wr-card">
-          <div className="wr-section-title" style={{ marginBottom: 8 }}>Plan for Next Time</div>
-          <div style={{ fontWeight: 700, fontSize: 15, color: '#1E2939', marginBottom: 4 }}>{plan.activeStrategy}</div>
-          {plan.whyItWorks && <div style={{ ...bodyStyle, marginBottom: 8 }}>{plan.whyItWorks}</div>}
-          {plan.protocolSteps?.length > 0 && (
-            <ol style={{ margin: '0 0 8px', paddingLeft: 20, fontSize: 14, color: '#374151', lineHeight: 1.5 }}>
-              {plan.protocolSteps.map((step, i) => <li key={i}>{step}</li>)}
-            </ol>
-          )}
-          {plan.focusAreas && plan.focusAreas.length > 0 && (
-            <div style={{ marginTop: 8 }}>
-              <div style={{ fontWeight: 600, fontSize: 12, color: '#6B7280', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 }}>
-                Cheat Sheet Focus Areas
-              </div>
-              {plan.focusAreas.map((fa, i) => (
-                <div key={i} style={{ marginBottom: 6 }}>
-                  <div style={{ fontWeight: 700, fontSize: 13, color: '#1E2939' }}>{fa.title}</div>
-                  <div style={{ fontSize: 13, color: '#374151' }}>{fa.detail}</div>
-                </div>
-              ))}
-            </div>
-          )}
-          {plan.crisisTool?.isNeeded && (
-            <div style={{ background: '#FEF2F2', borderRadius: 10, padding: 10, marginTop: 8 }}>
-              <div style={{ fontWeight: 700, fontSize: 13, color: '#DC2626', marginBottom: 2 }}>{plan.crisisTool.title}</div>
-              <div style={{ fontSize: 13, color: '#374151' }}>{plan.crisisTool.action}</div>
-              {plan.crisisTool.script && <div style={{ fontSize: 13, fontStyle: 'italic', color: '#374151', marginTop: 4 }}>“{plan.crisisTool.script}”</div>}
-            </div>
-          )}
-        </div>
-      )}
 
-      {/* Transcript (collapsible) */}
+      {/* Transcript (collapsible) — like the app, only on the older
+          fixed-card reports, not the narrative write-up */}
+      {!narrative && (
       <div className="wr-card">
         <div
           className="wr-section-title"
@@ -288,6 +270,7 @@ function ModuleReportView({ report, fmt, fmtDuration }: {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
